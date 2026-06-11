@@ -1,0 +1,61 @@
+lockfile_version: '1'
+generated_at: '2026-06-11T10:21:24.227617+00:00'
+apm_version: 0.11.0
+dependencies:
+- repo_url: dev-komenzar/ori
+  host: github.com
+  resolved_commit: 2fde6233e59bc50fcb29c02dddb3eb748a7fb262
+  package_type: apm_package
+  deployed_files:
+  - .claude/agents/ori-reviewer.md
+  - .claude/rules/ddd-rust.md
+  - .claude/rules/ddd-test.md
+  - .claude/rules/ddd-typescript.md
+  - .claude/rules/domain-phase.md
+  - .claude/rules/feature-manifest.md
+  - .claude/rules/feature-spec.md
+  - .claude/rules/ori-conventions.md
+  - .claude/rules/ui-test.md
+  - .claude/skills/ori-arch
+  - .claude/skills/ori-bug
+  - .claude/skills/ori-ddd-1-discovery
+  - .claude/skills/ori-ddd-10-types
+  - .claude/skills/ori-ddd-11a-ui-fields
+  - .claude/skills/ori-ddd-11b-ui-grouping
+  - .claude/skills/ori-ddd-2-event-storming
+  - .claude/skills/ori-ddd-3-bounded-contexts
+  - .claude/skills/ori-ddd-4-context-map
+  - .claude/skills/ori-ddd-5-aggregates
+  - .claude/skills/ori-ddd-6-domain-events
+  - .claude/skills/ori-ddd-7-validation
+  - .claude/skills/ori-ddd-8-glossary
+  - .claude/skills/ori-ddd-9-workflows
+  - .claude/skills/ori-derive
+  - .claude/skills/ori-distill
+  - .claude/skills/ori-doctor
+  - .claude/skills/ori-feature-status
+  - .claude/skills/ori-finalize
+  - .claude/skills/ori-flow
+  - .claude/skills/ori-graph
+  - .claude/skills/ori-impl-green
+  - .claude/skills/ori-init
+  - .claude/skills/ori-migrate
+  - .claude/skills/ori-model
+  - .claude/skills/ori-plan
+  - .claude/skills/ori-propose
+  - .claude/skills/ori-refactor
+  - .claude/skills/ori-review
+  - .claude/skills/ori-review-proposals
+  - .claude/skills/ori-sync
+  - .claude/skills/ori-test-red
+  deployed_file_hashes:
+    .claude/agents/ori-reviewer.md: sha256:59b412ca81b05a21dc55484d0bfefaeaba014fc1a55477838e89655fe337c459
+    .claude/rules/ddd-rust.md: sha256:92075d6a1c0f2e1e39b0b40f9b9644279600fa658065067698a256c95ee44ce1
+    .claude/rules/ddd-test.md: sha256:f581e45455b83651435e46226ddddccc781e7bcd08631a906be2773b3bd32f96
+    .claude/rules/ddd-typescript.md: sha256:0d4a700d19245b1cf6e41f22c087d57f40328e7c913d3a8c49713ecf60ae72d3
+    .claude/rules/domain-phase.md: sha256:3ff915ce26f9ae436f907ab8733e85803a6813123cfbed5d9eefc600a08cac54
+    .claude/rules/feature-manifest.md: sha256:6f730790fc0847895f68fc293e8ecb0b355e0f6f8fe2e15c0e5b7216f0c2dc55
+    .claude/rules/feature-spec.md: sha256:0299d61cb0b6b047e535e437f78ebb918abde0f97ecee156dd811820aed87d11
+    .claude/rules/ori-conventions.md: sha256:d8afaa2bf5be5849dc76f56c8533859ed14bb585f4026eb168926d1ce74ad0a0
+    .claude/rules/ui-test.md: sha256:7d1d0950d51a7501b5763344c4e3618ea6e7f5b8eda7321fc2db32eaaa6f8cf6
+  content_hash: sha256:65d04d22938f62cf6ba18c5b4dcf17bde4e0b9c25dd534cf84c8c6db4324a1d0

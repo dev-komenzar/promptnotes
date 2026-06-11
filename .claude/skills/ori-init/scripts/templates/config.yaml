@@ -1,0 +1,100 @@
+ori:
+  version: 1
+  workspace:
+    apps_root: apps
+    apps:
+      - name: __APP_NAME__
+        path: apps/__APP_NAME__
+  workflow:
+    phases:
+      derive:
+        capability: deep
+      plan:
+        capability: deep
+      test-red:
+        capability: deep
+      impl-green:
+        capability: deep
+      refactor:
+        capability: fast
+      review:
+        capability: reasoning
+        fresh_context: true
+      finalize:
+        capability: fast
+  agents:
+    claude:
+      capability_to_model:
+        fast: claude-haiku-4-5
+        deep: claude-sonnet-4-6
+        reasoning: claude-opus-4-7
+      spawn:
+        binary: claude
+        args:
+          - "--model"
+          - "{model}"
+          - "--no-interactive"
+          - "--skill"
+          - "ori-{phase}"
+          - "{slice_id}"
+        mode: headless
+    codex:
+      capability_to_model:
+        fast: gpt-4o-mini
+        deep: gpt-4o
+        reasoning: o1
+      spawn:
+        binary: codex
+        args:
+          - "run"
+          - "ori-{phase}"
+          - "--model"
+          - "{model}"
+          - "--slice"
+          - "{slice_id}"
+        mode: headless
+    opencode:
+      capability_to_model:
+        fast: deepseek/deepseek-v4-flash
+        deep: deepseek/deepseek-v4-pro
+        reasoning: deepseek/deepseek-v4-pro
+      spawn:
+        binary: opencode
+        args:
+          - "run"
+          - "--model"
+          - "{model}"
+          - "ori-{phase}"
+          - "{slice_id}"
+        mode: headless
+    gemini:
+      capability_to_model:
+        fast: gemini-2.0-flash
+        deep: gemini-2.0-pro
+        reasoning: gemini-2.0-pro-thinking
+      spawn:
+        binary: gemini
+        args:
+          - "run"
+          - "--model"
+          - "{model}"
+          - "skill:ori-{phase}"
+          - "{slice_id}"
+        mode: headless
+    cursor:
+      capability_to_model:
+        fast: claude-haiku-4.5
+        deep: claude-sonnet-4.6
+        reasoning: claude-opus-4.7
+      spawn:
+        mode: manual
+        instructions: "Cursor does not expose a headless invocation. Open a new chat tab and run: /ori-{phase} {slice_id}  (model: {model})"
+    copilot:
+      capability_to_model:
+        fast: gpt-4o-mini
+        deep: gpt-4o
+        reasoning: claude-3.5-sonnet
+      spawn:
+        mode: manual
+        instructions: "In VSCode Copilot Chat, run: @workspace /ori-{phase} {slice_id}  (model: {model})"
+  current_agent: __CURRENT_AGENT__
