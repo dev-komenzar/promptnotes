@@ -50,8 +50,10 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
   - 同一秒内の連続編集では `updatedAt` は同じ値に留まる（時計の解像度で十分）
 - **I-N5**: `tags` 内に同一 `Tag::name` は 1 件のみ
 - **I-N6**: `Tag::name` は正規化規則（lowercase + trim、禁止文字排除）を必ず満たす
-- **I-N7**: 削除（trash 移動）された Note の identity は **同一プロセス内に保持される単一の path** で復元可能
-  （複数削除した古い順は復元不能、トースト消失で破棄）
+- **I-N7**: 削除（trash 移動）された Note の identity は application service の
+  **DeletedNote スタック** (`Vec<DeletedNote>`) に push され、各 DeletedNote は
+  対応する Toast の有効期間中のみ復元可能。Toast 消失でその要素のみスタックから除去
+  （各 Toast / DeletedNote は独立した有効期間を持ち、互いに干渉しない）
 
 ### 公開操作 {#note-aggregate-operations}
 
@@ -69,9 +71,11 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
   - TagSet から削除。`updatedAt` を更新
 - `Note::delete_to_trash(self) -> DeletedNote`
   - OS のゴミ箱に移動し、`DeletedNote { id, original_path }` を返す
-  - Undo 用 in-memory state を 1 件保持（複数同時保持しない、Q5 決定）
+  - 戻り値は application service の DeletedNote スタックに **push** される
+    （複数の DeletedNote を同時保持、Phase 11a UI 設計改訂による）
 - `DeletedNote::restore(self) -> Note`
-  - OS ゴミ箱から復帰。トースト消失後の呼び出しは不可（呼び出し側で時間管理）
+  - OS ゴミ箱から復帰。対応する Toast の有効期間外の呼び出しは不可
+    （呼び出し側 application service が DeletedNote ごとの有効期間を管理）
 
 #### Queries {#note-aggregate-queries}
 
@@ -241,8 +245,13 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 ### 削除 Undo の集約境界 {#notes-undo}
 
 - `DeletedNote` を独立 entity にせず、Note Aggregate の operation の戻り値とする
-- 復元状態は **Note Capture BC の application service** が 1 件のみ保持
-- ドメインに Undo stack を持たない（Q5 決定の純粋反映）
+  （VO 的扱い: identity を持たない短命なハンドル）
+- 復元状態は **Note Capture BC の application service** が **スタック**
+  (`Vec<DeletedNote>`) として保持（Phase 11a UI 設計改訂による Q5 改定）
+- 各 DeletedNote は対応する Toast と 1:1 対応し、独立した有効期間 (TTL) を持つ
+- Toast 消失 / Undo 成功 / 明示クローズ のいずれかで該当 DeletedNote のみスタックから除去
+- ドメイン本体 (Note Aggregate) に Undo stack を持たない方針は維持
+  （Undo stack は application service 層の責務）
 
 ### NoteFeed の sort 副作用 {#notes-sort-side-effect}
 

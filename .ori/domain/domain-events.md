@@ -117,12 +117,13 @@ struct NoteDeletedToTrash {
 #### Subscribers {#note-deleted-to-trash-subscribers}
 
 - **Note Feed**: 表示集合から除外
-- **UI 層**: 「元に戻す」トーストを表示（仮 5 秒、Q5 決定）
-- **Application service**: 直前の `DeletedNote` を 1 件保持（in-memory single path）
+- **UI 層**: 「元に戻す」トーストを **画面下部の縦パイル** に追加表示（仮 5 秒、各 Toast 個別、Q5 改訂）
+- **Application service**: `DeletedNote` を Undo スタック (`Vec<DeletedNote>`) に **push**
 
 #### Timing {#note-deleted-to-trash-timing}
 
-同期。複数削除が連続したら直前の `DeletedNote` は破棄される（古い削除の Undo は不可）。
+同期。複数削除が連続しても各 `DeletedNote` は独立して保持され、対応する Toast の
+有効期間中はそれぞれ Undo 可能（Phase 11a UI 設計改訂による）。
 
 ### NoteRestoredFromTrash {#note-restored-from-trash}
 

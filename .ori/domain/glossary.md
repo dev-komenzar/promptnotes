@@ -133,7 +133,9 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 
 - **定義**: `Note::delete_to_trash` の戻り値。Undo 復元のための短命なハンドル
 - **kind**: VO
-- **保持**: in-memory 1 件のみ（Q5 決定、独立 aggregate 化しない）
+- **保持**: application service の **Undo スタック** (`Vec<DeletedNote>`) に push
+  （Q5 改訂 2026-06-20 / Phase 11a: 各 DeletedNote は対応する Toast の有効期間中のみ保持。
+  独立 aggregate 化はしない方針を維持）
 
 ## Domain Events {#glossary-events}
 
@@ -214,9 +216,10 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 
 ### UndoWindow {#glossary-undo-window}
 
-- **定義**: Note 削除後にトーストが表示されている間の Undo 有効期間
-- **長さ**: 仮 5 秒（UI Phase で確定）
-- **特性**: トースト消失と同時に [DeletedNote](#glossary-deleted-note) は破棄され、復元不能
+- **定義**: Note 削除後に **その削除に対応する Toast** が表示されている間の Undo 有効期間
+- **長さ**: 仮 5 秒（Toast ごとに独立、UI Phase で確定）
+- **特性**: 該当 Toast 消失と同時に対応する [DeletedNote](#glossary-deleted-note) が
+  Undo スタックから除去され、その Note のみ復元不能（他の DeletedNote は影響を受けない）
 - **context**: Note Capture
 
 ### DeleteToTrash {#glossary-delete-to-trash}

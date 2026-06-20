@@ -40,10 +40,23 @@ pub trait UpdaterPlugin: Send + Sync {
     fn fetch_latest(&self) -> Result<Release, UpdateError>;
 }
 
-pub trait UndoSlot: Send + Sync {
-    fn replace(&self, deleted: DeletedNote);
-    fn take(&self) -> Option<DeletedNote>;
-    fn clear(&self);
+/// Undo スタック (Vec<DeletedNote>) を保持する application service。
+/// 各要素は対応する Toast の TTL に同期して expire する。
+/// Phase 11a UI 設計改訂 (2026-06-20) により、旧 `UndoSlot` (単一保持) から
+/// スタック型に変更された。
+pub trait UndoStack: Send + Sync {
+    /// 新規 DeletedNote をスタックに push (既存要素は維持)。
+    fn push(&self, deleted: DeletedNote);
+
+    /// 指定 NoteId に一致する DeletedNote を検索 (TTL 内に限る)。
+    fn find(&self, id: &NoteId) -> Option<DeletedNote>;
+
+    /// 指定 NoteId に一致する DeletedNote をスタックから除去。
+    /// 戻り値: 除去されたら true。存在しないなら false。
+    fn remove(&self, id: &NoteId) -> bool;
+
+    /// 現在 TTL 内の全 DeletedNote を取得 (UI 復元等で利用)。
+    fn snapshot(&self) -> Vec<DeletedNote>;
 }
 
 // ----- Workflow input / output types -----
@@ -131,7 +144,9 @@ pub enum DeleteNoteError {
 }
 
 #[derive(Debug, Clone)]
-pub struct RestoreDeletedNoteCommand;
+pub struct RestoreDeletedNoteCommand {
+    pub note_id: NoteId,
+}
 
 #[derive(Debug)]
 pub enum RestoreDeletedNoteError {

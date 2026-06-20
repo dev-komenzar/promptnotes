@@ -39,23 +39,28 @@ struct DeleteNoteCommand {
    - `storage_dir / <note_id>.md`
 3. `moveToTrash: PathBuf → Result<(), TrashError>`
    - OS 依存（macOS: `NSWorkspace`, Linux: XDG trash, Windows: SHFileOperation）
-4. `replaceDeletedSlot: DeletedNote → ()`
-   - application service の保持 slot を **上書き**（S6: 直前の DeletedNote は破棄）
-   - 同時にトーストタイマーをリセット
-5. `buildDeletedNote: (NoteId, PathBuf, Timestamp) → DeletedNote`
+4. `buildDeletedNote: (NoteId, PathBuf, Timestamp) → DeletedNote`
+5. `pushUndoStack: DeletedNote → ()`
+   - application service の Undo スタック (`Vec<DeletedNote>`) に **push**
+     （Phase 11a UI 設計改訂による Q5 改定: 既存の DeletedNote は破棄しない）
+   - 新規 Toast を画面下部の縦パイル最上部に表示するよう UI 層に通知
+   - 当該 DeletedNote 固有の TTL タイマー (仮 5 秒) を起動
 6. `emit: DeletedNote → NoteDeletedToTrash`
 
 ## Dependencies {#dependencies}
 
 - `NoteRepository`
 - `TrashService` — OS ゴミ箱 API の薄いラッパー
-- `UndoSlot` — `Option<DeletedNote>` を保持する application service
+- `UndoStack` — `Vec<DeletedNote>` を保持する application service
+  （TTL 管理付き、各要素ごとに個別タイマー）
 - `Clock`
 - `EventBus`
 
 ## Notes {#notes}
 
-- **連続削除時の挙動**（S6）: 古い `DeletedNote` は復元不能（OS ゴミ箱からの手動復元のみ）
-- トースト UI のタイマー管理は UI 層の責務だが、`UndoSlot` の TTL と同期する必要あり
-  → Phase 11a (ui-fields) で具体化
+- **連続削除時の挙動**（S6 改訂）: 各 `DeletedNote` は独立に保持される。
+  対応する Toast が時間切れ / 明示クローズ / Undo 成功 のいずれかで該当要素が
+  スタックから除去されるが、他の DeletedNote は影響を受けない
+- Toast UI のタイマー管理は UI 層の責務だが、`UndoStack` の per-element TTL と
+  同期する必要あり → Phase 11a (ui-fields) で確定済み（仮 5 秒、各 Toast 個別）
 - ファイル名は `id` から決定論的に導出可能なので Note 全体を保持しない設計

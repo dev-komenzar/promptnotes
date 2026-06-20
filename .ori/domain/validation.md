@@ -124,47 +124,64 @@ typical / edge / error の各シナリオを Given/When/Then で walkthrough し
   - NoteFeed: 表示に再登場
   - UI: トーストを閉じる
 
-## Scenario S6: 連続削除でトースト置換、古い削除は Undo 不可 {#s6-delete-replace}
+## Scenario S6: 連続削除で Toast がスタック、両方とも独立 Undo 可能 {#s6-delete-replace}
 
 ### Given {#s6-given}
 
 - Note A, B が表示
 - どちらも未削除
+- Undo スタックは空
 
 ### When {#s6-when}
 
 1. `t0` に A を削除
 2. `t0 + 1s = t1` に B を削除（A の Undo トースト表示中）
-3. `t1 + 1s = t2` に「元に戻す」ボタンをクリック
+3. `t1 + 1s = t2` に A の Toast 内「元に戻す」ボタンをクリック
+4. `t2 + 1s = t3` に B の Toast 内「元に戻す」ボタンをクリック
 
 ### Then {#s6-then}
 
-- `t0`: A の **NoteDeletedToTrash**, A のトースト表示, `DeletedNote = A`
+- `t0`:
+  - A の **NoteDeletedToTrash** 発行
+  - A の Toast が画面下部に表示
+  - Undo スタック: `[DeletedNote(A)]`
 - `t1`:
   - B の **NoteDeletedToTrash** 発行
-  - A のトーストが消え、B のトーストに置換
-  - **`DeletedNote = B`** に上書き（A は破棄、Q5 決定: 単一 path 保持）
-- `t2`: `DeletedNote::restore()` → **B が復元**
+  - B の Toast を **A の上に積む** (縦パイル、最新が上)
+  - Undo スタック: `[DeletedNote(A), DeletedNote(B)]`
+  - A の Toast は維持 (置換されない、独立 TTL)
+- `t2`: A の Toast の Undo クリック → A が復元
+  - event **NoteRestoredFromTrash** `{ note_id: A, ... }`
+  - Undo スタックから A を除去: `[DeletedNote(B)]`
+  - B の Toast は表示維持 (有効期間内)
+- `t3`: B の Toast の Undo クリック → B が復元
   - event **NoteRestoredFromTrash** `{ note_id: B, ... }`
-- A はアプリでは復元不能（OS ゴミ箱からの手動復元のみ）
+  - Undo スタックから B を除去: `[]`
+- 補足: A の Toast が `t0 + 5s` に時間切れで消えた場合は A のみが破棄され、
+  B の Toast / Undo は影響を受けない（各 Toast は独立 TTL）
 
-## Scenario S7: トースト消失後の Undo は no-op {#s7-undo-after-toast}
+## Scenario S7: Toast 消失後の Undo は no-op (per-toast 個別) {#s7-undo-after-toast}
 
 ### Given {#s7-given}
 
-- Note A を `t0` に削除、トースト表示中
+- Note A を `t0` に削除、Toast 表示中
+- Undo スタック: `[DeletedNote(A)]`
 
 ### When {#s7-when}
 
-1. `t0 + 5s = t1`（仮トースト有効期間）でトースト消失
-2. `t1 + 1s = t2` に何らかの方法で復元 API 呼び出し試行
+1. `t0 + 5s = t1`（仮 Toast 有効期間）で A の Toast が消失
+2. `t1 + 1s = t2` に何らかの方法で A に対する復元 API 呼び出し試行
 
 ### Then {#s7-then}
 
-- UI 層: トースト消失と同時に `DeletedNote` 保持を破棄
-- 復元 API は呼び出されない（UI 側で reject）
-- event **NoteRestoredFromTrash** は発行されない
+- `t1`: A の Toast 消失と同時に application service が Undo スタックから A を除去
+  - Undo スタック: `[]`
+- `t2`: 復元 API は **対応する DeletedNote がスタックに無い** ため reject
+  - event **NoteRestoredFromTrash** は発行されない
+  - workflow restore-deleted-note は `NoUndoAvailable` を返す
 - A は OS ゴミ箱に残る（アプリ責務外）
+- 補足: 他の Toast (例: B の Toast が同時に存在) がある場合、B の Undo は
+  影響を受けず引き続き有効（per-toast 独立性）
 
 ## Scenario S8: 検索文字列の NFC + lowercase 正規化 {#s8-query-normalize}
 
