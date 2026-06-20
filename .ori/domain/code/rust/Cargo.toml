@@ -1,0 +1,17 @@
+[package]
+name = "promptnotes-domain"
+version = "0.0.0"
+edition = "2021"
+description = "Phase 10 reference types (distill-ddd). Not the production crate."
+
+[dependencies]
+thiserror = "1"
+garde = { version = "0.20", features = ["derive", "pattern"] }
+unicode-normalization = "0.1"
+time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"] }
+serde = { version = "1", features = ["derive"] }
+url = { version = "2", features = ["serde"] }
+semver = { version = "1", features = ["serde"] }
+
+[lib]
+path = "lib.rs"
