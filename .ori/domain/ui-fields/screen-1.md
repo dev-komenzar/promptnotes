@@ -49,23 +49,32 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 
 | id | label | 型 | 必須 | UI | 備考 |
 |--|--|--|--|--|--|
-| `{#screen-1-draft-body}` | 本文 | `String → NoteBody` | - | CodeMirror 6 (readOnly: false) | フィード最上部に常時固定。`Cmd+N` で focus、`Enter` で改行、`Cmd+Enter` で確定 |
+| `{#screen-1-draft-body}` | 本文 | `String → NoteBody` | - | CodeMirror 6 (readOnly: false) | フィード最上部に常時固定。Markdown シンタックスハイライト + [入力補助](#notes-markdown-helpers) 適用。`Cmd+N` で focus、`Enter` で改行、`Cmd+Enter` で確定 |
 | `{#screen-1-draft-submit}` | ＋追加 | (action) | - | button | クリックで `Cmd+Enter` と同等 |
 
 ### Block region (各 Note 1 ブロック) {#fields-block}
 
 各 Block は `IDLE | FOCUSED | EDITING` の state machine を持つ（spec 準拠）。
+**上下 2 段構造** (spec「各ブロックの構造（上から）」準拠):
+
+1. **メタ行** (上段, 小さく薄いフォント)
+   - 左: タグチップ群
+   - 右: `createdAt` 右寄せ + `updatedAt` ホバー tooltip
+2. **本文** (下段, CodeMirror 6, Markdown シンタックスハイライト, レンダリングなし)
+   - 全文表示（切り捨て・折りたたみ **禁止**）
+
+ホバー時アクション（copy / delete）はブロック右上 (メタ行右端の手前) に重ねて表示。
 
 | id | label | 型 | 必須 | UI | 備考 |
 |--|--|--|--|--|--|
-| `{#screen-1-block-tag-chip}` | タグ | `Tag` | - | chip (click で `update-feed-filter SetTag`) | メタ行左端、タグ群を順序保持で表示 |
-| `{#screen-1-block-tag-input}` | 新規タグ入力 | `String → Tag` | - | text input (タグ編集モード時のみ表示) | Enter で確定 → `assign-tag` |
+| `{#screen-1-block-tag-chip}` | タグ | `Tag` | - | chip (click で `update-feed-filter SetTag`) | **メタ行左端**、タグ群を順序保持で表示。小さく薄いフォント |
+| `{#screen-1-block-tag-input}` | 新規タグ入力 | `String → Tag` | - | text input (タグ編集モード時のみ表示) | メタ行内、Enter で確定 → `assign-tag` |
 | `{#screen-1-block-tag-remove}` | タグ削除 | (action) | - | × icon on chip | クリックで `remove-tag` |
-| `{#screen-1-block-created-at}` | 作成日時 | `Timestamp` | ✓ | read-only label (小さく薄く、右寄せ) | spec のメタ行 |
-| `{#screen-1-block-updated-at}` | 更新日時 | `Timestamp` | - | read-only tooltip | ホバー時のみ表示 |
-| `{#screen-1-block-body}` | 本文 | `NoteBody` | ✓ | CodeMirror 6 (readOnly toggle) | IDLE/FOCUSED: readOnly=true、EDITING: readOnly=false。全文表示（切り捨てなし） |
-| `{#screen-1-block-copy}` | コピー | (action) | - | hover-only icon button | クリックで `copy-note-body` |
-| `{#screen-1-block-delete}` | 削除 | (action) | - | hover-only icon button | クリックで `delete-note` |
+| `{#screen-1-block-created-at}` | 作成日時 | `Timestamp` | ✓ | read-only label | **メタ行右端**、右寄せ、小さく薄いフォント |
+| `{#screen-1-block-updated-at}` | 更新日時 | `Timestamp` | - | read-only tooltip | メタ行右端、`createdAt` のホバー時のみ表示 |
+| `{#screen-1-block-body}` | 本文 | `NoteBody` | ✓ | CodeMirror 6 (readOnly toggle) | **下段**。Markdown シンタックスハイライトあり、レンダリングなし。IDLE/FOCUSED: readOnly=true、EDITING: readOnly=false。**全文表示（切り捨て・折りたたみ禁止）** |
+| `{#screen-1-block-copy}` | コピー | (action) | - | hover-only icon button | ブロック右上に重ねて表示、クリックで `copy-note-body` |
+| `{#screen-1-block-delete}` | 削除 | (action) | - | hover-only icon button | ブロック右上に重ねて表示、クリックで `delete-note` |
 
 ### Toast region (画面下部) {#fields-toast}
 
@@ -147,17 +156,48 @@ Phase 11b で確定。現時点では：
 - `readOnly: true` (Block IDLE / FOCUSED 時)
 - 別レンダラ（プレビュー用 HTML 等）に切り替えない（spec 末尾の禁止事項 #3）
 
-### Block の縦並び {#notes-block-vertical}
+### Block の縦並び (フィード全体) {#notes-block-vertical}
 
-- 一列縦並びのみ（複数カラム禁止、spec）
+- フィード上のブロック群は **一列縦並び** のみ（複数カラム禁止、spec）
 - ブロック間の区切り: 細い水平線のみ（背景色・枠線・影によるコンテナなし）
 - 背景色:
   - IDLE: デフォルト
   - FOCUSED: 薄いハイライト
   - EDITING: FOCUSED と同色
 
+### Block 内の上下構造 {#notes-block-layout}
+
+spec「各ブロックの構造（上から）」を厳密に遵守:
+
+1. **メタ行** (上段)
+   - 1 行で収まる高さ
+   - フォント: 小さく薄い（本文より明らかに subdued）
+   - 左端: [tag-chip](#fields-block) + [tag-input](#fields-block) (編集モード時) + [tag-remove](#fields-block)
+   - 右端: [created-at](#fields-block) (常時) / [updated-at](#fields-block) (ホバー時 tooltip)
+2. **本文** (下段)
+   - CodeMirror 6 インスタンス
+   - Markdown シンタックスハイライト **あり**
+   - HTML/PDF へのレンダリング **なし**（spec 末尾の禁止事項 #3: 別レンダラ切替禁止）
+   - **全文表示**（切り捨て / 折りたたみ / "show more" 等のトリミング UI 禁止）
+   - 高さは内容に応じて自然伸縮（min-height はメタ行の数倍程度）
+
+メタ行と本文の間に視覚的セパレータは置かない（spec の minimal レイアウト原則）。
+
 ### ホバーアクションの表示タイミング {#notes-hover-actions}
 
-- `copy` / `delete` ボタンは ホバー時のみ表示
+- `copy` / `delete` ボタンは ホバー時のみ表示（ブロック右上に重ねて配置）
 - メタ行の `updated_at` tooltip もホバー時のみ
 - マウス非依存（タッチデバイス）の代替は MVP 範囲外
+
+### Markdown 入力補助 (CodeMirror 6 共通) {#notes-markdown-helpers}
+
+[draft-body](#fields-draft) と [block-body](#fields-block) の **両 CodeMirror** で
+有効化する補助機能（spec「Markdown入力補助」準拠）:
+
+- `-` や `1.` 行で改行すると次行も自動でリスト記号を挿入
+- `Tab` でインデント、`Shift+Tab` でアンインデント
+- `**` 入力で `****` になりカーソルが中央に入るブラケット補完
+- 見出し `#` のシンタックスハイライト強調
+
+readOnly: true 時（IDLE/FOCUSED ブロック本文）は補助機能は不要だが、シンタックス
+ハイライト自体は維持（CodeMirror の表示一貫性を保つため）。
