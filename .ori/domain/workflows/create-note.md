@@ -28,8 +28,9 @@ struct CreateNoteCommand {
 
 ## Errors {#errors}
 
-- `InvalidTag { name: String, reason: TagError }` — タグの正規化 / 禁止文字違反
-- `PersistError { path: PathBuf, cause: io::Error }` — `.md` 書き出し失敗
+- `InvalidTag { raw: String, source: TagError }` — タグの正規化 / 禁止文字違反（I-N6）
+- `InvalidBody { source: NoteBodyError }` — `raw_body` が NoteBody の domain 不変条件に違反（`---` 単独行を含む等。aggregates.md#note-aggregate-elements より「frontmatter 由来の `---` を含まない」）
+- `PersistError { path: PathBuf, source: io::Error }` — `.md` 書き出し失敗
 
 ## Steps {#steps}
 
@@ -54,5 +55,7 @@ struct CreateNoteCommand {
 ## Notes {#notes}
 
 - Draft → Note の確定経路は **これが唯一**。AutoSave 経路では新規作成しない
-- 空 `raw_body` でも作成を許容（spec では明示禁止していない、I-N1 〜 I-N7 に違反しない）
+- **空 / whitespace のみの `raw_body` は presentation/command layer で no-op**（Note 非生成、event 非発行）。
+  - Aggregate 自体は空 body を受理する（I-N1〜I-N7 に違反しない）が、create-note command 経路では defensive に reject せず単に何もしない（戻り値 `Ok(None)`）。
+  - 理由: Cmd+Enter 連打時の重複防止 + Empty Note 防止 + 同一秒 NoteId 衝突の構造的回避（screen-1.md#cross-draft-submit で Draft 即時クリアと併せて）。
 - 作成成功後の Draft 入力欄クリアは UI 層の責務（event を購読して実行）
