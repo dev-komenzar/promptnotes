@@ -1,4 +1,5 @@
 pub mod note_capture;
+pub mod user_preferences;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,6 +21,7 @@ pub fn run() {
     })
     .invoke_handler(tauri::generate_handler![
       note_capture::slices::create_note::commands::create_note,
+      user_preferences::slices::load_settings::commands::load_settings,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
