@@ -1,0 +1,14 @@
+slice_id: "load-settings"
+type: "query"
+derives_from:
+  - domain/workflows/load-settings.md#load-settings
+  - domain/aggregates.md#settings-aggregate
+  - domain/bounded-contexts.md#user-preferences
+  - domain/validation.md#s12-startup-state
+relations: []
+implementation:
+  language: rust
+  primary_bc: user-preferences
+  generates:
+    - apps/promptnotes/src-tauri/src/user_preferences/slices/load_settings/
+    - apps/promptnotes/src/lib/user-preferences/slices/load-settings/

@@ -1,0 +1,49 @@
+slice_id: load-settings
+derived_at: 2026-06-24T09:33:12.478Z
+beads:
+  epic: ori-slice-load-settings
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-derive-load-settings
+    completed_at: 2026-06-24
+  plan:
+    status: closed
+    issue: ori-plan-load-settings
+    completed_at: 2026-06-24
+  test-red:
+    status: closed
+    issue: ori-test-red-load-settings
+    completed_at: 2026-06-24
+    failing_tests: 25
+  impl-green:
+    status: closed
+    issue: ori-impl-green-load-settings
+    completed_at: 2026-06-24
+    passing_tests: 25
+  refactor:
+    status: closed
+    issue: ori-refactor-load-settings
+    completed_at: 2026-06-24
+  review:
+    status: closed
+    issue: ori-review-load-settings
+    completed_at: 2026-06-24
+    passes: 2
+    verdict: PASS
+    passing_tests: 25
+dirty: []
+finalized_at: 2026-06-24
+followup:
+  deferred_findings:
+    - source: review.md (Pass 1 MED + LOW)
+      tracking: ori-9i0
+      summary: "OsDirs port contract / C-LS3 vs C-LS4 merge / OQ ratification / TP-I4 wording / SettingsRaw drift"
