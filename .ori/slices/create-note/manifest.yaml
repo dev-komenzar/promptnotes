@@ -1,0 +1,15 @@
+slice_id: "create-note"
+type: "command"
+derives_from:
+  - domain/workflows/create-note.md#create-note
+  - domain/aggregates.md#note-aggregate
+  - domain/domain-events.md#note-created
+  - domain/bounded-contexts.md#note-capture
+  - domain/ui-fields/screen-1.md#fields
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/create_note/
+    - apps/promptnotes/src/lib/note-capture/slices/create-note/
