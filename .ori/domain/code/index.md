@@ -1,8 +1,8 @@
 ---
-coherence:
-  source: scaffold
-  status: pending
-  last_validated: null
+ori:
+  node_id: type-definitions:code-scaffold
+  type: type-definitions
+  depends_on: []
 ---
 
 # Code Index

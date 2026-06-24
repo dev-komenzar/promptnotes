@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md
-    - domain-events.md
-    - validation.md
+ori:
+  node_id: workflow:index
+  type: workflow
+  depends_on:
+    - aggregate:collection
+    - event:collection
+    - scenario:collection
 ---
 
 # Workflows Index {#workflows-index}

@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - bounded-contexts.md
-    - context-map.md
+ori:
+  node_id: aggregate:collection
+  type: aggregate
+  depends_on:
+    - bounded-context:collection
+    - context-map:map
 ---
 
 # Aggregates {#aggregates}

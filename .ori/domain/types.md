@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md
-    - domain-events.md
-    - workflows/index.md
+ori:
+  node_id: type-definitions:index
+  type: type-definitions
+  depends_on:
+    - aggregate:collection
+    - event:collection
+    - workflow:index
 ---
 
 # Types {#types}

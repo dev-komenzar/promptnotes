@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-deleted-to-trash
-    - validation.md#s5-delete-undo-in-window
-    - validation.md#s6-delete-replace
+ori:
+  node_id: workflow:delete-note
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteDeletedToTrash
+    - scenario:s5-delete-undo-in-window
+    - scenario:s6-delete-replace
 ---
 
 # delete-note {#delete-note}

@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-feed-aggregate
-    - aggregates.md#settings-aggregate
-    - domain-events.md#sort-preference-changed
+ori:
+  node_id: workflow:change-sort-order
+  type: workflow
+  depends_on:
+    - aggregate:NoteFeed
+    - aggregate:Settings
+    - event:SortPreferenceChanged
 ---
 
 # change-sort-order {#change-sort-order}

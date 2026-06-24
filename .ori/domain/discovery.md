@@ -1,8 +1,8 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-11
-  upstream: []
+ori:
+  node_id: discovery:overview
+  type: discovery
+  depends_on: []
 ---
 
 # Discovery {#discovery}

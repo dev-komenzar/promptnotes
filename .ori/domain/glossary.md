@@ -1,15 +1,15 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - discovery.md
-    - event-storming.md
-    - bounded-contexts.md
-    - context-map.md
-    - aggregates.md
-    - domain-events.md
-    - validation.md
+ori:
+  node_id: glossary-term:collection
+  type: glossary-term
+  depends_on:
+    - discovery:overview
+    - event-storming:timeline
+    - bounded-context:collection
+    - context-map:map
+    - aggregate:collection
+    - event:collection
+    - scenario:collection
 ---
 
 # Glossary {#glossary}

@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - types.md
-    - workflows/update-settings.md
+ori:
+  node_id: ui-field:screen-2
+  type: ui-field
+  depends_on:
+    - type-definitions:index
+    - workflow:update-settings
 ---
 
 # Screen 2: Settings Modal {#screen-2}

@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - types.md
-    - workflows/check-for-updates.md
+ori:
+  node_id: ui-field:screen-3
+  type: ui-field
+  depends_on:
+    - type-definitions:index
+    - workflow:check-for-updates
 ---
 
 # Screen 3: Update Notification {#screen-3}

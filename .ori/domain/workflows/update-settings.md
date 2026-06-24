@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#settings-aggregate
-    - domain-events.md#storage-dir-changed
-    - domain-events.md#theme-changed
-    - validation.md#s11-storage-dir-change
+ori:
+  node_id: workflow:update-settings
+  type: workflow
+  depends_on:
+    - aggregate:Settings
+    - event:StorageDirChanged
+    - event:ThemeChanged
+    - scenario:s11-storage-dir-change
 ---
 
 # update-settings {#update-settings}

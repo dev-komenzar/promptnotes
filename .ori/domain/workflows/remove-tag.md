@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-tags-changed
+ori:
+  node_id: workflow:remove-tag
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteTagsChanged
 ---
 
 # remove-tag {#remove-tag}

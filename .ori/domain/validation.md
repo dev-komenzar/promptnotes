@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md
-    - domain-events.md
-    - event-storming.md
+ori:
+  node_id: scenario:collection
+  type: scenario
+  depends_on:
+    - aggregate:collection
+    - event:collection
+    - event-storming:timeline
 ---
 
 # Validation Scenarios {#validation-scenarios}

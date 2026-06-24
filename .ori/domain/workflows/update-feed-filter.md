@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-feed-aggregate
-    - validation.md#s8-query-normalize
+ori:
+  node_id: workflow:update-feed-filter
+  type: workflow
+  depends_on:
+    - aggregate:NoteFeed
+    - scenario:s8-query-normalize
 ---
 
 # update-feed-filter {#update-feed-filter}

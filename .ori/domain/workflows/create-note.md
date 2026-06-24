@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-created
-    - validation.md#s1-note-created-happy
+ori:
+  node_id: workflow:create-note
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteCreated
+    - scenario:s1-note-created-happy
 ---
 
 # create-note {#create-note}

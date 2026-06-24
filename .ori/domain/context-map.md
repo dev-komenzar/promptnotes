@@ -1,9 +1,9 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - bounded-contexts.md
+ori:
+  node_id: context-map:map
+  type: context-map
+  depends_on:
+    - bounded-context:collection
 ---
 
 # Context Map {#context-map}

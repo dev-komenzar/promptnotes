@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-restored-from-trash
-    - validation.md#s5-delete-undo-in-window
-    - validation.md#s7-undo-after-toast
+ori:
+  node_id: workflow:restore-deleted-note
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteRestoredFromTrash
+    - scenario:s5-delete-undo-in-window
+    - scenario:s7-undo-after-toast
 ---
 
 # restore-deleted-note {#restore-deleted-note}

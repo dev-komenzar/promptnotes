@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#update-channel-aggregate
-    - domain-events.md#new-version-detected
-    - validation.md#s14-update-check-failure
+ori:
+  node_id: workflow:check-for-updates
+  type: workflow
+  depends_on:
+    - aggregate:UpdateChannel
+    - event:NewVersionDetected
+    - scenario:s14-update-check-failure
 ---
 
 # check-for-updates {#check-for-updates}

@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-tags-changed
-    - validation.md#s4-tag-assign-normalize
-    - validation.md#s10-tag-invalid-char
+ori:
+  node_id: workflow:assign-tag
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteTagsChanged
+    - scenario:s4-tag-assign-normalize
+    - scenario:s10-tag-invalid-char
 ---
 
 # assign-tag {#assign-tag}

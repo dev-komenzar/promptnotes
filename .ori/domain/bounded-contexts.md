@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-16
-  upstream:
-    - event-storming.md
-    - discovery.md
+ori:
+  node_id: bounded-context:collection
+  type: bounded-context
+  depends_on:
+    - event-storming:timeline
+    - discovery:overview
 ---
 
 # Bounded Contexts {#bounded-contexts}

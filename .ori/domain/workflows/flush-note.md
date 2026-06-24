@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-body-edited
-    - validation.md#s3-flush-on-blur
-    - validation.md#s13-quit-flush
+ori:
+  node_id: workflow:flush-note
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteBodyEdited
+    - scenario:s3-flush-on-blur
+    - scenario:s13-quit-flush
 ---
 
 # flush-note {#flush-note}

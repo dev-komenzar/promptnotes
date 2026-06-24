@@ -1,9 +1,9 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - discovery.md
+ori:
+  node_id: event-storming:timeline
+  type: event-storming
+  depends_on:
+    - discovery:overview
 ---
 
 # Event Storming {#event-storming}

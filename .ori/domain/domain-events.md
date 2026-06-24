@@ -1,11 +1,11 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md
-    - event-storming.md
-    - context-map.md
+ori:
+  node_id: event:collection
+  type: event
+  depends_on:
+    - aggregate:collection
+    - event-storming:timeline
+    - context-map:map
 ---
 
 # Domain Events {#domain-events}

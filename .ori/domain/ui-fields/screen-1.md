@@ -1,19 +1,19 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - types.md
-    - workflows/create-note.md
-    - workflows/auto-save-note.md
-    - workflows/flush-note.md
-    - workflows/assign-tag.md
-    - workflows/remove-tag.md
-    - workflows/delete-note.md
-    - workflows/restore-deleted-note.md
-    - workflows/copy-note-body.md
-    - workflows/update-feed-filter.md
-    - workflows/change-sort-order.md
+ori:
+  node_id: ui-field:screen-1
+  type: ui-field
+  depends_on:
+    - type-definitions:index
+    - workflow:create-note
+    - workflow:auto-save-note
+    - workflow:flush-note
+    - workflow:assign-tag
+    - workflow:remove-tag
+    - workflow:delete-note
+    - workflow:restore-deleted-note
+    - workflow:copy-note-body
+    - workflow:update-feed-filter
+    - workflow:change-sort-order
 ---
 
 # Screen 1: Main Window {#screen-1}

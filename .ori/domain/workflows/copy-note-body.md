@@ -1,9 +1,9 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
+ori:
+  node_id: workflow:copy-note-body
+  type: workflow
+  depends_on:
+    - aggregate:Note
 ---
 
 # copy-note-body {#copy-note-body}

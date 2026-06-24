@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#settings-aggregate
-    - validation.md#s12-startup-state
+ori:
+  node_id: workflow:load-settings
+  type: workflow
+  depends_on:
+    - aggregate:Settings
+    - scenario:s12-startup-state
 ---
 
 # load-settings {#load-settings}

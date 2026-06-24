@@ -1,12 +1,12 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - aggregates.md#note-aggregate
-    - domain-events.md#note-body-edited
-    - validation.md#s2-autosave-debounce
-    - validation.md#s9-idempotent-autosave
+ori:
+  node_id: workflow:auto-save-note
+  type: workflow
+  depends_on:
+    - aggregate:Note
+    - event:NoteBodyEdited
+    - scenario:s2-autosave-debounce
+    - scenario:s9-idempotent-autosave
 ---
 
 # auto-save-note {#auto-save-note}

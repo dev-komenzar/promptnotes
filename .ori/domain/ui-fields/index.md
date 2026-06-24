@@ -1,10 +1,10 @@
 ---
-coherence:
-  source: human
-  last_validated: 2026-06-20
-  upstream:
-    - types.md
-    - workflows/index.md
+ori:
+  node_id: ui-field:index
+  type: ui-field
+  depends_on:
+    - type-definitions:index
+    - workflow:index
 ---
 
 # UI Fields {#ui-fields}
