@@ -6,3 +6,8 @@ apm_modules/
 .dolt/
 *.db
 .beads-credential-key
+
+# direnv + nix
+.direnv/
+result
+result-*
