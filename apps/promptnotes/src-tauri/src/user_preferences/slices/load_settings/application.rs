@@ -1,3 +1,7 @@
+//! Pure application layer for `load-settings`. No I/O: all side effects go
+//! through the `FileSystem` / `OsDirs` ports. `serde_json` is used for
+//! in-memory parsing only.
+
 use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;

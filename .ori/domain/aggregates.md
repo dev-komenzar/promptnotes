@@ -162,7 +162,11 @@ User Preferences BC の唯一の集約。
 
 - **I-S1**: `storage_dir` は絶対パス
 - **I-S2**: Settings の永続化先 (`app_config_dir/settings.json`) は `storage_dir` 配下にしない
-  （Q6 決定: 循環参照回避）
+  （Q6 決定: 循環参照回避）。判定方向: `config_path.starts_with(storage_dir)` を違反とみなす
+  （sibling layout `Application Support/promptnotes/{settings.json, notes/}` は許容）。
+  **port-level 契約**: OS 慣習パスを返す port (例: `OsDirs::default_storage_dir`) は、
+  返す `StorageDir` が任意の妥当な `config_path` (`app_config_dir` 配下) に対して I-S2 を満たすことを契約として保証する責務を負う
+  （load-settings slice 側で defensive re-check はしない）
 - **I-S3**: 不在時のデフォルト
   - `storage_dir`: OS 慣習パス（macOS `~/Library/Application Support/promptnotes/notes/`,
     Linux `~/.local/share/promptnotes/notes/`, Windows `%APPDATA%\promptnotes\notes\`）
