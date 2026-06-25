@@ -15,6 +15,14 @@ pub trait FileSystem {
 /// OS 慣習に基づく default `storage_dir` を返す port。
 ///
 /// macOS / Linux / Windows ごとの慣習パスは infrastructure 実装に閉じ込める。
+///
+/// # 契約 (`aggregates.md#settings-aggregate-invariants`)
+///
+/// impl は返す `StorageDir` が **I-S1 (絶対パス)** と **I-S2 (任意の妥当な
+/// `config_path` を子孫として含まない)** の両方を満たすことを保証する責務を負う。
+/// load-settings slice はこの契約を信頼して `default_storage_dir()` の戻り値に
+/// 対し I-S2 を defensive re-check しない (見つけ次第 panic ではなく、port 契約違反は
+/// 上位 (infrastructure テスト) で防ぐ)。
 pub trait OsDirs {
     fn default_storage_dir(&self) -> StorageDir;
 }
