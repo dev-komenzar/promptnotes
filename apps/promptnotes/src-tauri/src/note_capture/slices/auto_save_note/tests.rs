@@ -45,6 +45,7 @@ struct FakeRepo {
     notes: RefCell<HashMap<String, Note>>,
     writes: RefCell<Vec<Note>>,
     fail_write_with: Cell<Option<io::ErrorKind>>,
+    fail_load_with: Cell<Option<io::ErrorKind>>,
     storage_dir: PathBuf,
 }
 impl FakeRepo {
@@ -53,6 +54,7 @@ impl FakeRepo {
             notes: RefCell::new(HashMap::new()),
             writes: RefCell::new(Vec::new()),
             fail_write_with: Cell::new(None),
+            fail_load_with: Cell::new(None),
             storage_dir: PathBuf::from("/tmp/promptnotes-test"),
         }
     }
@@ -63,6 +65,9 @@ impl FakeRepo {
     }
     fn fail_next_write(&self, kind: io::ErrorKind) {
         self.fail_write_with.set(Some(kind));
+    }
+    fn fail_next_load(&self, kind: io::ErrorKind) {
+        self.fail_load_with.set(Some(kind));
     }
     fn write_count(&self) -> usize {
         self.writes.borrow().len()
@@ -83,6 +88,9 @@ impl NoteRepository for FakeRepo {
         &self.storage_dir
     }
     fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
+        if let Some(kind) = self.fail_load_with.take() {
+            return Err(io::Error::new(kind, "fake load failure"));
+        }
         Ok(self.notes.borrow().get(id.as_str()).cloned())
     }
 }
@@ -109,6 +117,11 @@ impl EventBus for FakeBus {
 }
 
 struct RcRepo(Rc<FakeRepo>);
+impl RcRepo {
+    fn fail_next_load(&self, kind: io::ErrorKind) {
+        self.0.fail_next_load(kind);
+    }
+}
 impl NoteRepository for RcRepo {
     fn write(&self, n: &Note) -> io::Result<()> {
         self.0.write(n)
@@ -356,9 +369,9 @@ fn tp_nf2_missing_note_does_not_touch_write_or_bus() {
 
 // ===== TP-PE*: PersistError =====
 
-/// spec.md#tp-persist-err TP-PE1
+/// spec.md#tp-persist-err TP-PE1 + TP-PE2 (path + cause.kind() の両方を確認)
 #[test]
-fn tp_pe1_write_failure_surfaces_as_persist_error() {
+fn tp_pe1_pe2_write_failure_surfaces_as_persist_error_with_kind() {
     let created = datetime!(2026-06-20 09:00:00 UTC);
     let now = datetime!(2026-06-25 12:34:56 UTC);
     let (uc, repo, _bus) = rig(now);
@@ -431,6 +444,89 @@ fn tp_pe4_retry_after_transient_persist_failure_succeeds() {
         .expect("must be Some");
     assert_eq!(second.body().as_str(), "hello world");
     assert_eq!(bus.event_count(), 1, "only the successful run emits");
+}
+
+// ===== TP-LE*: LoadError (read I/O failure) — review HIGH-2 反映 =====
+
+/// spec.md#io-errors LoadError: load_by_id が Err を返した場合
+#[test]
+fn tp_le1_load_failure_surfaces_as_load_error_not_persist_error() {
+    let now = datetime!(2026-06-25 12:34:56 UTC);
+    let (uc, repo, bus) = rig(now);
+    let id = NoteId::from_timestamp(Timestamp::from_offset_datetime(datetime!(
+        2026-06-20 09:00:00 UTC
+    )));
+    RcRepo(repo.clone()).fail_next_load(io::ErrorKind::PermissionDenied);
+
+    let err = uc
+        .execute(AutoSaveNoteCommand {
+            note_id: id.clone(),
+            new_body: "anything".into(),
+        })
+        .expect_err("load failure must surface");
+
+    match err {
+        AutoSaveError::LoadError { path, source } => {
+            assert_eq!(
+                path,
+                PathBuf::from(format!("/tmp/promptnotes-test/{}.md", id.as_str()))
+            );
+            assert_eq!(source.kind(), io::ErrorKind::PermissionDenied);
+        }
+        AutoSaveError::PersistError { .. } => {
+            panic!("read failure must NOT collapse into PersistError (review HIGH-2)")
+        }
+        other => panic!("expected LoadError, got {other:?}"),
+    }
+    assert_eq!(repo.write_count(), 0);
+    assert_eq!(bus.event_count(), 0);
+}
+
+// ===== TP-IB*: InvalidBody (I-N8 violation, aggregate smart constructor 由来) =====
+
+/// spec.md#tp-invalid-body TP-IB1
+#[test]
+fn tp_ib1_body_with_frontmatter_delimiter_line_yields_invalid_body() {
+    let created = datetime!(2026-06-20 09:00:00 UTC);
+    let now = datetime!(2026-06-25 12:34:56 UTC);
+    let (uc, repo, _bus) = rig(now);
+    let seed = fixture_note("hello", created);
+    let id = seed.id().clone();
+    repo.seed(seed);
+
+    let err = uc
+        .execute(AutoSaveNoteCommand {
+            note_id: id,
+            new_body: "before\n---\nafter".into(),
+        })
+        .expect_err("body with `---` delimiter line must error");
+
+    match err {
+        AutoSaveError::InvalidBody { source } => {
+            use crate::note_capture::shared::types::NoteBodyError;
+            assert!(matches!(source, NoteBodyError::ContainsFrontmatterDelimiter));
+        }
+        other => panic!("expected InvalidBody, got {other:?}"),
+    }
+}
+
+/// spec.md#tp-invalid-body TP-IB2
+#[test]
+fn tp_ib2_invalid_body_skips_write_and_publish() {
+    let created = datetime!(2026-06-20 09:00:00 UTC);
+    let now = datetime!(2026-06-25 12:34:56 UTC);
+    let (uc, repo, bus) = rig(now);
+    let seed = fixture_note("hello", created);
+    let id = seed.id().clone();
+    repo.seed(seed);
+
+    let _ = uc.execute(AutoSaveNoteCommand {
+        note_id: id,
+        new_body: "---".into(),
+    });
+
+    assert_eq!(repo.write_count(), 0);
+    assert_eq!(bus.event_count(), 0);
 }
 
 // ===== TP-BC*: body comparison detail =====

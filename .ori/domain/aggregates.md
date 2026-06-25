@@ -29,7 +29,9 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
   - 文字列表現は `^\d{14}$`（`YYYYMMDDhhmmss`）
   - identity の唯一の源（filename と 1:1）
 - **NoteBody** (VO)
-  - 任意の UTF-8 文字列（空文字も許容、frontmatter 由来の `---` を含まない）
+  - 任意の UTF-8 文字列（空文字も許容）
+  - **不変条件 (I-N8)**: frontmatter 由来の delimiter 行（行全体が `---`、末尾空白許容）を含まない
+  - **construction**: `NoteBody::new(raw: String) -> Result<NoteBody, NoteBodyError>` の smart constructor で I-N8 を enforce。`NoteBodyError::ContainsFrontmatterDelimiter` で表面化
 - **Tag** (VO)
   - `name: String` — 正規化済み（lowercase + trim, CJK 許容）
   - 禁止文字（` `, `\t`, `\n`, `,`, `[`, `]`）を含まない
@@ -54,6 +56,9 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
   **DeletedNote スタック** (`Vec<DeletedNote>`) に push され、各 DeletedNote は
   対応する Toast の有効期間中のみ復元可能。Toast 消失でその要素のみスタックから除去
   （各 Toast / DeletedNote は独立した有効期間を持ち、互いに干渉しない）
+- **I-N8**: `body` の構築は `NoteBody::new` 経由でのみ可能であり、frontmatter
+  delimiter 行 (`---`、末尾空白許容) を含まない。永続化フォーマット (`.md` ファイルの
+  YAML frontmatter) との分離を construction-time に保証する不変条件
 
 ### 公開操作 {#note-aggregate-operations}
 
@@ -62,6 +67,12 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
 - `Note::create(body: NoteBody, tags: TagSet, now: Timestamp) -> Note`
   - 新規 Note を生成。`id = now.format(YYYYMMDDhhmmss)`、`createdAt = updatedAt = now`
   - Cmd+Enter による確定経路の唯一の入口
+- `Note::from_persisted(body: NoteBody, tags: TagSet, created_at: Timestamp, updated_at: Timestamp) -> Note`
+  - 永続化済 Note の再構築（`NoteRepository::load_by_id` 経由のみ）
+  - `id = NoteId::from_timestamp(created_at)` で I-N2 を construction-time に保証
+  - 呼び出し側は `.md` ファイルの YAML frontmatter から各 field を解放してから渡す
+  - 再構築失敗（malformed frontmatter / missing key 等）は port (`NoteRepository::load_by_id`) 側で
+    `io::ErrorKind::InvalidData` として表面化（aggregate には到達しない）
 - `Note::edit_body(self, new_body: NoteBody, now: Timestamp) -> Note`
   - 本文を差し替え、`updatedAt = now` に更新（I-N4）
 - `Note::assign_tag(self, tag: Tag) -> Note`

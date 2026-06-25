@@ -38,11 +38,12 @@ impl<R: NoteRepository, C: Clock, E: EventBus> AutoSaveNoteUseCase<R, C, E> {
     }
 
     pub fn execute(&self, cmd: AutoSaveNoteCommand) -> Result<Option<Note>, AutoSaveError> {
-        // Step 1 — load_note.
+        // Step 1 — load_note. Read I/O failure is reported as LoadError
+        // (semantically distinct from PersistError, spec.md#io-errors).
         let existing = self
             .repo
             .load_by_id(&cmd.note_id)
-            .map_err(|source| self.persist_error(&cmd.note_id, source))?
+            .map_err(|source| self.load_error(&cmd.note_id, source))?
             .ok_or_else(|| AutoSaveError::NoteNotFound {
                 id: cmd.note_id.clone(),
             })?;
@@ -77,6 +78,13 @@ impl<R: NoteRepository, C: Clock, E: EventBus> AutoSaveNoteUseCase<R, C, E> {
 
     fn persist_error(&self, id: &NoteId, source: std::io::Error) -> AutoSaveError {
         AutoSaveError::PersistError {
+            path: self.note_md_path(id),
+            source,
+        }
+    }
+
+    fn load_error(&self, id: &NoteId, source: std::io::Error) -> AutoSaveError {
+        AutoSaveError::LoadError {
             path: self.note_md_path(id),
             source,
         }

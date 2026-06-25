@@ -12,16 +12,21 @@ pub struct AutoSaveNoteCommand {
 pub enum AutoSaveError {
     #[error("note not found: {id:?}")]
     NoteNotFound { id: NoteId },
-    /// Defensive variant for the case where `new_body` contains a `---`
-    /// delimiter line (NoteBody invariant from create-note BC). spec.md
-    /// asserts the path is infallible because the aggregate definition reads
-    /// "任意の UTF-8 文字列"; in practice the BC's NoteBody constructor still
-    /// rejects frontmatter delimiters. See open question
-    /// `oq-invalid-body-variant` in spec.md.
+    /// `NoteBody::new(new_body)` failed (aggregates.md#note-aggregate-invariants
+    /// I-N8: body must not contain a frontmatter delimiter line).
     #[error("invalid note body: {source}")]
     InvalidBody {
         #[source]
         source: NoteBodyError,
+    },
+    /// I/O failure on the read side of the pipeline (load_by_id).
+    /// Semantically distinct from `PersistError` (write side); the on-disk
+    /// note exists but can't be parsed / read.
+    #[error("failed to load note at {path}: {source}")]
+    LoadError {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
     },
     #[error("failed to persist note at {path}: {source}")]
     PersistError {

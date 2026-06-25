@@ -46,6 +46,7 @@ pub enum AutoSaveOutcome {
 pub enum AutoSaveErrorDto {
     NoteNotFound { id: String },
     InvalidBody { reason: String },
+    LoadError { path: String, reason: String },
     PersistError { path: String, reason: String },
 }
 
@@ -56,6 +57,10 @@ impl From<AutoSaveError> for AutoSaveErrorDto {
                 id: id.as_str().to_string(),
             },
             AutoSaveError::InvalidBody { source } => Self::InvalidBody {
+                reason: source.to_string(),
+            },
+            AutoSaveError::LoadError { path, source } => Self::LoadError {
+                path: path.display().to_string(),
                 reason: source.to_string(),
             },
             AutoSaveError::PersistError { path, source } => Self::PersistError {

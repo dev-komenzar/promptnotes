@@ -1,6 +1,6 @@
 use time::format_description::FormatItem;
 use time::macros::format_description;
-use time::OffsetDateTime;
+use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
 const YYYYMMDDHHMMSS: &[FormatItem<'static>] = format_description!(
     "[year][month][day][hour padding:zero][minute padding:zero][second padding:zero]"
@@ -33,8 +33,11 @@ impl Timestamp {
     }
 
     pub fn parse_yyyymmddhhmmss(s: &str) -> Result<Self, TimestampError> {
-        OffsetDateTime::parse(s, YYYYMMDDHHMMSS)
-            .map(Self::from_offset_datetime)
+        // The format has no timezone component, so we parse as a primitive
+        // datetime and pin it to UTC (matches `format_yyyymmddhhmmss`, which
+        // discards the offset).
+        PrimitiveDateTime::parse(s, YYYYMMDDHHMMSS)
+            .map(|p| Self::from_offset_datetime(p.assume_offset(UtcOffset::UTC)))
             .map_err(|_| TimestampError::InvalidFormat(s.to_string()))
     }
 }
