@@ -1,0 +1,15 @@
+slice_id: "auto-save-note"
+type: "command"
+derives_from:
+  - domain/workflows/auto-save-note.md#auto-save-note
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-body-edited
+  - domain/validation.md#s2-autosave-debounce
+  - domain/validation.md#s9-idempotent-autosave
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/auto_save_note/

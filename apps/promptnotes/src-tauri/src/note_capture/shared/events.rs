@@ -7,4 +7,8 @@ pub enum DomainEvent {
         created_at: Timestamp,
         initial_tags: TagSet,
     },
+    NoteBodyEdited {
+        note_id: NoteId,
+        updated_at: Timestamp,
+    },
 }

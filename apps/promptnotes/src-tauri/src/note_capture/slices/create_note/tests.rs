@@ -178,6 +178,7 @@ fn tp_h1_emitted_event_payload_matches_aggregate() {
             assert_eq!(created_at, note.created_at());
             assert!(initial_tags.is_empty());
         }
+        other => panic!("create-note must publish NoteCreated, got {other:?}"),
     }
 }
 
@@ -637,4 +638,87 @@ fn fs_note_repo_creates_storage_dir_on_first_write() {
     repo.write(&note).expect("write must create parent dirs");
 
     assert!(nested.join("20260624100000.md").exists());
+}
+
+// ===== FsNoteRepository::load_by_id — roundtrip + edge cases =====
+// (auto-save-note review MED-2 反映: load_by_id 経路の regression を本 slice で守る)
+
+#[test]
+fn fs_note_repo_load_by_id_roundtrips_a_freshly_written_note() {
+    use crate::note_capture::shared::types::{NoteBody, Tag, TagSet};
+
+    let created = datetime!(2026-06-20 09:00:00 UTC);
+    let tempdir = tempfile::tempdir().expect("tempdir");
+    let repo = FsNoteRepository::new(tempdir.path().to_path_buf());
+
+    let tags = TagSet::from_tags([Tag::new("GPT").unwrap(), Tag::new("coding").unwrap()]);
+    let note = Note::create(
+        NoteBody::new("hello world".into()).unwrap(),
+        tags.clone(),
+        Timestamp::from_offset_datetime(created),
+    );
+    repo.write(&note).expect("write");
+
+    let loaded = repo
+        .load_by_id(note.id())
+        .expect("load io ok")
+        .expect("note must round-trip");
+
+    assert_eq!(loaded.id(), note.id());
+    assert_eq!(loaded.body().as_str(), "hello world");
+    assert_eq!(loaded.tags(), &tags);
+    assert_eq!(loaded.created_at(), note.created_at());
+    assert_eq!(loaded.updated_at(), note.updated_at());
+}
+
+#[test]
+fn fs_note_repo_load_by_id_returns_none_on_missing_file() {
+    use crate::note_capture::shared::types::NoteId;
+
+    let tempdir = tempfile::tempdir().expect("tempdir");
+    let repo = FsNoteRepository::new(tempdir.path().to_path_buf());
+    let id = NoteId::from_timestamp(Timestamp::from_offset_datetime(datetime!(
+        2026-06-20 09:00:00 UTC
+    )));
+
+    let result = repo.load_by_id(&id).expect("missing file is not an error");
+    assert!(result.is_none());
+}
+
+#[test]
+fn fs_note_repo_load_by_id_yields_invalid_data_on_malformed_frontmatter() {
+    use crate::note_capture::shared::types::NoteId;
+
+    let tempdir = tempfile::tempdir().expect("tempdir");
+    let repo = FsNoteRepository::new(tempdir.path().to_path_buf());
+    let id_dt = datetime!(2026-06-20 09:00:00 UTC);
+    let id = NoteId::from_timestamp(Timestamp::from_offset_datetime(id_dt));
+    let path = tempdir.path().join(format!("{}.md", id.as_str()));
+    // No leading `---` line.
+    std::fs::write(&path, "not a frontmatter\nat all").expect("seed");
+
+    let err = repo.load_by_id(&id).expect_err("malformed file must error");
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidData);
+}
+
+#[test]
+fn fs_note_repo_load_by_id_handles_empty_tags_inline() {
+    use crate::note_capture::shared::types::{NoteBody, TagSet};
+
+    let created = datetime!(2026-06-20 09:00:00 UTC);
+    let tempdir = tempfile::tempdir().expect("tempdir");
+    let repo = FsNoteRepository::new(tempdir.path().to_path_buf());
+
+    let note = Note::create(
+        NoteBody::new("body".into()).unwrap(),
+        TagSet::empty(),
+        Timestamp::from_offset_datetime(created),
+    );
+    repo.write(&note).expect("write");
+
+    let loaded = repo
+        .load_by_id(note.id())
+        .expect("load io ok")
+        .expect("must roundtrip empty-tags note");
+    assert!(loaded.tags().is_empty());
 }

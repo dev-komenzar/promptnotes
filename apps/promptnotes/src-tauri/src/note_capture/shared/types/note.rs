@@ -25,6 +25,35 @@ impl Note {
         }
     }
 
+    /// Reconstruct a Note from already-persisted state (used by repository
+    /// implementations when reading `.md` files). `id` is computed from
+    /// `created_at` to keep I-N2 enforced by construction.
+    pub fn from_persisted(
+        body: NoteBody,
+        tags: TagSet,
+        created_at: Timestamp,
+        updated_at: Timestamp,
+    ) -> Self {
+        Self {
+            id: NoteId::from_timestamp(created_at),
+            body,
+            tags,
+            created_at,
+            updated_at,
+        }
+    }
+
+    /// Replace the body and stamp `updated_at = now` (workflow: auto-save-note,
+    /// flush-note). The aggregate is consumed and returned to make in-place
+    /// mutation aliasing-free; callers persist the returned value.
+    pub fn edit_body(self, new_body: NoteBody, now: Timestamp) -> Self {
+        Self {
+            body: new_body,
+            updated_at: now,
+            ..self
+        }
+    }
+
     pub fn id(&self) -> &NoteId {
         &self.id
     }
