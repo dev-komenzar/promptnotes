@@ -1,0 +1,13 @@
+slice_id: "copy-note-body"
+type: "command"
+derives_from:
+  - domain/workflows/copy-note-body.md#copy-note-body
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/copy_note_body/
+    - apps/promptnotes/src/lib/note-capture/slices/copy-note-body/
