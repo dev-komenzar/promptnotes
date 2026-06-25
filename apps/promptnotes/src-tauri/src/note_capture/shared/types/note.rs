@@ -73,4 +73,13 @@ impl Note {
     pub fn updated_at(&self) -> Timestamp {
         self.updated_at
     }
+
+    /// Returns the body string suited for OS clipboard output (workflow:
+    /// copy-note-body, slice's I-CNB1 differentiator). `NoteBody` already
+    /// excludes frontmatter delimiter lines by I-N8, and `tags` /
+    /// timestamps are stored on separate fields — so "body only" is
+    /// `self.body.as_str()` by construction.
+    pub fn body_for_clipboard(&self) -> String {
+        self.body.as_str().to_string()
+    }
 }
