@@ -43,6 +43,8 @@
           nodejs_22
           cargo-tauri
           pkg-config
+          # apm CLI のフォールバック (pip3 install --user apm-cli) 用
+          (python3.withPackages (ps: with ps; [ pip ]))
         ];
       in
       {
