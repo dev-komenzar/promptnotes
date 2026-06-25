@@ -110,7 +110,7 @@ Reviewer: claude-opus-4-7 (capability=reasoning, fresh context)
 
 - **スキル本体はメイン session**：reviewer は Task agent で spawn する
 - **single-pass 厳守**：3 周目に入ったら必ず human に上げる（無限ループ防止）
-- **review.md は派生ファイルではない**：人間が読むための監査ログ。`coherence.source` は不要
+- **review.md は派生ファイルではない**：人間が読むための監査ログ。design.md §5 の `ori:` frontmatter は不要
 
 ## 次のアクション
 

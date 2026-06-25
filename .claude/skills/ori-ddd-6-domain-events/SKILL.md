@@ -15,7 +15,11 @@ description: distill-ddd Phase 6（Domain Events）。各 aggregate が発行す
 
 - 入力：`.ori/domain/aggregates.md`（Phase 5）、`.ori/domain/event-storming.md`（Phase 2）、`.ori/domain/context-map.md`（Phase 4）
 - 出力：`.ori/domain/domain-events.md`
-  - frontmatter: `coherence: { upstream: [aggregates.md, event-storming.md, context-map.md] }`
+  - frontmatter: `ori:` ブロック（design.md §5）
+    - `node_id: event:collection`（file-level representative）
+    - `type: event`
+    - `depends_on: [aggregate:collection, event-storming:timeline, context-map:map]`
+  - 個別 event node は H3 anchor から導出（例: `### NoteSaved {#note-saved}` → `event:NoteSaved`）
   - **H2 = aggregate**、**H3 = 個別 event**
 
 ## 手順
@@ -39,13 +43,13 @@ description: distill-ddd Phase 6（Domain Events）。各 aggregate が発行す
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream:
-    - aggregates.md
-    - event-storming.md
-    - context-map.md
+ori:
+  node_id: event:collection
+  type: event
+  depends_on:
+    - aggregate:collection
+    - event-storming:timeline
+    - context-map:map
 ---
 
 # Domain Events {#domain-events}

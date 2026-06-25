@@ -203,8 +203,32 @@ else
 fi
 
 # .ori/.gitignore
+# Seed with default ignore patterns to prevent build artifacts from phase 10
+# (ori-ddd-10-types) from being accidentally committed. Real-world incident:
+# `.ori/domain/code/rust/target/` was committed with 596 files because cargo
+# check was run before .gitignore existed.
 GITIGNORE="$DEST/.ori/.gitignore"
-[[ -e "$GITIGNORE" ]] || printf 'state/\n' > "$GITIGNORE"
+if [[ ! -e "$GITIGNORE" ]]; then
+  cat > "$GITIGNORE" <<'EOF'
+# ori runtime state
+state/
+
+# phase 10 (ori-ddd-10-types) build artifacts —
+# cargo / npm / gradle / python can generate these under domain/code/<lang>/.
+# Add language-specific .gitignore inside each code/<lang>/ as well.
+domain/code/*/target/
+domain/code/*/node_modules/
+domain/code/*/dist/
+domain/code/*/build/
+domain/code/*/.gradle/
+domain/code/*/__pycache__/
+domain/code/*/.venv/
+domain/code/**/*.tsbuildinfo
+domain/code/**/*.pyc
+domain/code/**/*.class
+EOF
+  echo "OK: wrote .ori/.gitignore (state/ + phase 10 build artifact patterns)"
+fi
 
 # Domain scaffolds — 12 phase outputs (DDD phase 1..11a + indexes).
 # Format: path|title|phase. Order matches the original CLI table.

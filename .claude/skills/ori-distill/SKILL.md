@@ -25,7 +25,7 @@ description: distill-ddd phase 1-11 + ori 独自 phase 11b（Page grouping）を
 - `.ori/domain/<phase-name>.md` (Phase 1-8、10)
 - `.ori/domain/workflows/<id>.md` (Phase 9、ファイル分割)
 - `.ori/domain/ui-fields/screen-N.md` (Phase 11a、画面分割)
-- 全ファイルに `{#id}` 必須 + `coherence:` frontmatter
+- 全ファイルに `{#id}` 必須 + `ori:` frontmatter（design.md §5: `node_id` / `type` / `depends_on`）
 
 ## 手順
 
