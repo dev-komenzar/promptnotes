@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::domain::{AutoSaveNoteCommand, AutoSaveError};
+use super::domain::{AutoSaveError, AutoSaveNoteCommand};
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus, NoteRepository};
 use crate::note_capture::shared::types::{Note, NoteBody, NoteId};
@@ -49,8 +49,8 @@ impl<R: NoteRepository, C: Clock, E: EventBus> AutoSaveNoteUseCase<R, C, E> {
             })?;
 
         // Step 2 — parse_body.
-        let parsed = NoteBody::new(cmd.new_body)
-            .map_err(|source| AutoSaveError::InvalidBody { source })?;
+        let parsed =
+            NoteBody::new(cmd.new_body).map_err(|source| AutoSaveError::InvalidBody { source })?;
 
         // Step 3 + 4 — compare and branch (S9, C-AS3).
         let new_body = match compare_body(existing.body(), parsed) {

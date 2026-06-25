@@ -36,10 +36,7 @@ impl EventBus for NoOpBus {
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum CreateNoteOutcome {
-    Created {
-        id: String,
-        created_at: String,
-    },
+    Created { id: String, created_at: String },
     NoOp,
 }
 

@@ -20,7 +20,7 @@ use crate::note_capture::shared::ports::{Clock, EventBus, NoteRepository};
 use crate::note_capture::shared::types::{Note, NoteBody, NoteId, TagSet, Timestamp};
 
 use super::application::AutoSaveNoteUseCase;
-use super::domain::{AutoSaveNoteCommand, AutoSaveError};
+use super::domain::{AutoSaveError, AutoSaveNoteCommand};
 
 // ===== test doubles =====
 
@@ -504,7 +504,10 @@ fn tp_ib1_body_with_frontmatter_delimiter_line_yields_invalid_body() {
     match err {
         AutoSaveError::InvalidBody { source } => {
             use crate::note_capture::shared::types::NoteBodyError;
-            assert!(matches!(source, NoteBodyError::ContainsFrontmatterDelimiter));
+            assert!(matches!(
+                source,
+                NoteBodyError::ContainsFrontmatterDelimiter
+            ));
         }
         other => panic!("expected InvalidBody, got {other:?}"),
     }
@@ -630,8 +633,10 @@ fn tp_inv1_inv2_id_immutable_and_updated_at_ge_created_at() {
 /// project will fail to build, not at runtime.
 #[test]
 fn tp_as1_execute_signature_returns_result_option_note() {
-    type ExecuteFn<R, C, E> =
-        fn(&AutoSaveNoteUseCase<R, C, E>, AutoSaveNoteCommand) -> Result<Option<Note>, AutoSaveError>;
+    type ExecuteFn<R, C, E> = fn(
+        &AutoSaveNoteUseCase<R, C, E>,
+        AutoSaveNoteCommand,
+    ) -> Result<Option<Note>, AutoSaveError>;
     fn assert_signature<R: NoteRepository, C: Clock, E: EventBus>() {
         let _: ExecuteFn<R, C, E> = AutoSaveNoteUseCase::<R, C, E>::execute;
     }

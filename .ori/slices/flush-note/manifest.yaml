@@ -1,0 +1,15 @@
+slice_id: "flush-note"
+type: "command"
+derives_from:
+  - domain/workflows/flush-note.md#flush-note
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-body-edited
+  - domain/validation.md#s3-flush-on-blur
+  - domain/validation.md#s13-quit-flush
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/flush_note/

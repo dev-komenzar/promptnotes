@@ -24,9 +24,7 @@ impl FsNoteRepository {
 impl NoteRepository for FsNoteRepository {
     fn write(&self, note: &Note) -> std::io::Result<()> {
         fs::create_dir_all(&self.storage_dir)?;
-        let path = self
-            .storage_dir
-            .join(format!("{}.md", note.id().as_str()));
+        let path = self.storage_dir.join(format!("{}.md", note.id().as_str()));
         let tags_inline = note
             .tags()
             .as_slice()
@@ -147,8 +145,8 @@ fn parse_note_md(raw: &str) -> Result<Note, ParseError> {
     let updated_at = updated_at.ok_or(ParseError::MissingKey("updatedAt"))?;
     let tags = tags.ok_or(ParseError::MissingKey("tags"))?;
     let body_str = &raw[body_start..];
-    let body = NoteBody::new(body_str.to_string())
-        .map_err(|e| ParseError::InvalidBody(e.to_string()))?;
+    let body =
+        NoteBody::new(body_str.to_string()).map_err(|e| ParseError::InvalidBody(e.to_string()))?;
 
     Ok(Note::from_persisted(body, tags, created_at, updated_at))
 }

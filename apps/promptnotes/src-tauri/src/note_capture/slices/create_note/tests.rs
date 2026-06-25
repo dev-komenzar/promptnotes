@@ -604,10 +604,7 @@ fn fs_note_repo_writes_tags_inline_in_insertion_order() {
     let now = datetime!(2026-06-24 10:00:00 UTC);
     let tempdir = tempfile::tempdir().expect("tempdir");
     let repo = FsNoteRepository::new(tempdir.path().to_path_buf());
-    let tags = TagSet::from_tags([
-        Tag::new("GPT").unwrap(),
-        Tag::new("coding").unwrap(),
-    ]);
+    let tags = TagSet::from_tags([Tag::new("GPT").unwrap(), Tag::new("coding").unwrap()]);
     let note = Note::create(
         NoteBody::new("body".into()).unwrap(),
         tags,

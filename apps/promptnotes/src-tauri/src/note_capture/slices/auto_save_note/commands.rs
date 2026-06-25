@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager, Runtime};
 use time::OffsetDateTime;
 
 use super::application::AutoSaveNoteUseCase;
-use super::domain::{AutoSaveNoteCommand, AutoSaveError};
+use super::domain::{AutoSaveError, AutoSaveNoteCommand};
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus};
 use crate::note_capture::shared::types::{NoteId, Timestamp};
@@ -34,10 +34,7 @@ impl EventBus for NoOpBus {
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum AutoSaveOutcome {
-    Saved {
-        id: String,
-        updated_at: String,
-    },
+    Saved { id: String, updated_at: String },
     NoOp,
 }
 
@@ -115,9 +112,7 @@ fn parse_note_id(raw: &str) -> NoteId {
         Err(_) => {
             // Construct a sentinel id from epoch + the raw string so the use
             // case load step inevitably misses and returns NoteNotFound.
-            NoteId::from_timestamp(Timestamp::from_offset_datetime(
-                OffsetDateTime::UNIX_EPOCH,
-            ))
+            NoteId::from_timestamp(Timestamp::from_offset_datetime(OffsetDateTime::UNIX_EPOCH))
         }
     }
 }
