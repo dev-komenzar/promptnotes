@@ -1,10 +1,10 @@
 lockfile_version: '1'
-generated_at: '2026-06-20T08:05:01.145037+00:00'
+generated_at: '2026-06-25T07:42:11.081668+00:00'
 apm_version: 0.11.0
 dependencies:
 - repo_url: dev-komenzar/ori
   host: github.com
-  resolved_commit: 63c1cd0de79a88d77fb7d24a68ed6f72d7660144
+  resolved_commit: d22ea17cdbfbc0384d6f3c6fab1e0746b1c9a97a
   package_type: apm_package
   deployed_files:
   - .claude/agents/ori-reviewer.md
@@ -60,4 +60,4 @@ dependencies:
     .claude/rules/ori-conventions.md: sha256:d8afaa2bf5be5849dc76f56c8533859ed14bb585f4026eb168926d1ce74ad0a0
     .claude/rules/task-management.md: sha256:33013689d352c7d36beb23c64d62c7f82356a1a7febdd7d36e6be53b58295f46
     .claude/rules/ui-test.md: sha256:7d1d0950d51a7501b5763344c4e3618ea6e7f5b8eda7321fc2db32eaaa6f8cf6
-  content_hash: sha256:71a4a1fca141df1b519fc777a2b31c44525ea8c085092f6570960215a651e1c2
+  content_hash: sha256:118e309f1aff925fe39160e1755f9949b5caf9b8138c40120a32cf7872710761

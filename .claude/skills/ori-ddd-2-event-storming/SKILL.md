@@ -15,7 +15,10 @@ description: distill-ddd Phase 2（Event Storming）。domain events / commands 
 
 - 入力：`.ori/domain/discovery.md`（Phase 1）。なければ「Phase 1 を先にやるか確認」と促す
 - 出力：`.ori/domain/event-storming.md`
-  - frontmatter: `coherence: { source: human, upstream: [discovery.md] }`
+  - frontmatter: `ori:` ブロック（design.md §5）
+    - `node_id: event-storming:timeline`
+    - `type: event-storming`
+    - `depends_on: [discovery:overview]`
   - H2/H3 すべて `{#id}` 必須
 
 ## 手順
@@ -39,11 +42,11 @@ description: distill-ddd Phase 2（Event Storming）。domain events / commands 
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream:
-    - discovery.md
+ori:
+  node_id: event-storming:timeline
+  type: event-storming
+  depends_on:
+    - discovery:overview
 ---
 
 # Event Storming {#event-storming}

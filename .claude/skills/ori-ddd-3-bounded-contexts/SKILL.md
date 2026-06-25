@@ -15,7 +15,11 @@ description: distill-ddd Phase 3（Bounded Contexts）。event cluster から bo
 
 - 入力：`.ori/domain/event-storming.md`（Phase 2）と `.ori/domain/discovery.md`（Phase 1）
 - 出力：`.ori/domain/bounded-contexts.md`
-  - frontmatter: `coherence: { upstream: [event-storming.md, discovery.md] }`
+  - frontmatter: `ori:` ブロック（design.md §5）
+    - `node_id: bounded-context:collection`（file-level の representative）
+    - `type: bounded-context`
+    - `depends_on: [event-storming:timeline, discovery:overview]`
+  - 個別 BC の node_id は H2 anchor から導出（例: `## Note Capture {#note-capture}` → `bounded-context:note-capture`）
   - **H2 = 1 BC**、H3 で詳細
 
 ## 手順
@@ -39,12 +43,12 @@ description: distill-ddd Phase 3（Bounded Contexts）。event cluster から bo
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream:
-    - event-storming.md
-    - discovery.md
+ori:
+  node_id: bounded-context:collection
+  type: bounded-context
+  depends_on:
+    - event-storming:timeline
+    - discovery:overview
 ---
 
 # Bounded Contexts {#bounded-contexts}

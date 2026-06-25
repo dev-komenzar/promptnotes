@@ -15,7 +15,11 @@ description: distill-ddd Phase 1（Discovery）。Core Domain と business drive
 
 - 入力：ユーザとの対話（事業ドメイン、ターゲット利用者、競合差別化要因）
 - 出力：`.ori/domain/discovery.md`
-  - frontmatter: `coherence:` ブロック（`source: human` / `last_validated: <iso-date>`）
+  - frontmatter: `ori:` ブロック（design.md §5 Frontmatter 規約に従う）
+    - `node_id: discovery:overview`
+    - `type: discovery`
+    - `depends_on: []`（Phase 1 は pipeline 起点）
+  - 個別 `persona:<id>` node は H3 anchor `{#<persona-id>}` から resolve される
   - H2/H3 すべてに `{#kebab-id}` アンカー（後段 phase の参照アンカーとして必須）
 
 ## 手順
@@ -41,10 +45,10 @@ description: distill-ddd Phase 1（Discovery）。Core Domain と business drive
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream: []
+ori:
+  node_id: discovery:overview
+  type: discovery
+  depends_on: []
 ---
 
 # Discovery {#discovery}
@@ -74,7 +78,7 @@ coherence:
 
 - **推測で書かない**：ユーザが言語化していない事項を勝手に補完しない
 - **このスキルは workflow を回さない**：実装は `/ori-flow` の責務
-- distill-ddd 上流の本家 phase 1 prompt との差分は `coherence:` frontmatter と `{#id}` 必須ルールのみ
+- distill-ddd 上流の本家 phase 1 prompt との差分は `ori:` frontmatter（design.md §5）と `{#id}` 必須ルールのみ
 
 ## 次のアクション
 

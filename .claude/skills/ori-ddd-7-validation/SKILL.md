@@ -15,7 +15,11 @@ description: distill-ddd Phase 7（Validation）。use case シナリオを Give
 
 - 入力：`.ori/domain/aggregates.md`（Phase 5）、`.ori/domain/domain-events.md`（Phase 6）、`.ori/domain/event-storming.md`（Phase 2）
 - 出力：`.ori/domain/validation.md`（**単一ファイル**）
-  - frontmatter: `coherence: { upstream: [aggregates.md, domain-events.md, event-storming.md] }`
+  - frontmatter: `ori:` ブロック（design.md §5）
+    - `node_id: scenario:collection`（file-level representative）
+    - `type: scenario`
+    - `depends_on: [aggregate:collection, event:collection, event-storming:timeline]`
+  - 個別 scenario node は H2 anchor から導出（例: `## Scenario: First auto-save {#first-auto-save-empty}` → `scenario:first-auto-save-empty`）
   - シナリオごとに H2、H3 = Given/When/Then
 
 ## 手順
@@ -41,13 +45,13 @@ description: distill-ddd Phase 7（Validation）。use case シナリオを Give
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream:
-    - aggregates.md
-    - domain-events.md
-    - event-storming.md
+ori:
+  node_id: scenario:collection
+  type: scenario
+  depends_on:
+    - aggregate:collection
+    - event:collection
+    - event-storming:timeline
 ---
 
 # Validation Scenarios {#validation-scenarios}

@@ -22,7 +22,7 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 
 - `.ori/domain/` 配下の全ファイルを Read し手動検証
 - 全 H2/H3 に `{#id}` があるか
-- frontmatter `coherence:` ブロックがあるか
+- frontmatter `ori:` ブロックがあるか（`node_id` / `type` / `depends_on`、design.md §5）
 - 必須セクション（slice / page / phase ごと）の有無
 
 ### 2. 派生文書の hash 一致

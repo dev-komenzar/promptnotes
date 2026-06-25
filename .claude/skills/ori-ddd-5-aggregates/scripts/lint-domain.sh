@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Shared domain file schema lint
 # Usage: ./lint-domain.sh <filepath>
-# Checks: frontmatter coherence block, H2/H3 {#id} anchors
+# Checks: frontmatter ori block (design.md §5), H2/H3 {#id} anchors
 set -euo pipefail
 
 # Auto-detect project root
@@ -30,10 +30,22 @@ fi
 
 ISSUES=0
 
-# Check frontmatter has coherence block
-if ! grep -q '^coherence:' "$FILE" 2>/dev/null; then
-  echo "WARN: missing coherence frontmatter"
+# Check frontmatter has ori: block (design.md §5)
+if ! grep -q '^ori:' "$FILE" 2>/dev/null; then
+  echo "WARN: missing ori: frontmatter (design.md §5)"
   ((ISSUES++)) || true
+fi
+
+# Check ori: block has node_id and type fields
+if grep -q '^ori:' "$FILE" 2>/dev/null; then
+  if ! grep -qE '^[[:space:]]+node_id:' "$FILE" 2>/dev/null; then
+    echo "WARN: ori: block missing node_id"
+    ((ISSUES++)) || true
+  fi
+  if ! grep -qE '^[[:space:]]+type:' "$FILE" 2>/dev/null; then
+    echo "WARN: ori: block missing type"
+    ((ISSUES++)) || true
+  fi
 fi
 
 # Check H2/H3 have {#id} anchors

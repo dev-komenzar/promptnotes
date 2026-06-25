@@ -15,7 +15,11 @@ description: distill-ddd Phase 4（Context Map）。bounded context 間の関係
 
 - 入力：`.ori/domain/bounded-contexts.md`（Phase 3）
 - 出力：`.ori/domain/context-map.md`
-  - frontmatter: `coherence: { upstream: [bounded-contexts.md] }`
+  - frontmatter: `ori:` ブロック（design.md §5）
+    - `node_id: context-map:map`
+    - `type: context-map`
+    - `depends_on: [bounded-context:collection]`
+  - 個別 `relationship:<from>-to-<to>` node は H3 anchor から resolve（例: `### Note Capture → Tag Management {#note-capture-to-tag-management}`）
   - 関係表 + Mermaid `graph LR` 図
 
 ## 統合パターン（DDD 戦略パターン）
@@ -61,11 +65,11 @@ description: distill-ddd Phase 4（Context Map）。bounded context 間の関係
 
 ```markdown
 ---
-coherence:
-  source: human
-  last_validated: 2026-05-14
-  upstream:
-    - bounded-contexts.md
+ori:
+  node_id: context-map:map
+  type: context-map
+  depends_on:
+    - bounded-context:collection
 ---
 
 # Context Map {#context-map}

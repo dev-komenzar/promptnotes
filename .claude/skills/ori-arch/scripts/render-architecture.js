@@ -15663,30 +15663,17 @@ function parseFrontmatter(raw) {
     content: parsed.content
   };
 }
-var OriCoherenceSchema = external_exports.object({
-  node_id: external_exports.string().optional(),
-  type: external_exports.string().optional(),
-  name: external_exports.string().optional(),
-  derives_from: external_exports.array(
-    external_exports.object({
-      id: external_exports.string().optional(),
-      relation: external_exports.string().optional()
-    })
-  ).optional(),
-  depended_by: external_exports.array(
-    external_exports.object({
-      id: external_exports.string()
-    })
-  ).optional(),
-  references: external_exports.array(external_exports.object({ id: external_exports.string() })).optional()
+var OriBlockSchema = external_exports.object({
+  node_id: external_exports.string().describe("<type>:<name>, globally unique"),
+  type: external_exports.string().describe("controlled vocabulary value (e.g. aggregate, workflow, ui-field)"),
+  depends_on: external_exports.array(external_exports.string()).default([]).describe("upstream node_id list"),
+  modules: external_exports.array(external_exports.string()).optional().describe("related code module paths"),
+  schema: external_exports.object({
+    propagation_level: external_exports.enum(["file", "h2", "h3", "none"]).optional()
+  }).passthrough().optional()
 }).passthrough();
 var OriFrontmatterSchema = external_exports.object({
-  coherence: OriCoherenceSchema.optional(),
-  ori: external_exports.object({
-    schema: external_exports.object({
-      propagation_level: external_exports.enum(["file", "h2", "h3", "none"]).optional()
-    }).passthrough().optional()
-  }).passthrough().optional()
+  ori: OriBlockSchema.optional()
 }).passthrough();
 var LayerKindSchema = external_exports.enum(["shared", "slice", "ui-layer"]);
 var LayerSchema = external_exports.object({
