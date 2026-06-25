@@ -178,6 +178,7 @@ fn tp_h1_emitted_event_payload_matches_aggregate() {
             assert_eq!(created_at, note.created_at());
             assert!(initial_tags.is_empty());
         }
+        other => panic!("create-note must publish NoteCreated, got {other:?}"),
     }
 }
 

@@ -21,6 +21,7 @@ pub fn run() {
     })
     .invoke_handler(tauri::generate_handler![
       note_capture::slices::create_note::commands::create_note,
+      note_capture::slices::auto_save_note::commands::auto_save_note,
       user_preferences::slices::load_settings::commands::load_settings,
     ])
     .run(tauri::generate_context!())
