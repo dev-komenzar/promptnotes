@@ -43,8 +43,19 @@
           nodejs_22
           cargo-tauri
           pkg-config
-          # apm CLI のフォールバック (pip3 install --user apm-cli) 用
-          (python3.withPackages (ps: with ps; [ pip ]))
+        ];
+
+        # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
+        # Python 標準モジュールが libffi / libsqlite3 / zlib 等の共有ライブラリを
+        # 実行時 dlopen する。NixOS では LD_LIBRARY_PATH で明示する必要がある。
+        apmRuntimeLibs = with pkgs; [
+          libffi
+          sqlite
+          zlib
+          bzip2
+          xz
+          openssl
+          stdenv.cc.cc.lib
         ];
       in
       {
@@ -57,6 +68,8 @@
             # FileChooser ($_GLib-GIO-WARNING: ... gtk schemas) workaround on NixOS
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share:$XDG_DATA_DIRS"
             export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
+            # apm CLI (PyInstaller binary) needs libffi / libsqlite3 / etc. at runtime
+            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath apmRuntimeLibs}:$LD_LIBRARY_PATH"
             # Blank-window mitigation on some GPU/driver combos (uncomment if you see it)
             # export WEBKIT_DISABLE_COMPOSITING_MODE=1
           '' + ''
