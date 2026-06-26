@@ -8,6 +8,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         // tauri_plugin_updater requires plugins.updater.{endpoints, pubkey} + a signing key.
         // Wire in once release infrastructure is ready.
@@ -24,6 +25,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             note_capture::slices::create_note::commands::create_note,
             note_capture::slices::auto_save_note::commands::auto_save_note,
+            note_capture::slices::copy_note_body::commands::copy_note_body,
             note_capture::slices::flush_note::commands::flush_note,
             note_capture::slices::assign_tag::commands::assign_tag,
             note_capture::slices::remove_tag::commands::remove_tag,

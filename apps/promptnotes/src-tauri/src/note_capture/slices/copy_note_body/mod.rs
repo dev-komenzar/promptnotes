@@ -1,4 +1,5 @@
 pub mod application;
+pub mod commands;
 pub mod domain;
 pub mod ports;
 
@@ -6,5 +7,6 @@ pub mod ports;
 mod tests;
 
 pub use application::CopyNoteBodyUseCase;
+pub use commands::copy_note_body;
 pub use domain::{CopyNoteBodyCommand, CopyNoteBodyError};
 pub use ports::{ClipboardErrorKind, ClipboardService};
