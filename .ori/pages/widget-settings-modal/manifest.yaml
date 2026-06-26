@@ -1,0 +1,18 @@
+page_id: "widget-settings-modal"
+type: widget
+parent_page: page-main
+derives_from:
+  - domain/ui-fields/screen-2.md#screen-2
+  - domain/ui-fields/page-groups.md#widget-settings-modal
+  - domain/workflows/update-settings.md#update-settings
+relations:
+  - kind: hosts
+    slices:
+      - update-settings
+  - kind: mounted-by
+    page: page-main
+implementation:
+  language: typescript
+  primary_bc: user-preferences
+  generates:
+    - apps/promptnotes/src/ui-widget/settings-modal/
