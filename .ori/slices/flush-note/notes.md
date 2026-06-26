@@ -1,0 +1,2 @@
+# flush-note — Implementation notes
+

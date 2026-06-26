@@ -273,7 +273,8 @@ fn tp_nf3_repo_io_error_collapses_to_note_not_found_with_no_clipboard_write() {
         2026-06-20 09:00:00 UTC
     )));
     // 注意: seed しない。fail_load_with を仕掛けて io::Err 経路を強制する。
-    repo.fail_load_with.set(Some(io::ErrorKind::PermissionDenied));
+    repo.fail_load_with
+        .set(Some(io::ErrorKind::PermissionDenied));
 
     let err = uc
         .execute(CopyNoteBodyCommand {

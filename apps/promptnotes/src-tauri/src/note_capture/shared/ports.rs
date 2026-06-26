@@ -26,3 +26,13 @@ pub trait Clock {
 pub trait EventBus {
     fn publish(&self, event: DomainEvent);
 }
+
+/// Handle to the UI-side debounce timer. The `flush-note` slice cancels any
+/// pending AutoSave for a Note before it persists synchronously, preventing
+/// a duplicate write race (spec.md#invariants-slice-specific C-FL1).
+///
+/// The cancellation is idempotent: calling `cancel` when no timer is armed
+/// must be a successful no-op.
+pub trait DebounceTimer {
+    fn cancel(&self, note_id: &NoteId);
+}
