@@ -1,9 +1,10 @@
 //! Production `SettingsRepository` adapter backed by `settings.json` file IO.
 //!
-//! `update-settings` slice 用。`load()` は composition root が事前解決した現在値を返し、
-//! `save()` は `serde_json::to_string_pretty` で settings.json に書き出す。
-//! parent directory が存在しなければ `create_dir_all` で確保する (load-settings の
-//! ensure_dir とは別経路: config_path の親 = OS app_config_dir 側)。
+//! `update-settings` / `change-sort-order` slice 用。`load()` は composition root が
+//! 事前解決した現在値を返し、`save()` は `serde_json::to_string_pretty` で
+//! settings.json に書き出す。parent directory が存在しなければ `create_dir_all`
+//! で確保する (load-settings の ensure_dir とは別経路: config_path の親 =
+//! OS app_config_dir 側)。
 
 use std::cell::RefCell;
 use std::fs;
