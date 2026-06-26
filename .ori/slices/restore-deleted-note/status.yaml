@@ -3,6 +3,21 @@ derived_at: 2026-06-26T07:22:16.566Z
 beads:
   epic: ori-slice-restore-deleted-note
   current_phase: null
-  completion: []
+  completion:
+    - phase: derive
+      issue: ori-derive-restore-deleted-note
+    - phase: plan
+      issue: ori-plan-restore-deleted-note
+    - phase: test-red
+      issue: ori-test-red-restore-deleted-note
+    - phase: impl-green
+      issue: ori-impl-green-restore-deleted-note
+    - phase: refactor
+      issue: ori-refactor-restore-deleted-note
+    - phase: review
+      issue: ori-review-restore-deleted-note
+    - phase: finalize
+      issue: ori-finalize-restore-deleted-note
 phases: {}
 dirty: []
+finalized_at: 2026-06-26
