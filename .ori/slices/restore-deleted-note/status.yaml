@@ -1,0 +1,8 @@
+slice_id: restore-deleted-note
+derived_at: 2026-06-26T07:22:16.566Z
+beads:
+  epic: ori-slice-restore-deleted-note
+  current_phase: null
+  completion: []
+phases: {}
+dirty: []

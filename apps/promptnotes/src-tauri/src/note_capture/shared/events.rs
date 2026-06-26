@@ -27,4 +27,12 @@ pub enum DomainEvent {
         original_path: PathBuf,
         deleted_at: Timestamp,
     },
+    /// Emitted by slice `restore-deleted-note` after the 4 preceding side
+    /// effects (find_by_id / restore_from_trash / load_by_id / remove_by_id)
+    /// have all succeeded (spec: domain/domain-events.md#note-restored-from-trash,
+    /// slice spec.md#io-output, I-RDN5 / I-RDN6 order contract).
+    NoteRestoredFromTrash {
+        note_id: NoteId,
+        restored_at: Timestamp,
+    },
 }
