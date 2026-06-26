@@ -31,6 +31,7 @@ specta = "2.0.0-rc.22"
 tauri-specta = { version = "2.0.0-rc.25", features = ["javascript", "typescript"] }
 thiserror = "1.0"
 time = { version = "=0.3.41", features = ["macros", "formatting", "parsing"] }
+unicode-normalization = "0.1"
 
 [dev-dependencies]
 proptest = "=1.6.0"

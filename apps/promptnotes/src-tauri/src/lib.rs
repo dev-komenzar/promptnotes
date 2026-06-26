@@ -1,4 +1,5 @@
 pub mod note_capture;
+pub mod note_feed;
 pub mod user_preferences;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
