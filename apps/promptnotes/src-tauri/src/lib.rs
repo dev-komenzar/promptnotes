@@ -29,6 +29,7 @@ pub fn run() {
             note_capture::slices::remove_tag::commands::remove_tag,
             note_capture::slices::restore_deleted_note::commands::restore_deleted_note,
             user_preferences::slices::load_settings::commands::load_settings,
+            user_preferences::slices::update_settings::commands::update_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
