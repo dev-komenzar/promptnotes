@@ -1,0 +1,14 @@
+slice_id: "check-for-updates"
+type: "command"
+derives_from:
+  - domain/workflows/check-for-updates.md#check-for-updates
+  - domain/aggregates.md#update-channel-aggregate
+  - domain/bounded-contexts.md#update-distribution
+  - domain/domain-events.md#new-version-detected
+  - domain/validation.md#s14-update-check-failure
+relations: []
+implementation:
+  language: rust
+  primary_bc: update-distribution
+  generates:
+    - apps/promptnotes/src-tauri/src/update_distribution/slices/check_for_updates/

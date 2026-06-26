@@ -1,0 +1,36 @@
+slice_id: check-for-updates
+derived_at: 2026-06-26T07:02:53.873Z
+beads:
+  epic: ori-2lm
+  current_phase: null
+  completion:
+    - phase: derive
+      issue: ori-2lm.1
+    - phase: plan
+      issue: ori-2lm.2
+    - phase: test-red
+      issue: ori-2lm.3
+    - phase: impl-green
+      issue: ori-2lm.4
+    - phase: refactor
+      issue: ori-2lm.5
+    - phase: review
+      issue: ori-2lm.6
+    - phase: finalize
+      issue: ori-2lm.7
+phases: {}
+dirty: []
+finalized_at: 2026-06-26
+followup:
+  - id: ori-2lm.8
+    note: TauriUpdaterPort production wiring (blocked on ori-6l4)
+  - id: ori-2lm.9
+    note: Version VO strict semver 対応
+  - id: ori-2lm.10
+    note: logging port 抽象化
+  - id: ori-2lm.11
+    note: aggregates check_at_startup signature proposal review
+blocked_on:
+  - ori-6l4
+proposals:
+  - pending/2026-06-26-check-for-updates-aggregates-check-at-startup-no-result.md
