@@ -1,0 +1,16 @@
+slice_id: "update-settings"
+type: "command"
+derives_from:
+  - domain/workflows/update-settings.md#update-settings
+  - domain/aggregates.md#settings-aggregate
+  - domain/bounded-contexts.md#user-preferences
+  - domain/domain-events.md#storage-dir-changed
+  - domain/domain-events.md#theme-changed
+  - domain/validation.md#s11-storage-dir-change
+relations: []
+implementation:
+  language: rust
+  primary_bc: user-preferences
+  generates:
+    - apps/promptnotes/src-tauri/src/user_preferences/slices/update_settings/
+    - apps/promptnotes/src/lib/user-preferences/slices/update-settings/

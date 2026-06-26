@@ -30,4 +30,17 @@ impl Settings {
     pub fn sort_preference(&self) -> SortOrder {
         self.sort_preference
     }
+
+    /// `aggregates.md#settings-aggregate-operations` の `change_storage_dir`。
+    /// 妥当性検証 (I-S1 / I-S2) は呼び出し側 (`update-settings` slice) の責務。
+    pub fn change_storage_dir(mut self, new_dir: StorageDir) -> Self {
+        self.storage_dir = new_dir;
+        self
+    }
+
+    /// `aggregates.md#settings-aggregate-operations` の `change_theme`。
+    pub fn change_theme(mut self, new_theme: Theme) -> Self {
+        self.theme = new_theme;
+        self
+    }
 }
