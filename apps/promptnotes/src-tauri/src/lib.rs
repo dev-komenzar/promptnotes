@@ -13,6 +13,7 @@ pub fn run() {
         // tauri_plugin_updater requires plugins.updater.{endpoints, pubkey} + a signing key.
         // Wire in once release infrastructure is ready.
         .manage(note_feed::shared::adapters::InMemoryNoteFeedState::new())
+        .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -30,6 +31,7 @@ pub fn run() {
             note_capture::slices::flush_note::commands::flush_note,
             note_capture::slices::assign_tag::commands::assign_tag,
             note_capture::slices::remove_tag::commands::remove_tag,
+            note_capture::slices::delete_note::commands::delete_note,
             note_capture::slices::restore_deleted_note::commands::restore_deleted_note,
             note_feed::slices::update_feed_filter::commands::update_feed_filter,
             user_preferences::slices::load_settings::commands::load_settings,
