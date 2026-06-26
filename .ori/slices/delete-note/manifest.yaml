@@ -1,0 +1,16 @@
+slice_id: "delete-note"
+type: "command"
+derives_from:
+  - domain/workflows/delete-note.md#delete-note
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-deleted-to-trash
+  - domain/validation.md#s5-delete-undo-in-window
+  - domain/validation.md#s6-delete-replace
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/delete_note/
+    - apps/promptnotes/src/lib/note-capture/slices/delete-note/

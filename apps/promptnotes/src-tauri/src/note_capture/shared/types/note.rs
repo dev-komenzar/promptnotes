@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+
+use super::deleted_note::DeletedNote;
 use super::note_body::NoteBody;
 use super::note_id::NoteId;
 use super::tag::Tag;
@@ -111,5 +114,20 @@ impl Note {
     /// `self.body.as_str()` by construction.
     pub fn body_for_clipboard(&self) -> String {
         self.body.as_str().to_string()
+    }
+
+    /// Consume the Note and produce an Undo handle (workflow: delete-note,
+    /// `aggregates.md#note-aggregate-commands` Note::delete_to_trash).
+    ///
+    /// `original_path` is supplied by the application service from the
+    /// `NoteRepository::storage_dir()` value (`storage_dir / <id>.md`,
+    /// slice spec.md#impl-notes I-DN1). Taking `self` provides compile-time
+    /// guarantee that a Note instance cannot be deleted twice in memory.
+    /// OS trash I/O remains an application-service responsibility
+    /// (aggregate stays pure); this method's role is to mint the
+    /// `DeletedNote` Undo handle from the privileged aggregate boundary,
+    /// keeping `DeletedNote::new` `pub(crate)` per spec I-DN7.
+    pub fn delete_to_trash(self, original_path: PathBuf) -> DeletedNote {
+        DeletedNote::new(self.id, original_path)
     }
 }
