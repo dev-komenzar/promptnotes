@@ -43,4 +43,12 @@ impl Settings {
         self.theme = new_theme;
         self
     }
+
+    /// `aggregates.md#settings-aggregate-operations` の `change_sort_preference`。
+    /// `change-sort-order` slice が NoteFeed.change_sort と同期して呼ぶ
+    /// (Customer-Supplier の逆流、`#notes-sort-side-effect`)。
+    pub fn change_sort_preference(mut self, new_sort: SortOrder) -> Self {
+        self.sort_preference = new_sort;
+        self
+    }
 }

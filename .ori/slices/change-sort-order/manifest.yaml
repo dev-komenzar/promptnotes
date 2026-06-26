@@ -1,0 +1,15 @@
+slice_id: "change-sort-order"
+type: "command"
+derives_from:
+  - domain/workflows/change-sort-order.md#change-sort-order
+  - domain/aggregates.md#note-feed-aggregate
+  - domain/aggregates.md#settings-aggregate
+  - domain/aggregates.md#notes-sort-side-effect
+  - domain/domain-events.md#sort-preference-changed
+relations:
+  - "reuses: user_preferences::slices::update_settings::domain::UpdateSettingsError::PersistError"
+implementation:
+  language: rust
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src-tauri/src/note_feed/slices/change_sort_order/
