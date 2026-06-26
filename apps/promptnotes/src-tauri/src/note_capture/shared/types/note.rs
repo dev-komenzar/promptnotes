@@ -1,5 +1,6 @@
 use super::note_body::NoteBody;
 use super::note_id::NoteId;
+use super::tag::Tag;
 use super::tag_set::TagSet;
 use super::timestamp::Timestamp;
 
@@ -40,6 +41,35 @@ impl Note {
             tags,
             created_at,
             updated_at,
+        }
+    }
+
+    /// Add a normalized Tag to the TagSet (workflow: assign-tag). Idempotent
+    /// against I-N5: when a tag with the same `name` already exists the
+    /// aggregate is returned unchanged. Callers (the application service)
+    /// pre-decide whether to invoke this by computing a TagDiff, so the
+    /// no-op branch here only protects the invariant — event-emission control
+    /// stays in the use case.
+    ///
+    /// `now` is passed in explicitly to keep `Note` pure; the open question
+    /// about extending the domain doc to declare this signature is tracked
+    /// in spec.md#oq-assign-tag-now-injection.
+    pub fn assign_tag(self, tag: Tag, now: Timestamp) -> Self {
+        if self.tags.as_slice().iter().any(|t| t.name() == tag.name()) {
+            // I-N5: same name already present → no-op, including updated_at.
+            return self;
+        }
+        let appended = self
+            .tags
+            .as_slice()
+            .iter()
+            .cloned()
+            .chain(std::iter::once(tag))
+            .collect::<Vec<_>>();
+        Self {
+            tags: TagSet::from_tags(appended),
+            updated_at: now,
+            ..self
         }
     }
 

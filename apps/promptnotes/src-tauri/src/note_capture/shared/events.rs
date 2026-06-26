@@ -11,4 +11,9 @@ pub enum DomainEvent {
         note_id: NoteId,
         updated_at: Timestamp,
     },
+    NoteTagsChanged {
+        note_id: NoteId,
+        tags: TagSet,
+        updated_at: Timestamp,
+    },
 }
