@@ -24,6 +24,14 @@ const DEFAULT_FILTER: NoteFeedFilterDto = {
 
 const DEFAULT_SORT: SortOrder = { field: 'created_at', direction: 'desc' };
 
+export type NoteSummary = {
+	id: string;
+	body: string;
+	tags: string[];
+	created_at: string;
+	updated_at: string;
+};
+
 export type FeedStore = ReturnType<typeof createFeedStore>;
 
 export function createFeedStore(deps: FeedStoreDeps = {}) {
@@ -33,6 +41,8 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	let filter = $state<NoteFeedFilterDto>({ ...DEFAULT_FILTER });
 	let sort = $state<SortOrder>({ ...DEFAULT_SORT });
 	let lastError = $state<UpdateFeedFilterError | null>(null);
+	let notes = $state<NoteSummary[]>([]);
+	let focusedNoteId = $state<string | null>(null);
 
 	async function setQuery(raw: string): Promise<void> {
 		try {
@@ -78,6 +88,15 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		sort = { ...next };
 	}
 
+	function prependNote(note: NoteSummary): void {
+		notes = [note, ...notes];
+		focusedNoteId = note.id;
+	}
+
+	function setFocus(id: string | null): void {
+		focusedNoteId = id;
+	}
+
 	return {
 		get filter() {
 			return filter;
@@ -88,13 +107,21 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		get lastError() {
 			return lastError;
 		},
+		get notes() {
+			return notes;
+		},
+		get focusedNoteId() {
+			return focusedNoteId;
+		},
 		setQuery,
 		setDateRange,
 		setTag,
 		clearAll,
 		setSortField,
 		setSortDirection,
-		hydrateSort
+		hydrateSort,
+		prependNote,
+		setFocus
 	};
 }
 
