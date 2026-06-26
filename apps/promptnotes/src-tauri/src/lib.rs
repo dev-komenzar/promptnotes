@@ -23,6 +23,7 @@ pub fn run() {
             note_capture::slices::create_note::commands::create_note,
             note_capture::slices::auto_save_note::commands::auto_save_note,
             note_capture::slices::flush_note::commands::flush_note,
+            note_capture::slices::assign_tag::commands::assign_tag,
             user_preferences::slices::load_settings::commands::load_settings,
         ])
         .run(tauri::generate_context!())

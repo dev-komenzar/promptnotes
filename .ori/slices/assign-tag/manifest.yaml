@@ -1,0 +1,15 @@
+slice_id: "assign-tag"
+type: "command"
+derives_from:
+  - domain/workflows/assign-tag.md#assign-tag
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-tags-changed
+  - domain/validation.md#s4-tag-assign-normalize
+  - domain/validation.md#s10-tag-invalid-char
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/assign_tag/
