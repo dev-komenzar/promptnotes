@@ -1,0 +1,13 @@
+slice_id: "remove-tag"
+type: "command"
+derives_from:
+  - domain/workflows/remove-tag.md#remove-tag
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-tags-changed
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/remove_tag/
