@@ -1,0 +1,31 @@
+slice_id: update-feed-filter
+derived_at: 2026-06-26T06:40:25.582Z
+beads:
+  epic: ori-64x
+  current_phase: null
+  completion:
+    - phase: derive
+      issue: ori-64x.1
+    - phase: plan
+      issue: ori-64x.2
+    - phase: test-red
+      issue: ori-64x.3
+    - phase: impl-green
+      issue: ori-64x.4
+    - phase: refactor
+      issue: ori-64x.5
+    - phase: review
+      issue: ori-64x.6
+    - phase: finalize
+      issue: ori-64x.7
+phases: {}
+dirty: []
+finalized_at: 2026-06-26
+followup:
+  - id: ori-64x.8
+  - id: ori-64x.9
+  - id: ori-64x.10
+  - id: ori-64x.11
+  - id: ori-64x.12
+proposals:
+  - pending/2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc.md

@@ -1,0 +1,13 @@
+slice_id: "update-feed-filter"
+type: "command"
+derives_from:
+  - domain/workflows/update-feed-filter.md#update-feed-filter
+  - domain/aggregates.md#note-feed-aggregate
+  - domain/bounded-contexts.md#note-feed
+  - domain/validation.md#s8-query-normalize
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src-tauri/src/note_feed/slices/update_feed_filter/
