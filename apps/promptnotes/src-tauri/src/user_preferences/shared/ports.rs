@@ -1,7 +1,7 @@
 use std::io;
 use std::path::Path;
 
-use super::types::StorageDir;
+use super::types::{Settings, SettingsEvent, StorageDir};
 
 /// `settings.json` の読み取り / `storage_dir` の物理確保を提供する port。
 ///
@@ -25,4 +25,19 @@ pub trait FileSystem {
 /// 上位 (infrastructure テスト) で防ぐ)。
 pub trait OsDirs {
     fn default_storage_dir(&self) -> StorageDir;
+}
+
+/// `Settings` の読み込み / 永続化を提供する port (`update-settings` slice 用)。
+///
+/// - `load`: 現在の `Settings` を返す。`load-settings` slice 通過後の状態を取得する想定。
+/// - `save`: 更新後の `Settings` を `settings.json` に書き出す。失敗は `io::Error` で返す。
+pub trait SettingsRepository {
+    fn load(&self) -> Settings;
+    fn save(&self, settings: &Settings) -> io::Result<()>;
+}
+
+/// User Preferences BC 内で発行される domain event の同期 in-process bus
+/// (`domain-events.md#notes-sync-rationale`)。
+pub trait EventBus {
+    fn publish(&self, event: SettingsEvent);
 }
