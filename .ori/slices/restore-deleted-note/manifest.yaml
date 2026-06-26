@@ -1,0 +1,15 @@
+slice_id: "restore-deleted-note"
+type: "command"
+derives_from:
+  - domain/workflows/restore-deleted-note.md#restore-deleted-note
+  - domain/aggregates.md#note-aggregate
+  - domain/bounded-contexts.md#note-capture
+  - domain/domain-events.md#note-restored-from-trash
+  - domain/validation.md#s5-delete-undo-in-window
+  - domain/validation.md#s7-undo-after-toast
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src-tauri/src/note_capture/slices/restore_deleted_note/

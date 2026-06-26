@@ -122,12 +122,20 @@ impl TrashService for FakeTrash {
         self.moves.borrow_mut().push(path.to_path_buf());
         Ok(())
     }
+    fn restore_from_trash(&self, _path: &Path) -> Result<(), TrashErrorKind> {
+        // restore-deleted-note slice の責務。delete-note tests では未使用なので
+        // panic させて誤呼出を検出する。
+        unreachable!("delete-note slice must not call restore_from_trash")
+    }
 }
 
 struct RcTrash(Rc<FakeTrash>);
 impl TrashService for RcTrash {
     fn move_to_trash(&self, p: &Path) -> Result<(), TrashErrorKind> {
         self.0.move_to_trash(p)
+    }
+    fn restore_from_trash(&self, p: &Path) -> Result<(), TrashErrorKind> {
+        self.0.restore_from_trash(p)
     }
 }
 
@@ -155,12 +163,28 @@ impl UndoStack for FakeUndo {
         self.order_log.borrow_mut().push("push");
         self.stack.borrow_mut().push(deleted);
     }
+    fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        self.stack
+            .borrow()
+            .iter()
+            .find(|d| d.id() == id)
+            .cloned()
+    }
+    fn remove_by_id(&self, _id: &NoteId) -> Option<DeletedNote> {
+        unreachable!("delete-note slice must not call remove_by_id")
+    }
 }
 
 struct RcUndo(Rc<FakeUndo>);
 impl UndoStack for RcUndo {
     fn push(&self, d: DeletedNote) {
         self.0.push(d);
+    }
+    fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        self.0.find_by_id(id)
+    }
+    fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        self.0.remove_by_id(id)
     }
 }
 
