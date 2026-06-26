@@ -2,6 +2,7 @@
 	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 	import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
+	import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
 	import DraftRegion from './regions/DraftRegion.svelte';
 	import FeedRegion from './regions/FeedRegion.svelte';
 	import ToastRegion from './regions/ToastRegion.svelte';
@@ -92,3 +93,5 @@
 {#if settingsModalOpen}
 	<WidgetSettingsModal initial={settingsForModal()} onClose={handleSettingsModalClose} />
 {/if}
+
+<WidgetUpdateToast />
