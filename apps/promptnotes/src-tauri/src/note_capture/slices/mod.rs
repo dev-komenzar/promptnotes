@@ -4,3 +4,4 @@ pub mod copy_note_body;
 pub mod create_note;
 pub mod delete_note;
 pub mod flush_note;
+pub mod remove_tag;

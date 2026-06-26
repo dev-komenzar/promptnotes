@@ -76,6 +76,33 @@ impl Note {
         }
     }
 
+    /// Remove a Tag from the TagSet by its normalized `name` (workflow:
+    /// remove-tag). Idempotent: when no tag matches, the aggregate is
+    /// returned unchanged (no `updated_at` bump). Comparison is exact
+    /// against the already-normalized `Tag::name`; this method does not
+    /// re-normalize input (slice I-RT1: callers pass UI-provided
+    /// `Tag::name` verbatim). Like `assign_tag`, event-emission control
+    /// stays in the use case; the aggregate's no-op branch only protects
+    /// the invariant.
+    pub fn remove_tag(self, tag_name: &str, now: Timestamp) -> Self {
+        if !self.tags.as_slice().iter().any(|t| t.name() == tag_name) {
+            // No matching tag → no-op, including updated_at.
+            return self;
+        }
+        let pruned = self
+            .tags
+            .as_slice()
+            .iter()
+            .filter(|t| t.name() != tag_name)
+            .cloned()
+            .collect::<Vec<_>>();
+        Self {
+            tags: TagSet::from_tags(pruned),
+            updated_at: now,
+            ..self
+        }
+    }
+
     /// Replace the body and stamp `updated_at = now` (workflow: auto-save-note,
     /// flush-note). The aggregate is consumed and returned to make in-place
     /// mutation aliasing-free; callers persist the returned value.
