@@ -1,0 +1,39 @@
+page_id: "page-main"
+type: page
+derives_from:
+  - domain/ui-fields/screen-1.md#screen-1
+  - domain/ui-fields/page-groups.md#page-main
+  - domain/workflows/create-note.md#create-note
+  - domain/workflows/auto-save-note.md#auto-save-note
+  - domain/workflows/flush-note.md#flush-note
+  - domain/workflows/assign-tag.md#assign-tag
+  - domain/workflows/remove-tag.md#remove-tag
+  - domain/workflows/delete-note.md#delete-note
+  - domain/workflows/restore-deleted-note.md#restore-deleted-note
+  - domain/workflows/copy-note-body.md#copy-note-body
+  - domain/workflows/update-feed-filter.md#update-feed-filter
+  - domain/workflows/change-sort-order.md#change-sort-order
+relations:
+  - kind: hosts
+    slices:
+      - create-note
+      - auto-save-note
+      - flush-note
+      - assign-tag
+      - remove-tag
+      - delete-note
+      - restore-deleted-note
+      - copy-note-body
+      - update-feed-filter
+      - change-sort-order
+  - kind: mounts-widget
+    widgets:
+      - widget-settings-modal
+      - widget-update-toast
+implementation:
+  language: typescript
+  primary_bc: note-capture
+  generates:
+    - apps/promptnotes/src/routes/+page.svelte
+    - apps/promptnotes/src/ui-page/page-main/
+    - apps/promptnotes/src/ui-widget/main/
