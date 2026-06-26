@@ -3,6 +3,21 @@ derived_at: 2026-06-26T05:20:33.169Z
 beads:
   epic: ori-slice-delete-note
   current_phase: null
-  completion: []
+  completion:
+    - phase: derive
+      issue: ori-derive-delete-note
+    - phase: plan
+      issue: ori-plan-delete-note
+    - phase: test-red
+      issue: ori-test-red-delete-note
+    - phase: impl-green
+      issue: ori-impl-green-delete-note
+    - phase: refactor
+      issue: ori-refactor-delete-note
+    - phase: review
+      issue: ori-review-delete-note
+    - phase: finalize
+      issue: ori-finalize-delete-note
 phases: {}
 dirty: []
+finalized_at: 2026-06-26
