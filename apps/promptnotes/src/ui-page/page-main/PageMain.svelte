@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { loadSettings } from '$lib/user-preferences/slices/load-settings';
+	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
+	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
+	import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
 	import DraftRegion from './regions/DraftRegion.svelte';
 	import FeedRegion from './regions/FeedRegion.svelte';
 	import ToastRegion from './regions/ToastRegion.svelte';
@@ -14,13 +16,21 @@
 
 	let { onOpenSettings, loadSettingsFn = loadSettings }: Props = $props();
 
+	const DEFAULT_SETTINGS: Settings = {
+		storage_dir: '',
+		theme: 'System',
+		sort_preference: { field: 'created_at', direction: 'desc' }
+	};
+
 	let settingsModalOpen = $state(false);
+	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 
 	$effect(() => {
 		// I-PM3 partial: load-settings on mount, hydrate toolbar sort initial value.
 		// Silent fallback per aggregates.md#settings-loading (no warning region).
 		void loadSettingsFn()
 			.then((settings) => {
+				currentSettings = settings;
 				feedStore.hydrateSort(settings.sort_preference);
 			})
 			.catch(() => {
@@ -34,10 +44,16 @@
 	});
 
 	function handleOpenSettings() {
-		// widget-settings-modal は別 epic。現時点では mount trigger 用 flag を
-		// 立てるだけの placeholder（実体 widget は未実装）。
 		settingsModalOpen = true;
 		onOpenSettings?.();
+	}
+
+	function handleSettingsModalClose() {
+		settingsModalOpen = false;
+	}
+
+	function settingsForModal(): SettingsDto {
+		return { ...currentSettings };
 	}
 
 	function isEditableTarget(target: EventTarget | null): boolean {
@@ -72,3 +88,7 @@
 	<FeedRegion />
 	<ToastRegion />
 </div>
+
+{#if settingsModalOpen}
+	<WidgetSettingsModal initial={settingsForModal()} onClose={handleSettingsModalClose} />
+{/if}
