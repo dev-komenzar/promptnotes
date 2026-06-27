@@ -105,7 +105,7 @@ pub async fn assign_tag<R: Runtime>(
                 .iter()
                 .map(|t| t.name().to_string())
                 .collect(),
-            updated_at: note.updated_at().format_yyyymmddhhmmss(),
+            updated_at: note.updated_at().format_rfc3339(),
         }),
         Ok(None) => Ok(AssignTagOutcome::NoOp),
         Err(e) => Err(e.into()),

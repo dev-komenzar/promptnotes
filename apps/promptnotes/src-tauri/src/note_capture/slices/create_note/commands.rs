@@ -90,7 +90,7 @@ pub async fn create_note<R: Runtime>(
     match uc.execute(CreateNoteCommand { raw_body, raw_tags }) {
         Ok(Some(note)) => Ok(CreateNoteOutcome::Created {
             id: note.id().as_str().to_string(),
-            created_at: note.created_at().format_yyyymmddhhmmss(),
+            created_at: note.created_at().format_rfc3339(),
         }),
         Ok(None) => Ok(CreateNoteOutcome::NoOp),
         Err(e) => Err(e.into()),

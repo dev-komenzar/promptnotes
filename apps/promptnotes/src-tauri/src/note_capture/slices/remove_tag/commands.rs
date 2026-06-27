@@ -98,7 +98,7 @@ pub async fn remove_tag<R: Runtime>(
                 .iter()
                 .map(|t| t.name().to_string())
                 .collect(),
-            updated_at: note.updated_at().format_yyyymmddhhmmss(),
+            updated_at: note.updated_at().format_rfc3339(),
         }),
         Ok(None) => Ok(RemoveTagOutcome::NoOp),
         Err(e) => Err(e.into()),
