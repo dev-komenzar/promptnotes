@@ -1,24 +1,29 @@
-use crate::user_preferences::shared::types::SortOrder;
+use time::{Date, Duration, OffsetDateTime};
+use unicode_normalization::UnicodeNormalization;
 
-use super::FeedFilter;
+use crate::note_capture::shared::types::Note;
+use crate::user_preferences::shared::types::{SortDirection, SortField, SortOrder};
+
+use super::{DateRangeFilter, FeedFilter, NormalizedQuery};
 
 /// Note Feed BC の唯一の集約 root (`aggregates.md#note-feed-aggregate`)。read model、揮発。
 ///
-/// `update-feed-filter` slice では filter 軸のみを扱い、`sort` / `source` は drop していた
-/// (notes.md decision)。`change-sort-order` slice で `sort: SortOrder` field を復活させた。
+/// `update-feed-filter` slice では filter 軸のみを扱い、`source` / `sort` は drop していた。
+/// `change-sort-order` slice で `sort: SortOrder` を、`list-feed` slice で `source: Vec<Note>` を
+/// 復活させた (aggregates.md#note-feed-aggregate-elements、`source` の Vec<Note> 採用根拠は
+/// `workflows/list-feed.md#notes`)。
 ///
 /// `SortOrder` は `user_preferences::shared::types::SortOrder` を直接借りる
 /// (Customer-Supplier 規約。Supplier = User Preferences、Customer = Note Feed)。
-/// `change-sort-order` が「NoteFeed → Settings の唯一の逆流」を application service で扱う
-/// ことで、両 aggregate の `sort` が同期される (aggregates.md#notes-sort-side-effect)。
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct NoteFeed {
+    source: Vec<Note>,
     filter: FeedFilter,
     sort: SortOrder,
 }
 
 impl NoteFeed {
-    /// I-F6 の起動時初期状態 (filter 空 + sort default = {CreatedAt, Desc} per I-S3)。
+    /// I-F6 の起動時初期状態 (source 空 + filter 空 + sort default = {CreatedAt, Desc})。
     pub fn empty() -> Self {
         Self::default()
     }
@@ -29,6 +34,10 @@ impl NoteFeed {
 
     pub fn sort(&self) -> SortOrder {
         self.sort
+    }
+
+    pub fn source(&self) -> &[Note] {
+        &self.source
     }
 
     /// FeedFilter を差し替えた新しい NoteFeed を返す (move semantics)。
@@ -43,5 +52,110 @@ impl NoteFeed {
     pub fn change_sort(mut self, sort: SortOrder) -> Self {
         self.sort = sort;
         self
+    }
+
+    /// `workflows/list-feed.md#steps` の `hydrateFeedSource`。
+    /// `source` を差し替える pure 関数 (C-LF9 冪等性)。
+    pub fn hydrate(mut self, notes: Vec<Note>) -> Self {
+        self.source = notes;
+        self
+    }
+
+    /// `aggregates.md#note-feed-aggregate-queries` の `visible_notes`。
+    /// filter を AND 合成 (I-F4) して、sort 適用後の `Vec<&Note>` を返す (C-LF2)。
+    /// `now` は `DateRangeFilter::Last*Days` の評価に使う (oq-list-feed-now-injection)。
+    pub fn visible_notes(&self, now: OffsetDateTime) -> Vec<&Note> {
+        let mut filtered: Vec<&Note> = self
+            .source
+            .iter()
+            .filter(|note| matches_filter(note, &self.filter, now))
+            .collect();
+        apply_sort(&mut filtered, self.sort);
+        filtered
+    }
+}
+
+/// I-F4 AND + early short-circuit (C-LF4)。query / tag / date_range の全軸を満たす Note のみ通す。
+fn matches_filter(note: &Note, filter: &FeedFilter, now: OffsetDateTime) -> bool {
+    if let Some(q) = filter.query() {
+        if !matches_query(note, q) {
+            return false;
+        }
+    }
+    if let Some(tag) = filter.tag() {
+        if !note.tags().as_slice().iter().any(|t| t.name() == tag.name()) {
+            return false;
+        }
+    }
+    matches_date_range(note, filter.date_range(), now)
+}
+
+/// I-F5: body + tags[*].name の substring (case-insensitive、NormalizedQuery は NFKC + lowercase 済)。C-LF5。
+fn matches_query(note: &Note, query: &NormalizedQuery) -> bool {
+    let needle = query.as_str();
+    let body_lc: String = note
+        .body()
+        .as_str()
+        .nfkc()
+        .collect::<String>()
+        .to_lowercase();
+    if body_lc.contains(needle) {
+        return true;
+    }
+    note.tags()
+        .as_slice()
+        .iter()
+        .any(|t| t.name().contains(needle))
+}
+
+/// C-LF8: `Note.created_at` ベース。`Custom { from, to }` は `from > to` で空集合に降格。
+fn matches_date_range(note: &Note, range: &DateRangeFilter, now: OffsetDateTime) -> bool {
+    let note_dt = note.created_at().into_offset_datetime();
+    match range {
+        DateRangeFilter::All => true,
+        DateRangeFilter::Last7Days => note_dt >= now - Duration::days(7),
+        DateRangeFilter::Last30Days => note_dt >= now - Duration::days(30),
+        DateRangeFilter::Last90Days => note_dt >= now - Duration::days(90),
+        DateRangeFilter::Custom { from, to } => {
+            let Some(from_d) = parse_iso_date(from) else {
+                return false;
+            };
+            let Some(to_d) = parse_iso_date(to) else {
+                return false;
+            };
+            if from_d > to_d {
+                return false;
+            }
+            let note_d = note_dt.date();
+            note_d >= from_d && note_d <= to_d
+        }
+    }
+}
+
+fn parse_iso_date(s: &str) -> Option<Date> {
+    let format = time::macros::format_description!("[year]-[month]-[day]");
+    Date::parse(s, format).ok()
+}
+
+/// C-LF3: stable sort + I-F3: 同 sort key は `id` (= created_at 秒精度) で tiebreak。
+/// Rust の `sort_by` は stable sort なので、key が等しいときの順序は入力順を保つ。
+/// 入力 (storage_dir の read_dir 順) を決定論にするため、ここで `id` で tiebreak する。
+fn apply_sort(notes: &mut [&Note], sort: SortOrder) {
+    notes.sort_by(|a, b| {
+        let primary = compare_by_field(a, b, sort.field());
+        let tiebreak = a.id().as_str().cmp(b.id().as_str());
+        let combined = primary.then(tiebreak);
+        if sort.direction() == SortDirection::Desc {
+            combined.reverse()
+        } else {
+            combined
+        }
+    });
+}
+
+fn compare_by_field(a: &Note, b: &Note, field: SortField) -> std::cmp::Ordering {
+    match field {
+        SortField::CreatedAt => a.created_at().cmp(&b.created_at()),
+        SortField::UpdatedAt => a.updated_at().cmp(&b.updated_at()),
     }
 }

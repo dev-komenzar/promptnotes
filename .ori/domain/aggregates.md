@@ -104,7 +104,9 @@ Note Feed BC の唯一の集約。read model。
 ### 構成要素 {#note-feed-aggregate-elements}
 
 - **NoteFeed** (root, 揮発)
-  - `source: &[Note]` — Shared Kernel 経由で Note Aggregate 群を参照
+  - `source: Vec<Note>` — Shared Kernel 経由で Note Aggregate 群を一括 hydration
+    (workflow:list-feed が `NoteRepository::list_all` で `storage_dir/*.md` から構築)。
+    `Vec<NoteId>` ではなく `Vec<Note>` を保持する根拠は workflows/list-feed.md#notes
   - `filter: FeedFilter` — 揮発（起動時 reset）
   - `sort: SortOrder` — Settings から復元 / 変更で永続化
 - **FeedFilter** (VO)
@@ -142,12 +144,16 @@ Note Feed BC の唯一の集約。read model。
 - `NoteFeed::change_sort(self, s: SortOrder) -> NoteFeed`
   - 副作用として Settings.sort_preference を更新（Customer-Supplier 経由）
 - `NoteFeed::clear_filters(self) -> NoteFeed`
+- `NoteFeed::hydrate(self, notes: Vec<Note>) -> NoteFeed`
+  - `source` を差し替える (workflow:list-feed の `hydrateFeedSource` ステップ)。
+    起動時 + 手動 Refresh で再呼出する pure 関数
 
 #### Queries {#note-feed-aggregate-queries}
 
 - `NoteFeed::visible_notes(&self) -> Vec<&Note>`
-  - filter を適用後、sort 順に並べて返す
+  - filter を適用後、sort 順に並べて返す (workflow:list-feed の `applyFilter` + `applySort`)
 - `NoteFeed::count(&self) -> usize`
+- `NoteFeed::source(&self) -> &[Note]` — hydration 結果の確認用 read accessor
 
 ## Settings Aggregate {#settings-aggregate}
 

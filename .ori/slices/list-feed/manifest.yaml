@@ -1,0 +1,13 @@
+slice_id: "list-feed"
+type: "query"
+derives_from:
+  - domain/workflows/list-feed.md#list-feed
+  - domain/aggregates.md#note-feed-aggregate
+  - domain/bounded-contexts.md#note-feed
+  - domain/validation.md#s12-startup-state
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src-tauri/src/note_feed/slices/list_feed/

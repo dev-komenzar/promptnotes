@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { listNotes } from '$lib/note-feed/slices/list-feed';
 	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 	import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
@@ -13,9 +14,14 @@
 	type Props = {
 		onOpenSettings?: () => void;
 		loadSettingsFn?: typeof loadSettings;
+		listNotesFn?: typeof listNotes;
 	};
 
-	let { onOpenSettings, loadSettingsFn = loadSettings }: Props = $props();
+	let {
+		onOpenSettings,
+		loadSettingsFn = loadSettings,
+		listNotesFn = listNotes
+	}: Props = $props();
 
 	const DEFAULT_SETTINGS: Settings = {
 		storage_dir: '',
@@ -27,8 +33,11 @@
 	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 
 	$effect(() => {
-		// I-PM3 partial: load-settings on mount, hydrate toolbar sort initial value.
+		// I-PM3 partial: load-settings → list-feed on mount.
 		// Silent fallback per aggregates.md#settings-loading (no warning region).
+		// list-feed slice (workflows/list-feed.md): storage_dir/*.md を hydrate して
+		// feedStore.notes を初期化する。Rust 側で sort も適用済 (sort_preference 復元) なので
+		// hydrateSort と順序は前後しても visible 結果は変わらない。
 		void loadSettingsFn()
 			.then((settings) => {
 				currentSettings = settings;
@@ -36,6 +45,13 @@
 			})
 			.catch(() => {
 				// silent fallback to defaults
+			});
+		void listNotesFn()
+			.then((feed) => {
+				feedStore.hydrateNotes(feed.notes);
+			})
+			.catch(() => {
+				// silent fallback: feedStore.notes stays empty
 			});
 	});
 

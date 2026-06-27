@@ -10,7 +10,7 @@ ori:
 
 # Workflows Index {#workflows-index}
 
-PromptNotes の 13 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
+PromptNotes の 14 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
 別ファイルに記述（review しやすさのため）。
 
 <!-- ori:auto-table:start -->
@@ -29,6 +29,7 @@ PromptNotes の 13 workflow を BC 別に列挙。各 workflow は DMMF pipeline
 | [copy-note-body](copy-note-body.md) | コピーボタン | (なし) | Note | Note Capture |
 | [update-feed-filter](update-feed-filter.md) | 検索/期間/タグ操作 | (なし) | NoteFeed | Note Feed |
 | [change-sort-order](change-sort-order.md) | ソートトグル | SortPreferenceChanged | NoteFeed + Settings | Note Feed |
+| [list-feed](list-feed.md) | アプリ起動時 / 手動 Refresh | (なし) | NoteFeed + Note | Note Feed |
 | [update-settings](update-settings.md) | 設定モーダル保存 | StorageDirChanged / ThemeChanged | Settings | User Preferences |
 | [load-settings](load-settings.md) | アプリ起動時 | (なし) | Settings | User Preferences |
 | [check-for-updates](check-for-updates.md) | アプリ起動時 | NewVersionDetected (条件付) | UpdateChannel | Update Distribution |
@@ -52,7 +53,7 @@ Phase 7 validation scenarios の workflow 対応：
 | S9 (同一 body 冪等) | auto-save-note の前段 |
 | S10 (禁止文字 Tag reject) | assign-tag |
 | S11 (storage_dir 変更) | update-settings |
-| S12 (起動時 filter リセット / sort 復元) | load-settings |
+| S12 (起動時 filter リセット / sort 復元) | load-settings → list-feed |
 | S13 (quit 時連続 Flush) | flush-note ×N |
 | S14 (更新失敗 silent) | check-for-updates |
 | S15 (同一秒内編集) | auto-save-note / flush-note |
