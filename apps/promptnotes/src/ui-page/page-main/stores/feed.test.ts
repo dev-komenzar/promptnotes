@@ -128,4 +128,41 @@ describe('page:page-main feed store', () => {
 
 		expect(store.sort).toStrictEqual({ field: 'updated_at', direction: 'asc' });
 	});
+
+	it('spec#I-PM9 — prependNote は新 Note を先頭に挿入し focus を移す', () => {
+		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
+
+		store.prependNote({
+			id: 'note-1',
+			body: 'first',
+			tags: [],
+			created_at: '2026-06-26T00:00:00Z',
+			updated_at: '2026-06-26T00:00:00Z'
+		});
+		store.prependNote({
+			id: 'note-2',
+			body: 'second',
+			tags: [],
+			created_at: '2026-06-26T00:01:00Z',
+			updated_at: '2026-06-26T00:01:00Z'
+		});
+
+		expect(store.notes.map((n) => n.id)).toStrictEqual(['note-2', 'note-1']);
+		expect(store.focusedNoteId).toBe('note-2');
+	});
+
+	it('setFocus(null) は focus を解除する', () => {
+		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
+
+		store.prependNote({
+			id: 'note-1',
+			body: 'x',
+			tags: [],
+			created_at: '2026-06-26T00:00:00Z',
+			updated_at: '2026-06-26T00:00:00Z'
+		});
+		store.setFocus(null);
+
+		expect(store.focusedNoteId).toBeNull();
+	});
 });
