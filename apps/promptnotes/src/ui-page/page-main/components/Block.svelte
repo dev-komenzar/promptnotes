@@ -11,6 +11,7 @@
 	import { createEditorState } from '../codemirror/setup';
 	import type { FocusStore, BlockState } from '../stores/focus.svelte';
 	import type { FeedStore, NoteSummary } from '../stores/feed.svelte';
+	import { toastStore } from '../stores/toasts.svelte';
 
 	type Props = {
 		note: NoteSummary;
@@ -24,6 +25,7 @@
 		flushFn?: typeof flushNote;
 		deleteFn?: typeof deleteNote;
 		copyFn?: typeof copyNoteBody;
+		toasts?: typeof toastStore;
 	};
 
 	let {
@@ -37,7 +39,8 @@
 		autoSaveFn = autoSaveNote,
 		flushFn = flushNote,
 		deleteFn = deleteNote,
-		copyFn = copyNoteBody
+		copyFn = copyNoteBody,
+		toasts = toastStore
 	}: Props = $props();
 
 	let host: HTMLDivElement | undefined = $state();
@@ -230,11 +233,20 @@
 	}
 
 	async function handleDelete(): Promise<void> {
+		// Capture a snapshot now so toast restoration can recover original created_at.
+		const snapshot: NoteSummary = {
+			id: note.id,
+			body: note.body,
+			tags: [...note.tags],
+			created_at: note.created_at,
+			updated_at: note.updated_at
+		};
 		try {
 			await deleteFn(note.id);
 			feed.applyDelete(note.id);
+			toasts.push(snapshot);
 		} catch {
-			// MVP silent; toast handled in page-main-toast
+			// MVP silent
 		}
 	}
 
