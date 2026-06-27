@@ -1,10 +1,27 @@
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
-import { EditorState, type Extension } from '@codemirror/state';
+import { EditorState, Text, type Extension } from '@codemirror/state';
 import { EditorView, drawSelection, highlightActiveLine, keymap } from '@codemirror/view';
 
 const MARKDOWN_LIST_PREFIX = /^(\s*)(?:[-*+]\s|(\d+)\.\s)/;
+
+/**
+ * CommonMark backslash-escape 判定 (https://spec.commonmark.org/0.31.2/#backslash-escapes)。
+ * pos の文字が直前の連続バックスラッシュによってエスケープされているかを返す。
+ * `\\` は literal `\` を生むため、連続 `\` 数が奇数のときのみエスケープ扱い。
+ */
+export function isEscapedAt(doc: Text | string, pos: number): boolean {
+	const read = (i: number): string =>
+		typeof doc === 'string' ? doc.charAt(i) : doc.sliceString(i, i + 1);
+	let count = 0;
+	let p = pos - 1;
+	while (p >= 0 && read(p) === '\\') {
+		count++;
+		p--;
+	}
+	return count % 2 === 1;
+}
 
 /**
  * Draft / Block body 共通の CodeMirror 6 構成
@@ -64,8 +81,12 @@ export function createEditorState(options: {
 				const { state } = view;
 				const range = state.selection.main;
 				if (!range.empty) return false;
-				const before = state.doc.sliceString(Math.max(0, range.head - 1), range.head);
+				const prev = range.head - 1;
+				if (prev < 0) return false;
+				const before = state.doc.sliceString(prev, range.head);
 				if (before !== '*') return false;
+				// 直前 `*` が backslash-escape されている (`\*`) なら補助を抑止 (ori-00s)
+				if (isEscapedAt(state.doc, prev)) return false;
 				// 直前が `*` → 4 連続 `**|**` の挿入は spec の `**` 入力時補完を実現する
 				view.dispatch({
 					changes: { from: range.head, insert: '*****' },
