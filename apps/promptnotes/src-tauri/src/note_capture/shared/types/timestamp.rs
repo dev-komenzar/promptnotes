@@ -1,3 +1,4 @@
+use time::format_description::well_known::Rfc3339;
 use time::format_description::FormatItem;
 use time::macros::format_description;
 use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
@@ -30,6 +31,15 @@ impl Timestamp {
         self.0
             .format(YYYYMMDDHHMMSS)
             .expect("YYYYMMDDhhmmss formatting must not fail for a valid OffsetDateTime")
+    }
+
+    /// RFC 3339 / ISO 8601 wire representation for Tauri DTOs. JavaScript
+    /// `Date.parse` accepts this form, unlike the compact `YYYYMMDDhhmmss`
+    /// used for filenames and `NoteId`.
+    pub fn format_rfc3339(&self) -> String {
+        self.0
+            .format(&Rfc3339)
+            .expect("RFC 3339 formatting must not fail for a valid OffsetDateTime")
     }
 
     pub fn parse_yyyymmddhhmmss(s: &str) -> Result<Self, TimestampError> {

@@ -148,7 +148,7 @@ pub async fn restore_deleted_note<R: Runtime>(
                 .iter()
                 .map(|t| t.name().to_string())
                 .collect(),
-            updated_at: note.updated_at().format_yyyymmddhhmmss(),
+            updated_at: note.updated_at().format_rfc3339(),
         }),
         Err(e) => Err(e.into()),
     }

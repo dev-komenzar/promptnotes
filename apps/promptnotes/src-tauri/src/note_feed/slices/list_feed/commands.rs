@@ -41,8 +41,8 @@ impl From<&Note> for NoteSummaryDto {
                 .iter()
                 .map(|t| t.name().to_string())
                 .collect(),
-            created_at: n.created_at().format_yyyymmddhhmmss(),
-            updated_at: n.updated_at().format_yyyymmddhhmmss(),
+            created_at: n.created_at().format_rfc3339(),
+            updated_at: n.updated_at().format_rfc3339(),
         }
     }
 }

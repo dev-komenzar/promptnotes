@@ -137,7 +137,7 @@ pub async fn flush_note<R: Runtime>(
     match uc.execute(cmd) {
         Ok(Some(note)) => Ok(FlushOutcome::Flushed {
             id: note.id().as_str().to_string(),
-            updated_at: note.updated_at().format_yyyymmddhhmmss(),
+            updated_at: note.updated_at().format_rfc3339(),
         }),
         Ok(None) => Ok(FlushOutcome::NoOp),
         Err(e) => Err(e.into()),

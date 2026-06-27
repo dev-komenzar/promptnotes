@@ -95,7 +95,7 @@ pub async fn auto_save_note<R: Runtime>(
     match uc.execute(cmd) {
         Ok(Some(note)) => Ok(AutoSaveOutcome::Saved {
             id: note.id().as_str().to_string(),
-            updated_at: note.updated_at().format_yyyymmddhhmmss(),
+            updated_at: note.updated_at().format_rfc3339(),
         }),
         Ok(None) => Ok(AutoSaveOutcome::NoOp),
         Err(e) => Err(e.into()),
