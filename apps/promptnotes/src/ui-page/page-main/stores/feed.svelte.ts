@@ -170,6 +170,18 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		focusedNoteId = note.id;
 	}
 
+	/**
+	 * Replace the in-memory note list with `next` (list-feed slice の startup hydration)。
+	 * 起動時 / 手動 Refresh で `listNotes()` の結果を流し込む唯一の経路。
+	 * focus は維持できない場合 (= 引数に含まれていない場合) は null にクリアする。
+	 */
+	function hydrateNotes(next: readonly NoteSummary[]): void {
+		notes = [...next];
+		if (focusedNoteId !== null && !notes.some((n) => n.id === focusedNoteId)) {
+			focusedNoteId = null;
+		}
+	}
+
 	function setFocus(id: string | null): void {
 		focusedNoteId = id;
 	}
@@ -225,6 +237,7 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		setSortField,
 		setSortDirection,
 		hydrateSort,
+		hydrateNotes,
 		prependNote,
 		setFocus,
 		applyAssignTag,

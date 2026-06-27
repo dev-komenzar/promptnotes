@@ -35,6 +35,7 @@ pub fn run() {
             note_capture::slices::restore_deleted_note::commands::restore_deleted_note,
             note_feed::slices::update_feed_filter::commands::update_feed_filter,
             note_feed::slices::change_sort_order::commands::change_sort_order,
+            note_feed::slices::list_feed::commands::list_notes,
             user_preferences::slices::load_settings::commands::load_settings,
             user_preferences::slices::update_settings::commands::update_settings,
         ])

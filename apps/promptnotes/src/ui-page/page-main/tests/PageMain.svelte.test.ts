@@ -9,9 +9,11 @@ const noopLoadSettings = async () => ({
 	sort_preference: { field: 'created_at' as const, direction: 'desc' as const }
 });
 
+const noopListNotes = async () => ({ notes: [] });
+
 describe('page:page-main shell', () => {
 	it('spec#tp-mount — 4 region (toolbar / draft / feed / toast) を DOM に mount する', async () => {
-		render(PageMain, { loadSettingsFn: noopLoadSettings });
+		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
 		for (const id of ['region-toolbar', 'region-draft', 'region-feed', 'region-toast']) {
 			await expect.element(page.getByTestId(id)).toBeInTheDocument();
@@ -19,7 +21,7 @@ describe('page:page-main shell', () => {
 	});
 
 	it('spec#tp-no-multi-pane — page-main / region-feed はそれぞれ単一 instance のみ存在する', async () => {
-		const { container } = render(PageMain, { loadSettingsFn: noopLoadSettings });
+		const { container } = render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
 		const pageMain = container.querySelectorAll('[data-testid="page-main"]');
 		const feed = container.querySelectorAll('[data-testid="region-feed"]');
@@ -31,7 +33,7 @@ describe('page:page-main shell', () => {
 	});
 
 	it('spec#fields-toolbar — toolbar に検索 / 期間 / sort / 設定 / ClearAll 入力が揃う', async () => {
-		render(PageMain, { loadSettingsFn: noopLoadSettings });
+		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
 		for (const id of [
 			'screen-1-toolbar-search-query',

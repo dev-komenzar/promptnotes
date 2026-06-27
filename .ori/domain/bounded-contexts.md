@@ -58,10 +58,14 @@ Note 集合に対する **read side** を司る。検索文字列・期間・タ
 ### Ubiquitous Language {#note-feed-ubiquitous-language}
 
 - **NoteFeed** — 表示中の Note 一覧の read model（揮発状態）
+- **Source** — NoteFeed が保持する `Vec<Note>`。アプリ起動時に `NoteRepository::list_all`
+  で hydrate される（workflow:list-feed）
 - **Query** — 検索バーの文字列。case-insensitive substring + NFC 正規化で `body` と `tags` にマッチ
 - **DateRangeFilter** — プリセット（7d / 30d / 90d / all / custom）による期間絞り込み
 - **TagFilter** — メタ行のタグチップクリックで発生する絞り込み
 - **SortOrder** — `createdAt` | `updatedAt` × `asc` | `desc` の組合せ。**Settings に永続化**
+- **VisibleNotes** — `source` に `filter` を AND 合成し `sort` を適用した結果。
+  NoteFeed の唯一の read query 出力
 
 ### Core Aggregates {#note-feed-core-aggregates}
 

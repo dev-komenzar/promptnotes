@@ -15,6 +15,14 @@ pub trait NoteRepository {
     fn load_by_id(&self, _id: &NoteId) -> std::io::Result<Option<Note>> {
         unimplemented!("NoteRepository::load_by_id is required by slice auto-save-note (phase 4)")
     }
+
+    /// Read every `.md` file under `storage_dir()` and return the parsed Notes
+    /// (slice list-feed, workflow `list-feed#steps`). Individual parse / I/O
+    /// failures must be skipped (C-LF1: "読めるものだけ読む"); only top-level
+    /// `read_dir` failures bubble up.
+    fn list_all(&self) -> std::io::Result<Vec<Note>> {
+        unimplemented!("NoteRepository::list_all is required by slice list-feed")
+    }
 }
 
 /// Injectable clock — production reads system time, tests use a fixed Timestamp.

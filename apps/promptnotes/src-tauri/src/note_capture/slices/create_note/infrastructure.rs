@@ -66,6 +66,49 @@ impl NoteRepository for FsNoteRepository {
             )
         })
     }
+
+    fn list_all(&self) -> io::Result<Vec<Note>> {
+        let entries = match fs::read_dir(&self.storage_dir) {
+            Ok(entries) => entries,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(e) => return Err(e),
+        };
+
+        let mut notes = Vec::new();
+        for entry in entries {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(err) => {
+                    log::warn!("note_repository.list_all: read_dir entry error: {err}");
+                    continue;
+                }
+            };
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("md") {
+                continue;
+            }
+            let raw = match fs::read_to_string(&path) {
+                Ok(s) => s,
+                Err(err) => {
+                    log::warn!(
+                        "note_repository.list_all: read_to_string failed for {}: {err}",
+                        path.display()
+                    );
+                    continue;
+                }
+            };
+            match parse_note_md(&raw) {
+                Ok(note) => notes.push(note),
+                Err(err) => {
+                    log::warn!(
+                        "note_repository.list_all: parse_note_md failed for {}: {err}",
+                        path.display()
+                    );
+                }
+            }
+        }
+        Ok(notes)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
