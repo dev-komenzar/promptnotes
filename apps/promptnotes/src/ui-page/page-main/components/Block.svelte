@@ -220,7 +220,7 @@
 		} catch (err) {
 			const e = err as { kind?: string; reason?: string };
 			if (e?.kind === 'invalid_tag') {
-				tagError = 'タグに使えない文字（カンマ・ブラケット・空白）が含まれています';
+				tagError = 'Tag contains invalid characters (comma, brackets, whitespace).';
 			}
 		}
 	}
@@ -275,7 +275,7 @@
 	data-testid="screen-1-block"
 	data-block-id={note.id}
 	data-block-state={blockState}
-	aria-label={`Note (作成 ${note.created_at})`}
+	aria-label={`Note (created ${note.created_at})`}
 	class={[
 		'group relative flex flex-col gap-1 border-b border-neutral-200 px-3 py-2 text-sm focus:outline-none dark:border-neutral-800',
 		blockState !== 'IDLE' ? 'bg-blue-50/60 dark:bg-blue-900/20' : 'bg-white dark:bg-neutral-950'
@@ -296,7 +296,7 @@
 						data-block-no-edit
 						data-testid="screen-1-block-tag-chip"
 						class="hover:text-blue-600 dark:hover:text-blue-400"
-						aria-label={`タグ ${tag} で絞り込み`}
+						aria-label={`Filter by tag ${tag}`}
 						onclick={(e) => {
 							e.stopPropagation();
 							handleTagChipClick(tag);
@@ -310,7 +310,7 @@
 							data-block-no-edit
 							data-testid="screen-1-block-tag-remove"
 							class="text-neutral-400 hover:text-red-500"
-							aria-label={`タグ ${tag} を削除`}
+							aria-label={`Remove tag ${tag}`}
 							onclick={(e) => {
 								e.stopPropagation();
 								void handleTagRemove(tag);
@@ -325,8 +325,8 @@
 					data-block-no-edit
 					data-testid="screen-1-block-tag-input"
 					class="min-w-[6rem] rounded border border-neutral-200 bg-white px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-900"
-					placeholder="+タグ"
-					aria-label="新規タグ"
+					placeholder="+ tag"
+					aria-label="New tag"
 					bind:value={tagInputDraft}
 					onkeydown={handleTagInputKey}
 					onclick={(e) => e.stopPropagation()}
@@ -355,7 +355,7 @@
 			data-block-no-edit
 			data-testid="screen-1-block-copy"
 			class="rounded border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
-			aria-label="本文をコピー"
+			aria-label="Copy body"
 			onclick={(e) => {
 				e.stopPropagation();
 				void handleCopy();
@@ -366,7 +366,7 @@
 			data-block-no-edit
 			data-testid="screen-1-block-delete"
 			class="rounded border border-red-200 bg-white px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-neutral-900 dark:hover:bg-red-900/20"
-			aria-label="Note を削除"
+			aria-label="Delete note"
 			onclick={(e) => {
 				e.stopPropagation();
 				void handleDelete();

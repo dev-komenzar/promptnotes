@@ -28,7 +28,7 @@ const PREVIEW_MAX = 40;
 function previewBody(body: string, max = PREVIEW_MAX): string {
 	const firstLine = body.split('\n').find((line) => line.trim() !== '') ?? '';
 	const trimmed = firstLine.trim();
-	if (trimmed === '') return '(空)';
+	if (trimmed === '') return '(empty)';
 	return trimmed.length > max ? trimmed.slice(0, max) + '…' : trimmed;
 }
 

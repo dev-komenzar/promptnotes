@@ -13,10 +13,10 @@
 		label: string;
 		range: DateRangeFilter;
 	}> = [
-		{ key: 'all', label: 'すべて', range: { kind: 'all' } },
-		{ key: 'last_7_days', label: '7 日', range: { kind: 'last_7_days' } },
-		{ key: 'last_30_days', label: '30 日', range: { kind: 'last_30_days' } },
-		{ key: 'last_90_days', label: '90 日', range: { kind: 'last_90_days' } }
+		{ key: 'all', label: 'All', range: { kind: 'all' } },
+		{ key: 'last_7_days', label: 'Last 7d', range: { kind: 'last_7_days' } },
+		{ key: 'last_30_days', label: 'Last 30d', range: { kind: 'last_30_days' } },
+		{ key: 'last_90_days', label: 'Last 90d', range: { kind: 'last_90_days' } }
 	];
 
 	let queryDraft = $state('');
@@ -64,7 +64,7 @@
 
 <header
 	data-testid="region-toolbar"
-	aria-label="ツールバー"
+	aria-label="Toolbar"
 	class="flex shrink-0 flex-wrap items-center gap-2 border-b border-neutral-200 bg-neutral-50/80 px-3 py-2 text-sm text-neutral-700 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-200"
 >
 	<label class="flex min-w-0 flex-1 items-center gap-1.5" for="screen-1-toolbar-search-query">
@@ -74,8 +74,8 @@
 			data-testid="screen-1-toolbar-search-query"
 			type="search"
 			class="w-full min-w-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm placeholder:text-neutral-400 focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800"
-			placeholder="検索 (Cmd+F)"
-			aria-label="検索"
+			placeholder="Search (Cmd+F)"
+			aria-label="Search"
 			value={queryDraft}
 			oninput={handleQueryInput}
 		/>
@@ -84,7 +84,7 @@
 	<div
 		data-testid="screen-1-toolbar-date-range"
 		role="group"
-		aria-label="期間"
+		aria-label="Date range"
 		class="inline-flex shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 	>
 		{#each DATE_PRESETS as preset (preset.key)}
@@ -111,7 +111,7 @@
 			type="button"
 			data-testid="screen-1-toolbar-tag-chip"
 			class="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
-			aria-label={`タグ ${feedStore.filter.tag} を解除`}
+			aria-label={`Remove tag ${feedStore.filter.tag}`}
 			onclick={clearTag}
 		>
 			<span>#{feedStore.filter.tag}</span>
@@ -121,7 +121,7 @@
 
 	<div
 		role="group"
-		aria-label="ソート対象"
+		aria-label="Sort by"
 		data-testid="screen-1-toolbar-sort-field"
 		class="inline-flex shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 	>
@@ -137,7 +137,7 @@
 			aria-pressed={feedStore.sort.field === 'created_at'}
 			onclick={() => selectSortField('created_at')}
 		>
-			作成日
+			Created
 		</button>
 		<button
 			type="button"
@@ -151,7 +151,7 @@
 			aria-pressed={feedStore.sort.field === 'updated_at'}
 			onclick={() => selectSortField('updated_at')}
 		>
-			更新日
+			Updated
 		</button>
 	</div>
 
@@ -159,7 +159,7 @@
 		type="button"
 		data-testid="screen-1-toolbar-sort-direction"
 		class="inline-flex shrink-0 items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-		aria-label={feedStore.sort.direction === 'asc' ? '昇順' : '降順'}
+		aria-label={feedStore.sort.direction === 'asc' ? 'Ascending' : 'Descending'}
 		onclick={toggleSortDirection}
 	>
 		<span aria-hidden="true">{feedStore.sort.direction === 'asc' ? '↑' : '↓'}</span>
@@ -169,17 +169,17 @@
 		type="button"
 		data-testid="screen-1-toolbar-clear-all"
 		class="shrink-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-		aria-label="フィルターをすべて解除"
+		aria-label="Clear all filters"
 		onclick={clearAll}
 	>
-		ClearAll
+		Clear all
 	</button>
 
 	<button
 		type="button"
 		data-testid="screen-1-toolbar-settings-button"
 		class="shrink-0 rounded-md border border-transparent px-2 py-1 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-700/60"
-		aria-label="設定を開く"
+		aria-label="Open settings"
 		onclick={openSettings}
 	>
 		<span aria-hidden="true">⚙️</span>

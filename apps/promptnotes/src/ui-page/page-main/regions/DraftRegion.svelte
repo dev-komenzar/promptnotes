@@ -74,7 +74,7 @@
 
 <section
 	data-testid="region-draft"
-	aria-label="新規 Note"
+	aria-label="New note"
 	class="sticky top-0 z-10 shrink-0 border-b border-neutral-200 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950"
 >
 	<div class="flex items-start gap-2">
@@ -87,11 +87,11 @@
 			type="button"
 			data-testid="screen-1-draft-submit"
 			class="shrink-0 self-stretch rounded-md bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-			aria-label="新規 Note を追加 (Cmd+Enter)"
+			aria-label="Add new note (Cmd+Enter)"
 			disabled={store.submitting}
 			onclick={handleButtonClick}
 		>
-			＋追加
+			+ Add
 		</button>
 	</div>
 </section>

@@ -173,7 +173,7 @@ describe('page:page-main toast store', () => {
 	it('空 body は (空) として preview される', () => {
 		const store = createToastStore({ restoreFn: vi.fn(), timeoutMs: 5000 });
 		store.push(makeNote('a', { body: '   \n  \n' }));
-		expect(store.entries[0].preview).toBe('(空)');
+		expect(store.entries[0].preview).toBe('(empty)');
 	});
 
 	it('reset は全 entry と全 timer を破棄する', () => {
