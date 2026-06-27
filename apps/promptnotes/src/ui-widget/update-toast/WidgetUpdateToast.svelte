@@ -50,21 +50,21 @@
 		>
 			<div class="flex items-start justify-between gap-2">
 				<p>
-					新しいバージョン
+					New version
 					<span data-testid="screen-3-latest-version" class="font-semibold">{p.latest_version}</span
 					>
-					が利用可能です
+					is available
 					<span
 						data-testid="screen-3-current-version"
 						class="text-xs text-neutral-500 dark:text-neutral-400"
 					>
-						(現在: {p.current_version})
+						(current: {p.current_version})
 					</span>
 				</p>
 				<button
 					type="button"
 					data-testid="screen-3-dismiss"
-					aria-label="閉じる"
+					aria-label="Close"
 					class="-mt-0.5 -mr-0.5 shrink-0 rounded p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
 					onclick={handleDismiss}
 				>
@@ -88,7 +88,7 @@
 					class="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
 					onclick={handleViewRelease}
 				>
-					詳細を見る
+					View release
 				</button>
 			</div>
 		</div>

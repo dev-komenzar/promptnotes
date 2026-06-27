@@ -32,7 +32,7 @@
 	});
 
 	const THEMES: Array<{ value: Theme; label: string }> = [
-		{ value: 'System', label: 'システム' },
+		{ value: 'System', label: 'System' },
 		{ value: 'Light', label: 'Light' },
 		{ value: 'Dark', label: 'Dark' }
 	];
@@ -40,20 +40,20 @@
 	function pathErrorMessage(error: UpdateSettingsError): string | null {
 		if (error.kind !== 'invalid_path') return null;
 		return error.reason === 'not_absolute'
-			? '絶対パスを指定してください'
-			: '設定ファイル配下のパスは指定できません';
+			? 'Path must be absolute.'
+			: 'Path inside the config directory is not allowed.';
 	}
 
 	function persistErrorMessage(error: UpdateSettingsError): string | null {
 		if (error.kind !== 'persist_error') return null;
-		return `保存に失敗しました: ${error.reason}`;
+		return `Failed to save: ${error.reason}`;
 	}
 
 	async function pickFolder() {
 		const picked = await openDialogFn({
 			directory: true,
 			multiple: false,
-			title: '保存ディレクトリを選択'
+			title: 'Select storage directory'
 		});
 		if (typeof picked === 'string') {
 			store.setStorageDir(picked);
@@ -91,10 +91,10 @@
 		class="flex w-[28rem] max-w-[90vw] flex-col gap-4 p-5"
 		onsubmit={handleSave}
 	>
-		<h1 id="widget-settings-modal-title" class="text-base font-semibold">設定</h1>
+		<h1 id="widget-settings-modal-title" class="text-base font-semibold">Settings</h1>
 
 		<section class="flex flex-col gap-1.5">
-			<span class="text-sm font-medium">保存ディレクトリ</span>
+			<span class="text-sm font-medium">Storage directory</span>
 			<div class="flex items-center gap-2">
 				<input
 					id="screen-2-storage-dir"
@@ -103,7 +103,7 @@
 					readonly
 					value={store.storageDir}
 					class="min-w-0 flex-1 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-xs text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-					aria-label="保存ディレクトリ"
+					aria-label="Storage directory"
 				/>
 				<button
 					type="button"
@@ -111,7 +111,7 @@
 					class="shrink-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 					onclick={pickFolder}
 				>
-					選択…
+					Browse…
 				</button>
 			</div>
 			{#if store.saveState.kind === 'error'}
@@ -128,10 +128,10 @@
 		</section>
 
 		<section class="flex flex-col gap-1.5">
-			<span class="text-sm font-medium">テーマ</span>
+			<span class="text-sm font-medium">Theme</span>
 			<div
 				role="radiogroup"
-				aria-label="テーマ"
+				aria-label="Theme"
 				data-testid="screen-2-theme"
 				class="inline-flex w-fit overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 			>
@@ -174,7 +174,7 @@
 				class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 				onclick={handleCancel}
 			>
-				キャンセル
+				Cancel
 			</button>
 			<button
 				type="submit"
@@ -182,7 +182,7 @@
 				disabled={store.saveState.kind === 'saving'}
 				class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
 			>
-				保存
+				Save
 			</button>
 		</footer>
 	</form>

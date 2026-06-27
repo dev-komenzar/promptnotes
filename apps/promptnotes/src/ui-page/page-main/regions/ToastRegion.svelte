@@ -16,7 +16,7 @@
 -->
 <aside
 	data-testid="region-toast"
-	aria-label="削除 Toast スタック"
+	aria-label="Deletion toast stack"
 	aria-live="polite"
 	class="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2"
 >
@@ -33,24 +33,24 @@
 					class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
 					title={entry.preview}
 				>
-					削除しました: {entry.preview}
+					Deleted: {entry.preview}
 				</span>
 				<button
 					type="button"
 					data-testid="screen-1-toast-undo"
 					data-toast-id={entry.id}
 					class="shrink-0 rounded border border-blue-200 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
-					aria-label="元に戻す"
+					aria-label="Undo"
 					onclick={() => {
 						void store.undo(entry.id);
-					}}>元に戻す</button
+					}}>Undo</button
 				>
 				<button
 					type="button"
 					data-testid="screen-1-toast-close"
 					data-toast-id={entry.id}
 					class="shrink-0 rounded px-1.5 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-					aria-label="Toast を閉じる"
+					aria-label="Close toast"
 					onclick={() => store.dismiss(entry.id)}>×</button
 				>
 			</div>

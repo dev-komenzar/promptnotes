@@ -39,7 +39,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <main
 	data-testid="region-feed"
-	aria-label="Note フィード"
+	aria-label="Note feed"
 	class="flex flex-1 flex-col overflow-y-auto text-sm text-neutral-700 dark:text-neutral-200"
 	onkeydown={handleKeyDown}
 	role="feed"
@@ -50,7 +50,7 @@
 			data-testid="screen-1-feed-empty"
 			class="px-3 py-6 text-center text-neutral-400 dark:text-neutral-500"
 		>
-			該当する Note がありません
+			No notes match
 		</p>
 	{:else}
 		{#each visibleNotes as note (note.id)}
