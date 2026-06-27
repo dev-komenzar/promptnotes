@@ -1,0 +1,17 @@
+page_id: "widget-update-toast"
+type: widget
+parent_page: page-main
+derives_from:
+  - domain/ui-fields/screen-3.md#screen-3
+  - domain/ui-fields/page-groups.md#widget-update-toast
+  - domain/workflows/check-for-updates.md#check-for-updates
+relations:
+  - kind: subscribes
+    event: domain/domain-events.md#new-version-detected
+  - kind: mounted-by
+    page: page-main
+implementation:
+  language: typescript
+  primary_bc: update-distribution
+  generates:
+    - apps/promptnotes/src/ui-widget/update-toast/
