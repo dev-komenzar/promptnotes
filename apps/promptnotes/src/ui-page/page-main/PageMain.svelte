@@ -97,8 +97,19 @@
 		void win
 			.onCloseRequested(async (event) => {
 				event.preventDefault();
-				await pendingFlush.flushAll('app_quit');
-				await win.destroy();
+				try {
+					await pendingFlush.flushAll('app_quit');
+				} catch (err) {
+					// flushAll は個別失敗を swallow する実装だが、念のため最終 catch
+					console.error('[quit] flushAll failed', err);
+				}
+				try {
+					await win.destroy();
+				} catch (err) {
+					// destroy() が permission denied 等で失敗するとアプリが終了しない。
+					// silent rejection だと UX 上ユーザーが原因を追えないので必ず log する。
+					console.error('[quit] window.destroy() failed', err);
+				}
 			})
 			.then((u) => {
 				if (disposed) u();
