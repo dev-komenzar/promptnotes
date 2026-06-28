@@ -40,8 +40,8 @@ struct AssignTagCommand {
    - lowercase + trim 適用 → 結果が空文字なら `EmptyAfterTrim`
    - 禁止文字 (` `, `\t`, `\n`, `,`, `[`, `]`) を含めば `InvalidChar`
 2. `loadNote: NoteId → Result<Note, NoteNotFound>`
-3. `applyAssign: (Note, Tag) → (Note, TagDiff)`
-   - `Note::assign_tag(tag)` で TagSet 更新
+3. `applyAssign: (Note, Tag, Timestamp) → (Note, TagDiff)`
+   - `Note::assign_tag(tag, now)` で TagSet 更新
    - `TagDiff = Unchanged | Added(Tag)`（既存ならば Unchanged、S4）
 4. `branchOnDiff:`
    - `Unchanged` → 早期 return（event 非発行）

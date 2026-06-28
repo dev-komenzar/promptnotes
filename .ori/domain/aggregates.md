@@ -75,11 +75,10 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
     `io::ErrorKind::InvalidData` として表面化（aggregate には到達しない）
 - `Note::edit_body(self, new_body: NoteBody, now: Timestamp) -> Note`
   - 本文を差し替え、`updatedAt = now` に更新（I-N4）
-- `Note::assign_tag(self, tag: Tag) -> Note`
-  - TagSet に追加（既存なら no-op、I-N5）。`updatedAt` は **更新する**
-    （tags も frontmatter 経由で永続化されるため）
-- `Note::remove_tag(self, tag_name: &str) -> Note`
-  - TagSet から削除。`updatedAt` を更新
+- `Note::assign_tag(self, tag: Tag, now: Timestamp) -> Note`
+  - TagSet に追加（既存なら no-op、I-N5）。新規追加時は `updatedAt = now`（同一 `name` の no-op 経路では updatedAt も据え置き — 永続化の必要が無いため）
+- `Note::remove_tag(self, tag_name: &str, now: Timestamp) -> Note`
+  - TagSet から削除。削除があった場合は `updatedAt = now`
 - `Note::delete_to_trash(self) -> DeletedNote`
   - OS のゴミ箱に移動し、`DeletedNote { id, original_path }` を返す
   - 戻り値は application service の DeletedNote スタックに **push** される
