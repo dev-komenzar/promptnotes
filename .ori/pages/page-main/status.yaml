@@ -2,7 +2,43 @@ page_id: page-main
 derived_at: 2026-06-26T12:48:51.936Z
 beads:
   epic: ori-page-page-main
-  current_phase: null
-  completion: []
-phases: {}
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
+    notes: spec.md derived (screen-1 = 4 region: Toolbar / Draft / Feed / Toast, hosts 10 slices)
+  plan:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
+    notes: 5 sub-task scaffold (shell / toolbar / draft / feed / toast)
+  test-red:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
+  impl-green:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
+    notes: PRs #22-#26 by page-main sub-tasks (shell=#22 / toolbar=#23 / draft=#24 / feed=#25 / toast=#26)
+  refactor:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
+  review:
+    status: closed
+    issue: ori-page-page-main
+    completed_at: 2026-06-27
 dirty: []
+finalized_at: 2026-06-27
+followup: []
+proposals: {}

@@ -2,7 +2,42 @@ page_id: widget-settings-modal
 derived_at: 2026-06-26T00:00:00.000Z
 beads:
   epic: ori-4g0
-  current_phase: null
-  completion: []
-phases: {}
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
+    notes: spec.md derived (screen-2 = Settings Modal、page-main overlay widget)
+  plan:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
+  test-red:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
+  impl-green:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
+    notes: PR #27 で Esc / save / cancel unmount + update-settings invoke による settings.json 永続化を実装
+  refactor:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
+  review:
+    status: closed
+    issue: ori-4g0
+    completed_at: 2026-06-27
 dirty: []
+finalized_at: 2026-06-27
+followup: []
+proposals: {}
