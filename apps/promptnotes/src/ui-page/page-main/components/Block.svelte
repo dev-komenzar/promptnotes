@@ -11,6 +11,10 @@
 	import { createEditorState } from '../codemirror/setup';
 	import type { FocusStore, BlockState } from '../stores/focus.svelte';
 	import type { FeedStore, NoteSummary } from '../stores/feed.svelte';
+	import {
+		pendingFlushRegistry,
+		type PendingFlushRegistry
+	} from '../stores/pending-flush.svelte';
 	import { toastStore } from '../stores/toasts.svelte';
 
 	type Props = {
@@ -26,6 +30,7 @@
 		deleteFn?: typeof deleteNote;
 		copyFn?: typeof copyNoteBody;
 		toasts?: typeof toastStore;
+		pendingFlush?: PendingFlushRegistry;
 	};
 
 	let {
@@ -40,7 +45,8 @@
 		flushFn = flushNote,
 		deleteFn = deleteNote,
 		copyFn = copyNoteBody,
-		toasts = toastStore
+		toasts = toastStore,
+		pendingFlush = pendingFlushRegistry
 	}: Props = $props();
 
 	let host: HTMLDivElement | undefined = $state();
@@ -63,12 +69,16 @@
 
 	function scheduleAutoSave(body: string): void {
 		pendingBody = body;
+		// ori-73q / spec.md#impl-quit-orchestration: pendingBody を抱えた瞬間に
+		// quit registry へ登録。timer fire / flush 完了で unregister する。
+		pendingFlush.register(note.id, runFlush);
 		cancelDebounce();
 		debounceTimer = setTimeout(() => {
 			debounceTimer = null;
 			const target = pendingBody;
 			if (target === null) return;
 			pendingBody = null;
+			pendingFlush.unregister(note.id);
 			void autoSaveFn(note.id, target)
 				.then((outcome) => {
 					if (outcome.outcome === 'saved') {
@@ -85,6 +95,7 @@
 		cancelDebounce();
 		const target = pendingBody;
 		pendingBody = null;
+		pendingFlush.unregister(note.id);
 		if (target === null) return;
 		try {
 			const outcome = await flushFn(note.id, target, trigger);
@@ -162,6 +173,7 @@
 
 	onDestroy(() => {
 		cancelDebounce();
+		pendingFlush.unregister(note.id);
 		view?.destroy();
 	});
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { listNotes } from '$lib/note-feed/slices/list-feed';
 	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
@@ -9,18 +10,32 @@
 	import ToastRegion from './regions/ToastRegion.svelte';
 	import ToolbarRegion from './regions/ToolbarRegion.svelte';
 	import { feedStore } from './stores/feed.svelte';
+	import {
+		pendingFlushRegistry,
+		type PendingFlushRegistry
+	} from './stores/pending-flush.svelte';
 	import { toastStore } from './stores/toasts.svelte';
+
+	type CloseRequestedEvent = { preventDefault: () => void };
+	type QuitWindow = {
+		onCloseRequested: (cb: (event: CloseRequestedEvent) => void | Promise<void>) => Promise<() => void>;
+		destroy: () => Promise<void>;
+	};
 
 	type Props = {
 		onOpenSettings?: () => void;
 		loadSettingsFn?: typeof loadSettings;
 		listNotesFn?: typeof listNotes;
+		pendingFlush?: PendingFlushRegistry;
+		quitWindow?: QuitWindow | null;
 	};
 
 	let {
 		onOpenSettings,
 		loadSettingsFn = loadSettings,
-		listNotesFn = listNotes
+		listNotesFn = listNotes,
+		pendingFlush = pendingFlushRegistry,
+		quitWindow
 	}: Props = $props();
 
 	const DEFAULT_SETTINGS: Settings = {
@@ -58,6 +73,44 @@
 	$effect(() => {
 		toastStore.setOnRestored((note) => feedStore.prependNote(note));
 		return () => toastStore.setOnRestored(undefined);
+	});
+
+	// ori-73q / spec.md#impl-quit-orchestration: S13 連続 Flush の orchestration。
+	// Tauri の CloseRequested を frontend で intercept → preventDefault →
+	// 全 pending Note を順次 flush → window.destroy() で実際に閉じる。
+	// quitWindow が明示注入されたらそれを使う (test injection)。null 注入なら hook を skip。
+	// 未指定 (本番) は getCurrentWindow() を resolve する (browser 環境では失敗 → skip)。
+	$effect(() => {
+		if (quitWindow === null) return;
+		let unlisten: (() => void) | undefined;
+		let disposed = false;
+		const resolveWindow = (): QuitWindow | null => {
+			if (quitWindow) return quitWindow;
+			try {
+				return getCurrentWindow() as unknown as QuitWindow;
+			} catch {
+				return null;
+			}
+		};
+		const win = resolveWindow();
+		if (!win) return;
+		void win
+			.onCloseRequested(async (event) => {
+				event.preventDefault();
+				await pendingFlush.flushAll('app_quit');
+				await win.destroy();
+			})
+			.then((u) => {
+				if (disposed) u();
+				else unlisten = u;
+			})
+			.catch(() => {
+				// silent — non-Tauri host (test / browser) は CloseRequested 不要
+			});
+		return () => {
+			disposed = true;
+			unlisten?.();
+		};
 	});
 
 	function handleOpenSettings() {
