@@ -1,17 +1,17 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-06-28
   upstream:
     - domain/workflows/update-feed-filter.md#update-feed-filter
     - domain/aggregates.md#note-feed-aggregate
     - domain/bounded-contexts.md#note-feed
     - domain/validation.md#s8-query-normalize
   hash:
-    domain/workflows/update-feed-filter.md#.*: 79e229cbcd37
-    domain/aggregates.md#.*: 9f9048f5816b
+    domain/workflows/update-feed-filter.md#.*: 51cdf06a33f9
+    domain/aggregates.md#.*: 82947dbfd3f6
     domain/bounded-contexts.md#.*: 4d579125a513
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file

@@ -1,7 +1,10 @@
 ---
 proposal:
   id: 2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc
-  status: pending
+  status: accepted
+  accepted_at: 2026-06-28
+  accepted_by: human (takuya.kometan@gmail.com)
+  applied_to: .ori/domain/aggregates.md (NoteFeed elements / I-F1 / filter_by_query で NFC → NFKC) + .ori/domain/validation.md (S8 walkthrough を NFKC + 互換等価変換に整合) + .ori/domain/workflows/update-feed-filter.md (normalizeQuery step を NFKC に整合)
   source: slice:update-feed-filter
   created_at: 2026-06-26
   target_files:

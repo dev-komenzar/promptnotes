@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-06-28
   upstream:
     - domain/workflows/check-for-updates.md#check-for-updates
     - domain/aggregates.md#update-channel-aggregate
@@ -10,7 +10,7 @@ coherence:
     - domain/validation.md#s14-update-check-failure
   hash:
     domain/workflows/check-for-updates.md#.*: e2935ac617af
-    domain/aggregates.md#.*: 9f9048f5816b
+    domain/aggregates.md#.*: 43aabb6b099b
     domain/bounded-contexts.md#.*: 4d579125a513
     domain/domain-events.md#.*: 8abdfac78084
     domain/validation.md#.*: 5294b0c32f1b

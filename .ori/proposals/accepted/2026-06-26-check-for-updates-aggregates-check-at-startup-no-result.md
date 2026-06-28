@@ -1,7 +1,10 @@
 ---
 proposal:
   id: 2026-06-26-check-for-updates-aggregates-check-at-startup-no-result
-  status: pending
+  status: accepted
+  accepted_at: 2026-06-28
+  accepted_by: human (takuya.kometan@gmail.com)
+  applied_to: .ori/domain/aggregates.md#update-channel-aggregate-commands (check_at_startup を no-Result API に変更 + 内部実装は private Result fn 経由を許容と明示)
   source: slice:check-for-updates
   created_at: 2026-06-26
   target_files:

@@ -31,17 +31,19 @@ struct AssignTagCommand {
 
 - `NoteNotFound { id: NoteId }`
 - `InvalidTag { name: String, reason: TagError }`
-  - `TagError = EmptyAfterTrim | InvalidChar(char)`
+  - `TagError = Empty | InvalidChar { raw: String }`
+  - `Empty`: trim 後に空文字（正規化結果が空）
+  - `InvalidChar { raw }`: 入力 raw 文字列が禁止文字 (` `, `\t`, `\n`, `,`, `[`, `]`) を含む
 - `PersistError { path: PathBuf, cause: io::Error }`
 
 ## Steps {#steps}
 
 1. `parseTag: String → Result<Tag, InvalidTag>`
-   - lowercase + trim 適用 → 結果が空文字なら `EmptyAfterTrim`
-   - 禁止文字 (` `, `\t`, `\n`, `,`, `[`, `]`) を含めば `InvalidChar`
+   - lowercase + trim 適用 → 結果が空文字なら `Empty`
+   - 禁止文字 (` `, `\t`, `\n`, `,`, `[`, `]`) を含めば `InvalidChar { raw }`（入力 raw 文字列全体を payload に保持）
 2. `loadNote: NoteId → Result<Note, NoteNotFound>`
-3. `applyAssign: (Note, Tag) → (Note, TagDiff)`
-   - `Note::assign_tag(tag)` で TagSet 更新
+3. `applyAssign: (Note, Tag, Timestamp) → (Note, TagDiff)`
+   - `Note::assign_tag(tag, now)` で TagSet 更新
    - `TagDiff = Unchanged | Added(Tag)`（既存ならば Unchanged、S4）
 4. `branchOnDiff:`
    - `Unchanged` → 早期 return（event 非発行）

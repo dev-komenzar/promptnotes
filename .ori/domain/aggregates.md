@@ -35,7 +35,7 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
 - **Tag** (VO)
   - `name: String` — 正規化済み（lowercase + trim, CJK 許容）
   - 禁止文字（` `, `\t`, `\n`, `,`, `[`, `]`）を含まない
-  - construction 時に禁止文字を含む入力は `TagError::InvalidChar` で reject
+  - construction 時に **trim 後の空文字** は `TagError::Empty` で、**禁止文字を含む入力** は `TagError::InvalidChar { raw }` で reject
 - **TagSet** (VO)
   - `Vec<Tag>` の薄いラッパー
   - 順序を保持（YAML inline list の表示順を保つ）
@@ -75,11 +75,10 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
     `io::ErrorKind::InvalidData` として表面化（aggregate には到達しない）
 - `Note::edit_body(self, new_body: NoteBody, now: Timestamp) -> Note`
   - 本文を差し替え、`updatedAt = now` に更新（I-N4）
-- `Note::assign_tag(self, tag: Tag) -> Note`
-  - TagSet に追加（既存なら no-op、I-N5）。`updatedAt` は **更新する**
-    （tags も frontmatter 経由で永続化されるため）
-- `Note::remove_tag(self, tag_name: &str) -> Note`
-  - TagSet から削除。`updatedAt` を更新
+- `Note::assign_tag(self, tag: Tag, now: Timestamp) -> Note`
+  - TagSet に追加（既存なら no-op、I-N5）。新規追加時は `updatedAt = now`（同一 `name` の no-op 経路では updatedAt も据え置き — 永続化の必要が無いため）
+- `Note::remove_tag(self, tag_name: &str, now: Timestamp) -> Note`
+  - TagSet から削除。削除があった場合は `updatedAt = now`
 - `Note::delete_to_trash(self) -> DeletedNote`
   - OS のゴミ箱に移動し、`DeletedNote { id, original_path }` を返す
   - 戻り値は application service の DeletedNote スタックに **push** される
@@ -110,11 +109,11 @@ Note Feed BC の唯一の集約。read model。
   - `filter: FeedFilter` — 揮発（起動時 reset）
   - `sort: SortOrder` — Settings から復元 / 変更で永続化
 - **FeedFilter** (VO)
-  - `query: Option<NormalizedQuery>` — NFC + lowercase 化済み
+  - `query: Option<NormalizedQuery>` — NFKC (compatibility normalization) + lowercase 化済み
   - `date_range: DateRangeFilter`
   - `tag: Option<Tag>` — メタ行クリックで設定される
 - **NormalizedQuery** (VO)
-  - 入力文字列を NFC 正規化 + lowercase 化した結果
+  - 入力文字列を NFKC (compatibility normalization) 正規化 + lowercase 化した結果
   - 1 文字以上の場合に保持（空文字は `None`）
 - **DateRangeFilter** (VO, enum)
   - `Last7Days | Last30Days | Last90Days | All | Custom { from: Date, to: Date }`
@@ -123,7 +122,7 @@ Note Feed BC の唯一の集約。read model。
 
 ### ビジネス不変条件 {#note-feed-aggregate-invariants}
 
-- **I-F1**: `query` は常に NFC 正規化済み（マッチング時に再正規化しない）
+- **I-F1**: `query` は常に **NFKC 正規化済み + lowercase 済み**（マッチング時に再正規化しない）。NFKC を使う理由: 全角 Latin / 半角 Latin、半角カナ / 全角カナ等の互換等価文字を同一視するため。canonical decomposition のみの NFC では半角化が起きず、S8 シナリオが成立しない
 - **I-F2**: filter が空のとき、`source` 全件を sort 順で返す
 - **I-F3**: `sort` の決定論性: 同一 sort key の Note は `id`（タイムスタンプ秒精度）で tiebreak
   → 安定したソート順を保証
@@ -138,7 +137,7 @@ Note Feed BC の唯一の集約。read model。
 #### Commands {#note-feed-aggregate-commands}
 
 - `NoteFeed::filter_by_query(self, raw: &str) -> NoteFeed`
-  - 入力を NFC + lowercase に正規化して filter.query を更新
+  - 入力を NFKC (compatibility normalization) + lowercase に正規化して filter.query を更新
 - `NoteFeed::filter_by_date_range(self, r: DateRangeFilter) -> NoteFeed`
 - `NoteFeed::filter_by_tag(self, t: Tag) -> NoteFeed`
 - `NoteFeed::change_sort(self, s: SortOrder) -> NoteFeed`
@@ -239,9 +238,12 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 #### Commands {#update-channel-aggregate-commands}
 
-- `UpdateChannel::check_at_startup() -> Result<UpdateChannel, UpdateError>`
+- `UpdateChannel::check_at_startup() -> UpdateChannel`
   - async ネットワーク呼び出し。Tauri updater plugin に委譲
-  - 失敗は silent（ユーザの作業を妨げない）
+  - 失敗は **application service 内部で silent に握り潰し**、`latest_release: None` の
+    `UpdateChannel` を返す（S14 / I-U2 / `workflows/check-for-updates.md#error-handling`）。
+  - 内部実装は `Result<UpdateChannel, UpdateError>` を持つ private fn を経由してよいが、
+    外部 API は **`Result` を露出しない**。
 
 #### Queries {#update-channel-aggregate-queries}
 

@@ -183,7 +183,7 @@ typical / edge / error の各シナリオを Given/When/Then で walkthrough し
 - 補足: 他の Toast (例: B の Toast が同時に存在) がある場合、B の Undo は
   影響を受けず引き続き有効（per-toast 独立性）
 
-## Scenario S8: 検索文字列の NFC + lowercase 正規化 {#s8-query-normalize}
+## Scenario S8: 検索文字列の NFKC + lowercase 正規化 {#s8-query-normalize}
 
 ### Given {#s8-given}
 
@@ -197,10 +197,10 @@ typical / edge / error の各シナリオを Given/When/Then で walkthrough し
 ### Then {#s8-then}
 
 - `NoteFeed::filter_by_query("gpt")`:
-  - 入力を NFC 正規化 + lowercase: `"gpt"` （変化なし）
+  - 入力を NFKC (compatibility normalization) + lowercase: `"gpt"` （変化なし）
 - NoteFeed.visible_notes:
-  - A の body を NFC + lowercase: `"gpt を試す"` → match
-  - B の body を NFC + lowercase: `"gpt のメモ"`（全角 → 半角化） → match
+  - A の body を NFKC + lowercase: `"gpt を試す"` → match
+  - B の body を NFKC + lowercase: `"gpt のメモ"`（全角 → 半角化、NFKC により互換等価変換） → match
   - 両者表示
 - event は発行されない（NoteFeed は read model）
 

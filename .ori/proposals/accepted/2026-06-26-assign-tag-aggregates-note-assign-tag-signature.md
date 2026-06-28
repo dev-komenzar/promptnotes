@@ -3,7 +3,10 @@ target: domain/aggregates.md#note-aggregate-commands
 by: slices/assign-tag
 reason: Note::assign_tag は updatedAt を更新する義務があるため `now: Timestamp` 引数注入が必要だが、aggregates.md は `Note::assign_tag(self, tag: Tag) -> Note` のままで signature と意味（"updatedAt は更新する"）が impl と乖離する
 created: 2026-06-26
-status: pending
+status: accepted
+accepted_at: 2026-06-28
+accepted_by: human (takuya.kometan@gmail.com)
+applied_to: domain/aggregates.md#note-aggregate-commands (assign_tag/remove_tag signature に now: Timestamp 注入 + no-op 時 updatedAt 据え置きへの仕様明確化) + domain/workflows/assign-tag.md#steps (applyAssign signature 更新)
 ---
 
 # Proposal: `Note::assign_tag` signature を `(self, tag: Tag, now: Timestamp) -> Note` に拡張する

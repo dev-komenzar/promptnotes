@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-06-28
   upstream:
     - domain/workflows/assign-tag.md#assign-tag
     - domain/aggregates.md#note-aggregate
@@ -10,8 +10,8 @@ coherence:
     - domain/validation.md#s4-tag-assign-normalize
     - domain/validation.md#s10-tag-invalid-char
   hash:
-    domain/workflows/assign-tag.md#.*: a4fb5e5fd3da
-    domain/aggregates.md#.*: 9f9048f5816b
+    domain/workflows/assign-tag.md#.*: 4efe2dfe63c4
+    domain/aggregates.md#.*: 991ebe2e34f1
     domain/bounded-contexts.md#.*: 4d579125a513
     domain/domain-events.md#.*: 8abdfac78084
     domain/validation.md#.*: 5294b0c32f1b

@@ -3,7 +3,10 @@ target: domain/workflows/flush-note.md#errors
 by: slices/flush-note
 reason: phase 1 derive で spec が auto-save-note と同形の 4 variant (NoteNotFound / InvalidBody / LoadError / PersistError) を先取り採用したが、upstream workflow は 2 variant のまま。auto-save-note proposal accepted (2026-06-25) で「flush-note workflow にも同形を将来適用」と followup 記録済みであり、本 slice 完了に伴い propagate する
 created: 2026-06-25
-status: pending
+status: accepted
+accepted_at: 2026-06-28
+accepted_by: human (takuya.kometan@gmail.com)
+applied_to: domain/workflows/flush-note.md#errors (4 variant に拡張) + #notes (NoteBody / load/persist 分離の補足追加)
 ---
 
 # Proposal: flush-note workflow の Errors を 4 variant に拡張する

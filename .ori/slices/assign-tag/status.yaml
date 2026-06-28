@@ -57,9 +57,11 @@ followup:
     - Note Feed slice の TagFilter で Tag::new を再利用する際、proposal #2 の Empty/InvalidChar 命名を継承
 proposals:
   pending:
-    - file: .ori/proposals/pending/2026-06-26-assign-tag-aggregates-note-assign-tag-signature.md
+    - file: .ori/proposals/accepted/2026-06-26-assign-tag-aggregates-note-assign-tag-signature.md
       target: domain/aggregates.md#note-aggregate-commands
       summary: Note::assign_tag / Note::remove_tag に now: Timestamp 注入を追加 (edit_body と同形化)
-    - file: .ori/proposals/pending/2026-06-26-assign-tag-workflows-tag-error-naming.md
+      status: accepted (2026-06-28)
+    - file: .ori/proposals/accepted/2026-06-26-assign-tag-workflows-tag-error-naming.md
       target: domain/workflows/assign-tag.md#errors
       summary: TagError variant を impl 既存形 (Empty | InvalidChar { raw }) に揃える
+      status: accepted (2026-06-28)
