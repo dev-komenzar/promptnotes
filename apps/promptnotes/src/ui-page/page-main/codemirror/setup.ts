@@ -2,7 +2,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { EditorState, Text, type Extension } from '@codemirror/state';
-import { EditorView, drawSelection, highlightActiveLine, keymap } from '@codemirror/view';
+import { EditorView, drawSelection, keymap } from '@codemirror/view';
 
 const MARKDOWN_LIST_PREFIX = /^(\s*)(?:[-*+]\s|(\d+)\.\s)/;
 
@@ -108,7 +108,6 @@ export function createEditorState(options: {
 	const extensions: Extension[] = [
 		history(),
 		drawSelection(),
-		highlightActiveLine(),
 		markdown(),
 		syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
 		submitBinding,
