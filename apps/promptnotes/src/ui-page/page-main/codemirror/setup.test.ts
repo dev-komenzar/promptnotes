@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { Text } from '@codemirror/state';
-import { isEscapedAt } from './setup';
+import { EditorView } from '@codemirror/view';
+import { createEditorState, isEscapedAt } from './setup';
 
 describe('feature:page-main codemirror — isEscapedAt (string input, ori-00s)', () => {
 	it('no preceding backslash → false', () => {
@@ -44,6 +46,50 @@ describe('feature:page-main codemirror — isEscapedAt (string input, ori-00s)',
 
 	it('行頭 `*` (pos 0) は backslash も無いので escape ではない', () => {
 		expect(isEscapedAt('*foo', 0)).toBe(false);
+	});
+});
+
+describe('feature:page-main codemirror — Block の active line ハイライト無効化 (ori-67c)', () => {
+	// screen-1.md#notes-block-vertical は Block 単位の背景色 (IDLE/FOCUSED/EDITING) のみ規定。
+	// 行ハイライトは spec に無いため highlightActiveLine extension は付けない。
+	it('readOnly Block で初期 selection (pos 0) の line に .cm-activeLine が付かない', () => {
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		try {
+			const state = createEditorState({
+				doc: 'line0\nline1\nline2',
+				onSubmit: () => false,
+				readOnly: true
+			});
+			const view = new EditorView({ state, parent: host });
+			try {
+				expect(host.querySelector('.cm-activeLine')).toBeNull();
+			} finally {
+				view.destroy();
+			}
+		} finally {
+			host.remove();
+		}
+	});
+
+	it('編集可能 Block でも未フォーカス時に .cm-activeLine が付かない', () => {
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		try {
+			const state = createEditorState({
+				doc: 'line0\nline1',
+				onSubmit: () => false,
+				readOnly: false
+			});
+			const view = new EditorView({ state, parent: host });
+			try {
+				expect(host.querySelector('.cm-activeLine')).toBeNull();
+			} finally {
+				view.destroy();
+			}
+		} finally {
+			host.remove();
+		}
 	});
 });
 
