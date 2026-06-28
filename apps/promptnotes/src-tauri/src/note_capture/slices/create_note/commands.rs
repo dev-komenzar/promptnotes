@@ -5,10 +5,8 @@
 //! pure use case, and serializes the result as `serde` DTOs. A future
 //! `tauri-specta` integration will emit TypeScript bindings from this file.
 
-use std::path::PathBuf;
-
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Runtime};
 use time::OffsetDateTime;
 
 use super::application::CreateNoteUseCase;
@@ -16,6 +14,7 @@ use super::domain::{CreateNoteCommand, CreateNoteError};
 use super::infrastructure::FsNoteRepository;
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::Timestamp;
 
 struct SystemClock;
@@ -64,18 +63,6 @@ impl From<CreateNoteError> for CreateNoteErrorDto {
             },
         }
     }
-}
-
-/// Resolve where Notes are stored.
-///
-/// TODO: when the Settings Aggregate (User Preferences BC) lands, the path
-/// comes from `Settings::storage_dir`. Until then we fall back to the OS
-/// convention `<app_data_dir>/notes/` (matches I-S3's "default" rule).
-fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("Tauri must resolve app_data_dir on supported platforms")
-        .join("notes")
 }
 
 #[tauri::command]

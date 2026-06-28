@@ -4,16 +4,15 @@
 //! when the user clicks the × button on a tag chip; the body of the file is
 //! mostly serialization glue around the pure use case.
 
-use std::path::PathBuf;
-
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Runtime};
 use time::OffsetDateTime;
 
 use super::application::RemoveTagUseCase;
 use super::domain::{RemoveTagCommand, RemoveTagError};
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
 
@@ -66,13 +65,6 @@ impl From<RemoveTagError> for RemoveTagErrorDto {
             },
         }
     }
-}
-
-fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("Tauri must resolve app_data_dir on supported platforms")
-        .join("notes")
 }
 
 #[tauri::command]

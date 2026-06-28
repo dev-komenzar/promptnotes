@@ -4,16 +4,15 @@
 //! `copy_note_body` from the hover button. The use case (`application.rs`)
 //! stays pure — adapters are wired here.
 
-use std::path::PathBuf;
-
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Runtime};
 use time::OffsetDateTime;
 
 use super::application::CopyNoteBodyUseCase;
 use super::domain::{CopyNoteBodyCommand, CopyNoteBodyError};
 use super::ports::ClipboardErrorKind;
 use crate::note_capture::shared::adapters::clipboard::TauriClipboardService;
+use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
 
@@ -42,13 +41,6 @@ impl From<CopyNoteBodyError> for CopyNoteBodyErrorDto {
             },
         }
     }
-}
-
-fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("Tauri must resolve app_data_dir on supported platforms")
-        .join("notes")
 }
 
 #[tauri::command]
