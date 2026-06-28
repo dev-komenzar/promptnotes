@@ -11,10 +11,7 @@
 	import { createEditorState } from '../codemirror/setup';
 	import type { FocusStore, BlockState } from '../stores/focus.svelte';
 	import type { FeedStore, NoteSummary } from '../stores/feed.svelte';
-	import {
-		pendingFlushRegistry,
-		type PendingFlushRegistry
-	} from '../stores/pending-flush.svelte';
+	import { pendingFlushRegistry, type PendingFlushRegistry } from '../stores/pending-flush.svelte';
 	import { toastStore } from '../stores/toasts.svelte';
 
 	type Props = {
@@ -255,11 +252,16 @@
 		};
 		try {
 			await deleteFn(note.id);
-			feed.applyDelete(note.id);
-			toasts.push(snapshot);
-		} catch {
-			// MVP silent
+		} catch (err) {
+			// Backend rejected the delete — keep the note visible and surface for debugging.
+			console.error('[ori-6aa] delete_note failed:', err);
+			return;
 		}
+		// ori-6aa: push toast before applyDelete. Mutating the feed first removes
+		// this Block from the keyed {#each}, which can interrupt the subsequent
+		// toasts.push (Undo) before reactivity propagates to ToastRegion.
+		toasts.push(snapshot);
+		feed.applyDelete(note.id);
 	}
 
 	async function handleCopy(): Promise<void> {
