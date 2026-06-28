@@ -33,6 +33,20 @@
           gsettings-desktop-schemas
         ];
 
+        # vitest browser (Playwright chromium headless shell) runtime libs.
+        # Playwright downloads its own chromium to ~/.cache/ms-playwright but the
+        # binary dlopens system libs (libglib, libnss, libdrm, libxkbcommon, ...)
+        # that NixOS does not put on the default loader path. We expose them via
+        # LD_LIBRARY_PATH without coupling to a specific chromium revision.
+        chromiumDeps = with pkgs; [
+          glib nss nspr at-spi2-atk at-spi2-core atk
+          cups dbus libdrm expat libxkbcommon
+          mesa libgbm
+          pango cairo alsa-lib
+          libxcb libx11 libxcomposite libxdamage
+          libxext libxfixes libxrandr
+        ];
+
         darwinDeps = with pkgs; [
           libiconv
         ];
@@ -68,8 +82,9 @@
             # FileChooser ($_GLib-GIO-WARNING: ... gtk schemas) workaround on NixOS
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share:$XDG_DATA_DIRS"
             export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
-            # apm CLI (PyInstaller binary) needs libffi / libsqlite3 / etc. at runtime
-            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath apmRuntimeLibs}:$LD_LIBRARY_PATH"
+            # apm CLI (PyInstaller) + Playwright chromium headless shell need
+            # libffi / libsqlite3 / libglib / libnss / libdrm / libxkbcommon / ...
+            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (apmRuntimeLibs ++ chromiumDeps)}:$LD_LIBRARY_PATH"
             # Blank-window mitigation on some GPU/driver combos (uncomment if you see it)
             # export WEBKIT_DISABLE_COMPOSITING_MODE=1
           '' + ''
