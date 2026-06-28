@@ -53,7 +53,8 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 	}
 
 	async function save(): Promise<
-		{ kind: 'closed' } | { kind: 'error'; error: UpdateSettingsError }
+		| { kind: 'closed'; settings?: SettingsDto }
+		| { kind: 'error'; error: UpdateSettingsError }
 	> {
 		// I-SM6: diff-less save short-circuits to close (skip Tauri round-trip).
 		if (!dirty) {
@@ -61,9 +62,9 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 		}
 		saveState = { kind: 'saving' };
 		try {
-			await updateSettingsFn(buildInput());
+			const settings = await updateSettingsFn(buildInput());
 			saveState = { kind: 'idle' };
-			return { kind: 'closed' };
+			return { kind: 'closed', settings };
 		} catch (raw) {
 			const error = raw as UpdateSettingsError;
 			saveState = { kind: 'error', error };

@@ -133,6 +133,20 @@
 		settingsModalOpen = false;
 	}
 
+	function handleSettingsSaved(next: SettingsDto) {
+		// Settings 変更後の即時反映: in-memory state を更新し、新 storage_dir で Feed を再 hydrate する。
+		// Rust 側 list_notes は呼び出し毎に settings.json を読み直すため、frontend が re-invoke するだけで足りる。
+		currentSettings = { ...next };
+		feedStore.hydrateSort(next.sort_preference);
+		void listNotesFn()
+			.then((feed) => {
+				feedStore.hydrateNotes(feed.notes);
+			})
+			.catch(() => {
+				// silent fallback: feed stays as-is
+			});
+	}
+
 	function settingsForModal(): SettingsDto {
 		return { ...currentSettings };
 	}
@@ -171,7 +185,11 @@
 </div>
 
 {#if settingsModalOpen}
-	<WidgetSettingsModal initial={settingsForModal()} onClose={handleSettingsModalClose} />
+	<WidgetSettingsModal
+		initial={settingsForModal()}
+		onClose={handleSettingsModalClose}
+		onSaved={handleSettingsSaved}
+	/>
 {/if}
 
 <WidgetUpdateToast />
