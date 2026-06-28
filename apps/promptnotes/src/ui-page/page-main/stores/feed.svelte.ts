@@ -131,8 +131,12 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	}
 
 	async function setDateRange(range: DateRangeFilter): Promise<void> {
-		filter = await updateFilter({ kind: 'set_date_range', range });
-		lastError = null;
+		try {
+			filter = await updateFilter({ kind: 'set_date_range', range });
+			lastError = null;
+		} catch (err) {
+			lastError = err as UpdateFeedFilterError;
+		}
 	}
 
 	async function setTag(raw: string | null): Promise<void> {
@@ -145,8 +149,12 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	}
 
 	async function clearAll(): Promise<void> {
-		filter = await updateFilter({ kind: 'clear_all' });
-		lastError = null;
+		try {
+			filter = await updateFilter({ kind: 'clear_all' });
+			lastError = null;
+		} catch (err) {
+			lastError = err as UpdateFeedFilterError;
+		}
 	}
 
 	async function setSortField(field: SortField): Promise<void> {

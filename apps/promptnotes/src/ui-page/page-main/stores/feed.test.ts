@@ -85,6 +85,21 @@ describe('page:page-main feed store', () => {
 		expect(store.filter.date_range).toStrictEqual({ kind: 'last_7_days' });
 	});
 
+	it('ori-6k2 — setDateRange が reject した場合は lastError に格納し silent fail しない', async () => {
+		const updateFilter = vi
+			.fn()
+			.mockRejectedValue({ kind: 'invalid_date_range', reason: 'wire_mismatch' });
+		const store = createFeedStore({ updateFilter, changeSort: noopSort() });
+
+		await store.setDateRange({ kind: 'last_7_days' });
+
+		expect(store.lastError).toStrictEqual({
+			kind: 'invalid_date_range',
+			reason: 'wire_mismatch'
+		});
+		expect(store.filter.date_range).toStrictEqual({ kind: 'all' });
+	});
+
 	it('spec#invariants-cross-region — setTag(null) は tag フィルタを解除する', async () => {
 		const updateFilter = vi.fn().mockResolvedValue({
 			query: null,
@@ -129,6 +144,20 @@ describe('page:page-main feed store', () => {
 			query: null,
 			date_range: { kind: 'all' },
 			tag: null
+		});
+	});
+
+	it('ori-6k2 — clearAll が reject した場合は lastError に格納し silent fail しない', async () => {
+		const updateFilter = vi
+			.fn()
+			.mockRejectedValue({ kind: 'invalid_state', reason: 'tauri_offline' });
+		const store = createFeedStore({ updateFilter, changeSort: noopSort() });
+
+		await store.clearAll();
+
+		expect(store.lastError).toStrictEqual({
+			kind: 'invalid_state',
+			reason: 'tauri_offline'
 		});
 	});
 
