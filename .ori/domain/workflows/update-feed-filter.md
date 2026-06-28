@@ -37,7 +37,7 @@ enum UpdateFeedFilterCommand {
 ### SetQuery 分岐 {#steps-set-query}
 
 1. `normalizeQuery: String → Option<NormalizedQuery>`
-   - NFC 正規化 + lowercase 化
+   - NFKC (compatibility normalization) 正規化 + lowercase 化
    - 空文字なら `None`、それ以外は `Some(query)`
 2. `applyQuery: (NoteFeed, Option<NormalizedQuery>) → NoteFeed`
    - filter.query を更新

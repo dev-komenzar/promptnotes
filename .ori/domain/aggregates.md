@@ -109,11 +109,11 @@ Note Feed BC の唯一の集約。read model。
   - `filter: FeedFilter` — 揮発（起動時 reset）
   - `sort: SortOrder` — Settings から復元 / 変更で永続化
 - **FeedFilter** (VO)
-  - `query: Option<NormalizedQuery>` — NFC + lowercase 化済み
+  - `query: Option<NormalizedQuery>` — NFKC (compatibility normalization) + lowercase 化済み
   - `date_range: DateRangeFilter`
   - `tag: Option<Tag>` — メタ行クリックで設定される
 - **NormalizedQuery** (VO)
-  - 入力文字列を NFC 正規化 + lowercase 化した結果
+  - 入力文字列を NFKC (compatibility normalization) 正規化 + lowercase 化した結果
   - 1 文字以上の場合に保持（空文字は `None`）
 - **DateRangeFilter** (VO, enum)
   - `Last7Days | Last30Days | Last90Days | All | Custom { from: Date, to: Date }`
@@ -122,7 +122,7 @@ Note Feed BC の唯一の集約。read model。
 
 ### ビジネス不変条件 {#note-feed-aggregate-invariants}
 
-- **I-F1**: `query` は常に NFC 正規化済み（マッチング時に再正規化しない）
+- **I-F1**: `query` は常に **NFKC 正規化済み + lowercase 済み**（マッチング時に再正規化しない）。NFKC を使う理由: 全角 Latin / 半角 Latin、半角カナ / 全角カナ等の互換等価文字を同一視するため。canonical decomposition のみの NFC では半角化が起きず、S8 シナリオが成立しない
 - **I-F2**: filter が空のとき、`source` 全件を sort 順で返す
 - **I-F3**: `sort` の決定論性: 同一 sort key の Note は `id`（タイムスタンプ秒精度）で tiebreak
   → 安定したソート順を保証
@@ -137,7 +137,7 @@ Note Feed BC の唯一の集約。read model。
 #### Commands {#note-feed-aggregate-commands}
 
 - `NoteFeed::filter_by_query(self, raw: &str) -> NoteFeed`
-  - 入力を NFC + lowercase に正規化して filter.query を更新
+  - 入力を NFKC (compatibility normalization) + lowercase に正規化して filter.query を更新
 - `NoteFeed::filter_by_date_range(self, r: DateRangeFilter) -> NoteFeed`
 - `NoteFeed::filter_by_tag(self, t: Tag) -> NoteFeed`
 - `NoteFeed::change_sort(self, s: SortOrder) -> NoteFeed`

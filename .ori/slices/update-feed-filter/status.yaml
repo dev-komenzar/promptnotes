@@ -28,4 +28,4 @@ followup:
   - id: ori-64x.11
   - id: ori-64x.12
 proposals:
-  - pending/2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc.md
+  - accepted/2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc.md  # accepted 2026-06-28
