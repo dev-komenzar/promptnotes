@@ -40,13 +40,14 @@ describe('widget:widget-settings-modal store', () => {
 	});
 
 	it('spec#tp-sm-save-invokes-workflow — theme 変更の save で updateSettings({theme}) を 1 回呼ぶ', async () => {
-		const updateSettingsFn = vi.fn().mockResolvedValue(makeSettings({ theme: 'Dark' }));
+		const updated = makeSettings({ theme: 'Dark' });
+		const updateSettingsFn = vi.fn().mockResolvedValue(updated);
 		const store = createSettingsModalStore(makeSettings(), { updateSettingsFn });
 
 		store.setTheme('Dark');
 		const outcome = await store.save();
 
-		expect(outcome).toStrictEqual({ kind: 'closed' });
+		expect(outcome).toStrictEqual({ kind: 'closed', settings: updated });
 		expect(updateSettingsFn).toHaveBeenCalledTimes(1);
 		expect(updateSettingsFn).toHaveBeenCalledWith({ theme: 'Dark' });
 	});
@@ -62,6 +63,17 @@ describe('widget:widget-settings-modal store', () => {
 		await store.save();
 
 		expect(updateSettingsFn).toHaveBeenCalledWith({ storage_dir: '/x', theme: 'Light' });
+	});
+
+	it('ori-ayx — save 成功時 outcome に updateSettings の戻り値 (新 SettingsDto) を含む', async () => {
+		const updated = makeSettings({ storage_dir: '/new/storage' });
+		const updateSettingsFn = vi.fn().mockResolvedValue(updated);
+		const store = createSettingsModalStore(makeSettings(), { updateSettingsFn });
+
+		store.setStorageDir('/new/storage');
+		const outcome = await store.save();
+
+		expect(outcome).toStrictEqual({ kind: 'closed', settings: updated });
 	});
 
 	it('spec#tp-sm-save-no-diff (I-SM6) — 差分なし save は updateSettings を呼ばずに closed を返す', async () => {
