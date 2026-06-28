@@ -71,6 +71,93 @@
           openssl
           stdenv.cc.cc.lib
         ];
+        gsettingsSchemaDir = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas";
+
+        # NixOS 個人利用向けの PromptNotes パッケージ。
+        # bun install / cargo fetch がネットワークを要するため __noChroot で
+        # sandbox をバイパスする (要 `--option sandbox relaxed` か daemon 側設定)。
+        # 公開 distribution (flathub / nixpkgs PR) を行う段階では FOD / buildBunModule に置き換える前提の preview ビルド。
+        promptnotesPackage = pkgs.stdenv.mkDerivation {
+          pname = "promptnotes";
+          version = "0.1.0";
+          src = ./.;
+
+          __noChroot = true;
+
+          nativeBuildInputs = with pkgs; [
+            rustToolchain
+            cargo-tauri
+            bun
+            nodejs_22
+            pkg-config
+            makeWrapper
+          ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+            pkgs.wrapGAppsHook3
+          ];
+
+          buildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux linuxDeps
+            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin darwinDeps;
+
+          dontWrapGApps = true;
+
+          configurePhase = ''
+            runHook preConfigure
+            export HOME=$(mktemp -d)
+            export CARGO_HOME=$HOME/.cargo
+            export XDG_CACHE_HOME=$HOME/.cache
+            cd apps/promptnotes
+            bun install --frozen-lockfile
+            runHook postConfigure
+          '';
+
+          buildPhase = ''
+            runHook preBuild
+            # cargo tauri build は tauri.conf.json の beforeBuildCommand
+            # (bun run build) を自動で呼ぶ。--no-bundle で deb/AppImage 等の
+            # bundling は省き、生 binary のみ生成する (Nix 側で wrap するため)。
+            cargo tauri build --no-bundle
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/bin
+            install -Dm755 src-tauri/target/release/app $out/bin/promptnotes
+          '' + pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            install -Dm644 src-tauri/icons/128x128.png \
+              $out/share/icons/hicolor/128x128/apps/promptnotes.png
+            install -Dm644 src-tauri/icons/icon.png \
+              $out/share/icons/hicolor/512x512/apps/promptnotes.png
+            mkdir -p $out/share/applications
+            cat > $out/share/applications/promptnotes.desktop <<EOF
+            [Desktop Entry]
+            Name=PromptNotes
+            Comment=AI prompt notes desktop app
+            Exec=promptnotes
+            Icon=promptnotes
+            Terminal=false
+            Type=Application
+            Categories=Utility;Office;
+            EOF
+          '' + ''
+            runHook postInstall
+          '';
+
+          postFixup = pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            wrapProgram $out/bin/promptnotes \
+              --set GSETTINGS_SCHEMA_DIR "${gsettingsSchemaDir}" \
+              --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share" \
+              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath linuxDeps}" \
+              "''${gappsWrapperArgs[@]}"
+          '';
+
+          meta = with pkgs.lib; {
+            description = "PromptNotes — AI プロンプトを書き溜めてすぐコピーできるローカル Tauri アプリ";
+            homepage = "https://github.com/dev-komenzar/promptnotes";
+            mainProgram = "promptnotes";
+            platforms = platforms.linux ++ platforms.darwin;
+          };
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -81,7 +168,7 @@
           shellHook = pkgs.lib.optionalString pkgs.stdenv.isLinux ''
             # FileChooser ($_GLib-GIO-WARNING: ... gtk schemas) workaround on NixOS
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share:$XDG_DATA_DIRS"
-            export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
+            export GSETTINGS_SCHEMA_DIR="${gsettingsSchemaDir}"
             # apm CLI (PyInstaller) + Playwright chromium headless shell need
             # libffi / libsqlite3 / libglib / libnss / libdrm / libxkbcommon / ...
             export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (apmRuntimeLibs ++ chromiumDeps)}:$LD_LIBRARY_PATH"
@@ -90,6 +177,14 @@
           '' + ''
             echo "PromptNotes dev shell: Rust $(rustc --version | cut -d' ' -f2) / Bun $(bun --version) / Node $(node --version)"
           '';
+        };
+
+        packages.default = promptnotesPackage;
+        packages.promptnotes = promptnotesPackage;
+
+        apps.default = {
+          type = "app";
+          program = "${promptnotesPackage}/bin/promptnotes";
         };
       });
 }
