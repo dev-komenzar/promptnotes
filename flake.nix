@@ -73,6 +73,18 @@
         ];
         gsettingsSchemaDir = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas";
 
+        # freedesktop .desktop file (heredoc indent 罠回避のため makeDesktopItem を使用)
+        promptnotesDesktopItem = pkgs.makeDesktopItem {
+          name = "promptnotes";
+          desktopName = "PromptNotes";
+          comment = "AI prompt notes desktop app";
+          exec = "promptnotes";
+          icon = "promptnotes";
+          terminal = false;
+          type = "Application";
+          categories = [ "Utility" "Office" ];
+        };
+
         # NixOS 個人利用向けの PromptNotes パッケージ。
         # bun install / cargo fetch がネットワークを要するため __noChroot で
         # sandbox をバイパスする (要 `--option sandbox relaxed` か daemon 側設定)。
@@ -124,21 +136,20 @@
             mkdir -p $out/bin
             install -Dm755 src-tauri/target/release/app $out/bin/promptnotes
           '' + pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            # XDG hicolor icon theme: 実 PNG サイズと path サイズを一致させる
+            # (cargo tauri icon が生成した 32/64/128/256/512 を全て展開)
+            install -Dm644 src-tauri/icons/32x32.png \
+              $out/share/icons/hicolor/32x32/apps/promptnotes.png
+            install -Dm644 src-tauri/icons/64x64.png \
+              $out/share/icons/hicolor/64x64/apps/promptnotes.png
             install -Dm644 src-tauri/icons/128x128.png \
               $out/share/icons/hicolor/128x128/apps/promptnotes.png
+            install -Dm644 src-tauri/icons/128x128@2x.png \
+              $out/share/icons/hicolor/256x256/apps/promptnotes.png
             install -Dm644 src-tauri/icons/icon.png \
               $out/share/icons/hicolor/512x512/apps/promptnotes.png
-            mkdir -p $out/share/applications
-            cat > $out/share/applications/promptnotes.desktop <<EOF
-            [Desktop Entry]
-            Name=PromptNotes
-            Comment=AI prompt notes desktop app
-            Exec=promptnotes
-            Icon=promptnotes
-            Terminal=false
-            Type=Application
-            Categories=Utility;Office;
-            EOF
+            install -Dm644 ${promptnotesDesktopItem}/share/applications/promptnotes.desktop \
+              $out/share/applications/promptnotes.desktop
           '' + ''
             runHook postInstall
           '';
