@@ -33,4 +33,4 @@ followup:
 blocked_on:
   - ori-6l4
 proposals:
-  - pending/2026-06-26-check-for-updates-aggregates-check-at-startup-no-result.md
+  - accepted/2026-06-26-check-for-updates-aggregates-check-at-startup-no-result.md  # accepted 2026-06-28

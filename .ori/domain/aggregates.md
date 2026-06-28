@@ -238,9 +238,12 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 #### Commands {#update-channel-aggregate-commands}
 
-- `UpdateChannel::check_at_startup() -> Result<UpdateChannel, UpdateError>`
+- `UpdateChannel::check_at_startup() -> UpdateChannel`
   - async ネットワーク呼び出し。Tauri updater plugin に委譲
-  - 失敗は silent（ユーザの作業を妨げない）
+  - 失敗は **application service 内部で silent に握り潰し**、`latest_release: None` の
+    `UpdateChannel` を返す（S14 / I-U2 / `workflows/check-for-updates.md#error-handling`）。
+  - 内部実装は `Result<UpdateChannel, UpdateError>` を持つ private fn を経由してよいが、
+    外部 API は **`Result` を露出しない**。
 
 #### Queries {#update-channel-aggregate-queries}
 
