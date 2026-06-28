@@ -1,18 +1,27 @@
 //! Tauri command surface for the `restore-deleted-note` slice.
+//!
+//! Wires the pure use case (`application.rs`) to the same runtime adapters
+//! that `delete-note` uses so the Undo round-trip observes the same trash
+//! files and undo stack (I-N7):
+//!   - `FsNoteRepository` for writing the restored note back
+//!   - `FsTrashService` (in-app `<storage_dir>/trash/` adapter)
+//!   - `InMemoryUndoStack` shared via `tauri::State`
 
 use std::path::PathBuf;
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Runtime, State};
 use time::OffsetDateTime;
 
 use super::application::RestoreDeletedNoteUseCase;
 use super::domain::{RestoreDeletedNoteCommand, RestoreDeletedNoteError};
+use crate::note_capture::shared::adapters::trash_service::FsTrashService;
+use crate::note_capture::shared::adapters::undo_stack::InMemoryUndoStack;
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus};
 use crate::note_capture::shared::types::{DeletedNote, NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
-use crate::note_capture::slices::delete_note::{TrashErrorKind, TrashService, UndoStack};
+use crate::note_capture::slices::delete_note::UndoStack;
 
 struct SystemClock;
 impl Clock for SystemClock {
@@ -21,35 +30,23 @@ impl Clock for SystemClock {
     }
 }
 
-
-
 struct NoOpBus;
 impl EventBus for NoOpBus {
     fn publish(&self, _event: DomainEvent) {}
 }
 
-/// Placeholder Tauri-side trash adapter. The actual OS bridge will land with
-/// the production wiring (analogous to delete-note's follow-up).
-struct UnimplementedTrash;
-impl TrashService for UnimplementedTrash {
-    fn move_to_trash(&self, _path: &std::path::Path) -> Result<(), TrashErrorKind> {
-        Err(TrashErrorKind::Unsupported)
+/// Bridges the `tauri::State<InMemoryUndoStack>` (which only yields `&T`)
+/// into the use case's `U: UndoStack` slot. Mirrors `delete_note::UndoStackRef`.
+struct UndoStackRef<'a>(&'a InMemoryUndoStack);
+impl<'a> UndoStack for UndoStackRef<'a> {
+    fn push(&self, deleted: DeletedNote) {
+        self.0.push(deleted)
     }
-    fn restore_from_trash(&self, _path: &std::path::Path) -> Result<(), TrashErrorKind> {
-        Err(TrashErrorKind::Unsupported)
+    fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        self.0.find_by_id(id)
     }
-}
-
-/// Placeholder Undo stack. Will be replaced by a process-wide singleton wired
-/// to the delete-note command surface in the production setup.
-struct UnimplementedUndo;
-impl UndoStack for UnimplementedUndo {
-    fn push(&self, _deleted: DeletedNote) {}
-    fn find_by_id(&self, _id: &NoteId) -> Option<DeletedNote> {
-        None
-    }
-    fn remove_by_id(&self, _id: &NoteId) -> Option<DeletedNote> {
-        None
+    fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        self.0.remove_by_id(id)
     }
 }
 
@@ -116,6 +113,7 @@ fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
 #[tauri::command]
 pub async fn restore_deleted_note<R: Runtime>(
     app: AppHandle<R>,
+    undo: State<'_, InMemoryUndoStack>,
     note_id: String,
 ) -> Result<RestoreDeletedNoteOutcome, RestoreDeletedNoteErrorDto> {
     // Parse first so a malformed payload surfaces distinctly from
@@ -129,9 +127,9 @@ pub async fn restore_deleted_note<R: Runtime>(
 
     let storage_dir = resolve_storage_dir(&app);
     let uc = RestoreDeletedNoteUseCase::new(
-        FsNoteRepository::new(storage_dir),
-        UnimplementedTrash,
-        UnimplementedUndo,
+        FsNoteRepository::new(storage_dir.clone()),
+        FsTrashService::new(storage_dir),
+        UndoStackRef(undo.inner()),
         SystemClock,
         NoOpBus,
     );
