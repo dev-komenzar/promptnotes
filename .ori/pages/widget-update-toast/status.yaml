@@ -2,7 +2,44 @@ page_id: widget-update-toast
 derived_at: 2026-06-26T00:00:00.000Z
 beads:
   epic: ori-8os
-  current_phase: null
-  completion: []
-phases: {}
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
+    notes: spec.md derived (screen-3 = Update Toast、page-main startup conditional widget)
+  plan:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
+  test-red:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
+  impl-green:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
+    notes: PR #28 で NewVersionDetected event 受信 → mount, dismiss / view-release で unmount を実装 (Tauri 実 updater は ori-6l4 unblock 後の ori-2lm.8 で wiring)
+  refactor:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
+  review:
+    status: closed
+    issue: ori-8os
+    completed_at: 2026-06-27
 dirty: []
+finalized_at: 2026-06-27
+followup:
+  - id: ori-2lm.8
+    note: TauriUpdaterPort production wiring (blocked on ori-6l4)
+proposals: {}

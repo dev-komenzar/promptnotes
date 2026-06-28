@@ -2,10 +2,42 @@ slice_id: list-feed
 derived_at: 2026-06-27
 beads:
   epic: ori-84i
-  current_phase: null
-  completion: []
-phases: {}
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
+    notes: spec.md derived for list-feed workflow (14 workflow 目、起動時 hydration + visible_notes pipeline)
+  plan:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
+  test-red:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
+  impl-green:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
+    notes: PR #30 で storage_dir/notes/*.md hydration + NoteFeed.source / visible_notes pipeline を実装 (oq-source-shape は Vec<Note> 採用で確定)
+  refactor:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
+  review:
+    status: closed
+    issue: ori-84i
+    completed_at: 2026-06-27
 dirty: []
-finalized_at: null
+finalized_at: 2026-06-27
 followup: []
-proposals: []
+proposals: {}
