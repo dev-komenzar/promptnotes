@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-25
+  last_derived: 2026-06-28
   upstream:
     - domain/workflows/flush-note.md#flush-note
     - domain/aggregates.md#note-aggregate
@@ -10,7 +10,7 @@ coherence:
     - domain/validation.md#s3-flush-on-blur
     - domain/validation.md#s13-quit-flush
   hash:
-    domain/workflows/flush-note.md#.*: 1282f5870ad0
+    domain/workflows/flush-note.md#.*: 06ace0dff2ff
     domain/aggregates.md#.*: 9f9048f5816b
     domain/bounded-contexts.md#.*: 4d579125a513
     domain/domain-events.md#.*: 8abdfac78084

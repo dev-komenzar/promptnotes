@@ -31,8 +31,10 @@ struct FlushNoteCommand {
 
 ## Errors {#errors}
 
-- `NoteNotFound { id: NoteId }`
-- `PersistError { path: PathBuf, cause: io::Error }`
+- `NoteNotFound { id: NoteId }` — load_by_id が `Ok(None)` を返した場合
+- `InvalidBody { source: NoteBodyError }` — `NoteBody::new(pending_body)` が失敗した場合（frontmatter delimiter line `---` を含む等、I-N8 違反）
+- `LoadError { path: PathBuf, source: io::Error }` — load_by_id の read I/O 失敗 / 既存 `.md` ファイルの parse 失敗
+- `PersistError { path: PathBuf, source: io::Error }` — `NoteRepository::write` の I/O 失敗 (write 経路専用)
 
 ## Steps {#steps}
 
@@ -61,3 +63,6 @@ struct FlushNoteCommand {
   （S13: 連続 Flush）。順序は処理順（並列性は持たない）
 - 永続化が完了するまで quit を待つ。最大欠損 500ms を許容（Q4 補足）
 - 冪等ガード（compareBody）は auto-save-note と同じロジック
+- `NoteBody` 不変条件（frontmatter delimiter `---` を含まない、I-N8）は aggregate 由来。Flush は pending_body を受け取り構築するため、aggregate と同じ smart constructor を通る
+- read 失敗 (`LoadError`) と write 失敗 (`PersistError`) は意味的に異なる経路として error variant を分離する（auto-save-note workflow と同形）
+- 本 errors 形は `auto-save-note` workflow と shared な「Note::edit_body 経由の永続化契約」を反映している。両 workflow を改訂する際は同時に同形を保つこと

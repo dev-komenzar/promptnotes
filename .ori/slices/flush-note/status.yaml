@@ -48,4 +48,4 @@ followup:
     reason: cross-slice integration. lib.rs に on_window_event(CloseRequested) を install して全 EDITING Note の Flush を順次実行
   - description: "frontend hook 側に 'flush_note invoke 前に必ず JS-side debounce clearTimeout を同期実行する' ルールを apps/promptnotes/src/lib/note-capture/ に明文化 (spec.md#oq-debounce-cancel-composition 由来、bd issue 未起票 — UI 着手時に起票)"
 proposals_surfaced:
-  - .ori/proposals/pending/2026-06-25-flush-note-workflows-flush-note-errors.md
+  - .ori/proposals/accepted/2026-06-25-flush-note-workflows-flush-note-errors.md  # accepted 2026-06-28
