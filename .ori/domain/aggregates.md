@@ -35,7 +35,7 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
 - **Tag** (VO)
   - `name: String` — 正規化済み（lowercase + trim, CJK 許容）
   - 禁止文字（` `, `\t`, `\n`, `,`, `[`, `]`）を含まない
-  - construction 時に禁止文字を含む入力は `TagError::InvalidChar` で reject
+  - construction 時に **trim 後の空文字** は `TagError::Empty` で、**禁止文字を含む入力** は `TagError::InvalidChar { raw }` で reject
 - **TagSet** (VO)
   - `Vec<Tag>` の薄いラッパー
   - 順序を保持（YAML inline list の表示順を保つ）

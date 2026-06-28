@@ -10,8 +10,8 @@ coherence:
     - domain/validation.md#s4-tag-assign-normalize
     - domain/validation.md#s10-tag-invalid-char
   hash:
-    domain/workflows/assign-tag.md#.*: 30fce9517324
-    domain/aggregates.md#.*: cba997f584e5
+    domain/workflows/assign-tag.md#.*: 4efe2dfe63c4
+    domain/aggregates.md#.*: 991ebe2e34f1
     domain/bounded-contexts.md#.*: 4d579125a513
     domain/domain-events.md#.*: 8abdfac78084
     domain/validation.md#.*: 5294b0c32f1b

@@ -61,6 +61,7 @@ proposals:
       target: domain/aggregates.md#note-aggregate-commands
       summary: Note::assign_tag / Note::remove_tag に now: Timestamp 注入を追加 (edit_body と同形化)
       status: accepted (2026-06-28)
-    - file: .ori/proposals/pending/2026-06-26-assign-tag-workflows-tag-error-naming.md
+    - file: .ori/proposals/accepted/2026-06-26-assign-tag-workflows-tag-error-naming.md
       target: domain/workflows/assign-tag.md#errors
       summary: TagError variant を impl 既存形 (Empty | InvalidChar { raw }) に揃える
+      status: accepted (2026-06-28)

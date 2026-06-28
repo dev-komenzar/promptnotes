@@ -3,7 +3,10 @@ target: domain/workflows/assign-tag.md#errors
 by: slices/assign-tag
 reason: workflow#errors の TagError variant 名 `EmptyAfterTrim | InvalidChar(char)` と impl 既存の `Empty | InvalidChar { raw: String }` でずれがある。Tag は既に複数 BC（Note Capture / Note Feed）で使われるため domain 側を impl に合わせる方が影響範囲が小さい
 created: 2026-06-26
-status: pending
+status: accepted
+accepted_at: 2026-06-28
+accepted_by: human (takuya.kometan@gmail.com)
+applied_to: domain/workflows/assign-tag.md#errors (TagError = Empty | InvalidChar { raw: String } に統一) + #steps (parseTag step 文言更新) + domain/aggregates.md#note-aggregate-elements (Tag VO 説明を Empty / InvalidChar { raw } 二分岐に整合)
 ---
 
 # Proposal: `TagError` variant 名を `Empty | InvalidChar { raw }` に統一する
