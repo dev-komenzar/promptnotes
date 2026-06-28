@@ -7,10 +7,8 @@
 //!   - `FsTrashService` (in-app `<storage_dir>/trash/` adapter)
 //!   - `InMemoryUndoStack` shared via `tauri::State`
 
-use std::path::PathBuf;
-
 use serde::Serialize;
-use tauri::{AppHandle, Manager, Runtime, State};
+use tauri::{AppHandle, Runtime, State};
 use time::OffsetDateTime;
 
 use super::application::RestoreDeletedNoteUseCase;
@@ -19,6 +17,7 @@ use crate::note_capture::shared::adapters::trash_service::FsTrashService;
 use crate::note_capture::shared::adapters::undo_stack::InMemoryUndoStack;
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{DeletedNote, NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
 use crate::note_capture::slices::delete_note::UndoStack;
@@ -101,13 +100,6 @@ impl From<RestoreDeletedNoteError> for RestoreDeletedNoteErrorDto {
             },
         }
     }
-}
-
-fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("Tauri must resolve app_data_dir on supported platforms")
-        .join("notes")
 }
 
 #[tauri::command]

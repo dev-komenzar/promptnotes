@@ -4,16 +4,15 @@
 //! on block focus loss, window blur, or app-quit; the body of the file is
 //! mostly serialization glue around the pure use case.
 
-use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Runtime};
 use time::OffsetDateTime;
 
 use super::application::FlushNoteUseCase;
 use super::domain::{FlushError, FlushNoteCommand, FlushTrigger};
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, DebounceTimer, EventBus};
+use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
 
@@ -93,13 +92,6 @@ impl From<FlushError> for FlushErrorDto {
             },
         }
     }
-}
-
-fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("Tauri must resolve app_data_dir on supported platforms")
-        .join("notes")
 }
 
 /// Same `NoteId` boundary handling as `auto-save-note`. See
