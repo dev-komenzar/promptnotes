@@ -11,3 +11,6 @@ apm_modules/
 .direnv/
 result
 result-*
+
+# tauri icon 再生成用 一時 PNG
+icon-source.png
