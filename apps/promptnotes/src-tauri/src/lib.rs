@@ -24,6 +24,13 @@ pub fn run() {
             }
             Ok(())
         })
+        // S13 (.ori/domain/validation.md#s13-quit-flush) の連続 Flush は
+        // frontend (PageMain.svelte) が CloseRequested を JS で intercept し、
+        // pendingFlushRegistry を順次 await → window.destroy() する案 1 で実装。
+        // Rust 側に on_window_event hook を置かないのは flush-note slice の
+        // C-FL11 (use case は 1 件 stateless) を保ったまま順序保証を
+        // composition root に寄せるため。
+        // 詳細: .ori/slices/flush-note/spec.md#impl-quit-orchestration / ori-73q
         .invoke_handler(tauri::generate_handler![
             note_capture::slices::create_note::commands::create_note,
             note_capture::slices::auto_save_note::commands::auto_save_note,
