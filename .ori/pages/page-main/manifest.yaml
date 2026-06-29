@@ -3,6 +3,7 @@ type: page
 derives_from:
   - domain/ui-fields/screen-1.md#screen-1
   - domain/ui-fields/page-groups.md#page-main
+  - domain/domain-events.md#theme-changed
   - domain/workflows/create-note.md#create-note
   - domain/workflows/auto-save-note.md#auto-save-note
   - domain/workflows/flush-note.md#flush-note

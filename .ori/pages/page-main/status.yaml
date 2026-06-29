@@ -1,8 +1,8 @@
 page_id: page-main
-derived_at: 2026-06-26T12:48:51.936Z
+derived_at: 2026-06-29
 beads:
   epic: ori-page-page-main
-  current_phase: finalize
+  current_phase: done
   completion:
     - derive
     - plan
@@ -10,35 +10,46 @@ beads:
     - impl-green
     - refactor
     - review
+    - finalize
 phases:
   derive:
     status: closed
     issue: ori-page-page-main
-    completed_at: 2026-06-27
-    notes: spec.md derived (screen-1 = 4 region: Toolbar / Draft / Feed / Toast, hosts 10 slices)
+    completed_at: 2026-06-29
+    notes: spec.md re-derived (added ThemeChanged subscriber: I-PM16/17/18, TP-T1〜T11)
   plan:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-06-27
-    notes: 5 sub-task scaffold (shell / toolbar / draft / feed / toast)
+    notes: 5 sub-task scaffold (shell / toolbar / draft / feed / toast) + theme beads issues
   test-red:
     status: closed
-    issue: ori-page-page-main
-    completed_at: 2026-06-27
+    issue: ori-test-red-page-main-theme
+    completed_at: 2026-06-29
+    notes: 15 failing tests written (TP-T1〜T11 + lifecycle + detach path)
   impl-green:
     status: closed
-    issue: ori-page-page-main
-    completed_at: 2026-06-27
-    notes: PRs #22-#26 by page-main sub-tasks (shell=#22 / toolbar=#23 / draft=#24 / feed=#25 / toast=#26)
+    issue: ori-impl-green-page-main-theme
+    completed_at: 2026-06-29
+    notes: theme-subscriber.svelte.ts + layout.css + PageMain.svelte wiring
   refactor:
     status: closed
     issue: ori-page-page-main
-    completed_at: 2026-06-27
+    completed_at: 2026-06-29
+    notes: onThemeApplied dead code removed
   review:
     status: closed
+    issue: ori-review-page-main-theme
+    completed_at: 2026-06-29
+    notes: Pass 2 PASS; 4 findings fixed, 2 triaged to follow-up issues
+  finalize:
+    status: closed
     issue: ori-page-page-main
-    completed_at: 2026-06-27
+    completed_at: 2026-06-29
+    notes: dirty cleared; 2 follow-up issues created
 dirty: []
-finalized_at: 2026-06-27
-followup: []
+finalized_at: 2026-06-29
+followup:
+  - ori-followup-page-main-theme-divergence
+  - ori-followup-page-main-theme-wiring-test
 proposals: {}

@@ -4,10 +4,11 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-06-29
   derives_from:
     - domain/ui-fields/screen-1.md#screen-1
     - domain/ui-fields/page-groups.md#page-main
+    - domain/domain-events.md#theme-changed
     - domain/workflows/create-note.md#create-note
     - domain/workflows/auto-save-note.md#auto-save-note
     - domain/workflows/flush-note.md#flush-note
@@ -130,6 +131,17 @@ UI 実装はこの 3 点を曖昧化してはならない。
 - **I-PM14（Domain 層への直接依存禁止）**: page-main は domain types を直接 import せず、slice の TS bindings が export する DTO 型のみを使う。Brand 化された VO（NoteId 等）の構築は slice 内で完結する
 - **I-PM15（Cross-slice の直接連携禁止）**: 例えば create-note の outcome を delete-note に直接渡す等の **slice 間結線は page state（Svelte store）経由のみ**。slice モジュールが他 slice を import してはならない（`.ori/architecture.md` `cross_slice.prohibited_direct: true`）
 
+### Theme 適用 {#invariants-theme}
+
+> domain/domain-events.md#theme-changed-subscribers より：「**UI 層**: CodeMirror テーマと CSS 変数を即時切り替え」
+
+- **I-PM16（theme DOM 反映）**: page-main は `Settings.theme` に応じて `<html>` 要素の `dark` class を toggle する
+  - `Dark`: `dark` class を付与
+  - `Light`: `dark` class を削除
+  - `System`: `prefers-color-scheme: dark` media query の結果に従い、`dark` class を toggle する。**media query の変更を監視**し、変化時に即時反映する
+- **I-PM17（ThemeChanged 購読）**: page-main は `settings:theme_changed` Tauri event を購読し、受信時に即座に `Settings.theme` を更新して DOM に反映する（domain-events.md#theme-changed-timing: 同期）
+- **I-PM18（初期 theme 適用）**: `load-settings` で取得した `Settings.theme` を page mount 時に DOM に反映する（I-PM3 の mount-time effect の一環）
+
 ## テスト観点 (E2E + smoke + a11y) {#test-points}
 
 ### tp-mount: 起動 smoke {#tp-mount}
@@ -191,6 +203,28 @@ eslint static check で `apps/promptnotes/src/ui-page/**` / `apps/promptnotes/sr
 
 詳細な a11y 監査（コントラスト / SR ナビゲーション）は MVP 範囲外。
 
+### tp-theme-apply: theme の DOM 反映 {#tp-theme-apply}
+
+> domain/domain-events.md#theme-changed-subscribers より：「UI 層が CodeMirror テーマと CSS 変数を即時切り替え」
+
+- **TP-T1**: `load-settings` で取得した `Settings.theme == Dark` の場合、`<html>` 要素に `dark` class が付与される
+- **TP-T2**: `Settings.theme == Light` の場合、`dark` class が削除される
+- **TP-T3**: `Settings.theme == System` かつ `prefers-color-scheme: dark` の場合、`dark` class が付与される
+- **TP-T4**: `Settings.theme == System` かつ `prefers-color-scheme: light` の場合、`dark` class が削除される
+
+### tp-theme-system-media: System theme の media query 監視 {#tp-theme-system-media}
+
+- **TP-T5**: `Settings.theme == System` の状態で `prefers-color-scheme` が `dark` → `light` に変化した場合、`dark` class が即座に削除される
+- **TP-T6**: `Settings.theme == System` の状態で `prefers-color-scheme` が `light` → `dark` に変化した場合、`dark` class が即座に付与される
+- **TP-T7**: `Settings.theme == Dark` または `Light` の状態では `prefers-color-scheme` の変化を無視する（固定）
+
+### tp-theme-changed-event: ThemeChanged event 購読 {#tp-theme-changed-event}
+
+- **TP-T8**: `settings:theme_changed` Tauri event で `new_theme: Dark` を受信した場合、即座に `dark` class が付与される
+- **TP-T9**: `settings:theme_changed` Tauri event で `new_theme: Light` を受信した場合、即座に `dark` class が削除される
+- **TP-T10**: `settings:theme_changed` Tauri event で `new_theme: System` を受信した場合、`prefers-color-scheme` media query の監視を再開し、現在値で `dark` class を toggle する
+- **TP-T11**: `settings:theme_changed` event 購読は非 Tauri 環境（browser / test）で silent fallback する（例外を投げない）
+
 ## 実装ノート {#impl-notes}
 
 ### Svelte 5 + SvelteKit static SPA {#impl-svelte-stack}
@@ -219,7 +253,9 @@ apps/promptnotes/src/
 │       │   ├── feed.svelte.ts          # 表示中 notes / filter / sort
 │       │   ├── draft.svelte.ts         # draft body / submit state
 │       │   ├── focus.svelte.ts         # Block state machine (IDLE/FOCUSED/EDITING)
-│       │   └── toasts.svelte.ts        # delete-note Toast スタック
+│       │   ├── toasts.svelte.ts        # delete-note Toast スタック
+│       │   ├── sort-preference-subscriber.svelte.ts  # SortPreferenceChanged event 購読
+│       │   └── theme-subscriber.svelte.ts            # ThemeChanged event 購読 + .dark class toggle
 │       └── tests/                      # *.svelte.test.ts (vitest browser)
 └── ui-widget/                          # kind: ui-widget (order 1)
     ├── settings-modal/
