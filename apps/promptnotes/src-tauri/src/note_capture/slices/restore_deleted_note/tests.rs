@@ -134,10 +134,14 @@ impl TrashService for FakeTrash {
         unreachable!("restore-deleted-note must not call move_to_trash")
     }
     fn restore_from_trash(&self, path: &Path) -> Result<(), TrashErrorKind> {
+        // Always log: the failure path also needs "trash" to appear so we can
+        // assert that trash ran after find (review Pass 2 LOW-B — symmetry with
+        // FakeUndo::find_by_id / FakeRepo::load_by_id which both log
+        // unconditionally per Pass 1 MED-6/MED-7).
+        self.order_log.borrow_mut().push("trash");
         if let Some(kind) = self.fail_restore_with.take() {
             return Err(kind);
         }
-        self.order_log.borrow_mut().push("trash");
         self.restores.borrow_mut().push(path.to_path_buf());
         Ok(())
     }
@@ -429,7 +433,7 @@ fn tp_tp1_middle_element_pop_preserves_others_in_order() {
 fn tp_tr1_restore_failure_short_circuits_load_remove_event() {
     let created = datetime!(2026-06-26 09:00:00 UTC);
     let now = datetime!(2026-06-26 10:00:00 UTC);
-    let (uc, repo, trash, undo, bus, _log) = rig(now);
+    let (uc, repo, trash, undo, bus, log) = rig(now);
 
     let original = fixture_note("hi", created);
     let id = original.id().clone();
@@ -463,6 +467,14 @@ fn tp_tr1_restore_failure_short_circuits_load_remove_event() {
         path.as_path(),
         "retry: same path remains"
     );
+    // review Pass 2 LOW-B: FakeTrash も常時 log 化されたので trash 失敗 path の
+    // 順序も pin できる。find → trash(fail) で短絡し load/remove/event 未到達。
+    let observed: Vec<&'static str> = log.borrow().iter().copied().collect();
+    assert_eq!(
+        observed,
+        vec!["find", "trash"],
+        "I-RDN3: find → trash(fail) で短絡し load/remove/event 未到達"
+    );
 }
 
 // ===== TP-RE*: ReadError (spec.md#tp-read-err-io, #tp-read-err-ok-none, I-RDN4) =====
@@ -471,7 +483,7 @@ fn tp_tr1_restore_failure_short_circuits_load_remove_event() {
 fn tp_re1_load_io_error_yields_read_error_and_keeps_undo() {
     let created = datetime!(2026-06-26 09:00:00 UTC);
     let now = datetime!(2026-06-26 10:00:00 UTC);
-    let (uc, repo, _trash, undo, bus, _log) = rig(now);
+    let (uc, repo, _trash, undo, bus, log) = rig(now);
 
     let original = fixture_note("hi", created);
     let id = original.id().clone();
@@ -498,6 +510,14 @@ fn tp_re1_load_io_error_yields_read_error_and_keeps_undo() {
     assert_eq!(snapshot.len(), 1, "DeletedNote remains for retry");
     assert_eq!(snapshot[0].id(), &id, "retry: same id remains (MED-5)");
     assert_eq!(snapshot[0].original_path(), path.as_path());
+    // review Pass 2 LOW-A: MED-7 で load が常時 log 化されたので failure path の
+    // 副作用順序も pin できる。find → trash (成功) → load (失敗) で短絡。
+    let observed: Vec<&'static str> = log.borrow().iter().copied().collect();
+    assert_eq!(
+        observed,
+        vec!["find", "trash", "load"],
+        "I-RDN4: find → trash → load(fail) で短絡し remove/event 未到達"
+    );
 }
 
 /// spec.md#tp-trash-restore-err + #tp-stack-targeted-pop combined
@@ -697,6 +717,45 @@ fn tp_nn1_no_undo_path_does_not_touch_any_side_effect() {
         "I-RDN1: remove must not be called when find missed"
     );
     assert_eq!(bus.event_count(), 0);
+}
+
+// ===== OQ pinning: oq-duplicate-deleted-note-by-id (spec.md#oq-duplicate-deleted-note-by-id) =====
+//
+// spec I-RDN9 は「同 NoteId の DeletedNote は同時に存在しない」前提で first-match
+// 挙動を未定義 (OQ) としている。本 test は current impl の "first-match (Vec front)"
+// 挙動を文書化するもので、invariant 保証ではない (review Pass 1 LOW [9])。
+#[test]
+#[ignore = "OQ pinning: oq-duplicate-deleted-note-by-id (挙動は未保証、文書化目的)"]
+fn tp_oq1_duplicate_note_id_first_match_semantics() {
+    let created = datetime!(2026-06-26 09:00:00 UTC);
+    let now = datetime!(2026-06-26 10:00:00 UTC);
+    let (uc, repo, trash, undo, _bus, _log) = rig(now);
+
+    let original = fixture_note("hi", created);
+    let id = original.id().clone();
+    let path1 = PathBuf::from("/dir1").join(format!("{}.md", id.as_str()));
+    let path2 = PathBuf::from("/dir2").join(format!("{}.md", id.as_str()));
+    undo.seed(make_deleted(original.clone(), path1.clone()));
+    undo.seed(make_deleted(original, path2.clone()));
+    repo.seed(fixture_note("hi", created));
+
+    uc.execute(RestoreDeletedNoteCommand {
+        note_id: id.clone(),
+    })
+    .expect("first-match を restore 対象にする");
+
+    assert_eq!(
+        trash.last_restored().as_deref(),
+        Some(path1.as_path()),
+        "find_by_id は最初に match した DeletedNote (path1) を返す"
+    );
+    let snapshot = undo.snapshot();
+    assert_eq!(snapshot.len(), 1, "remove_by_id は 1 件のみ除去");
+    assert_eq!(
+        snapshot[0].original_path(),
+        path2.as_path(),
+        "残存は path2 (後方の要素)"
+    );
 }
 
 // ===== TP-SIG: signature pin =====
