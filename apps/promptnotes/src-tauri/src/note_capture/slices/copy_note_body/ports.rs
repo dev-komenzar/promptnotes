@@ -18,3 +18,9 @@ pub enum ClipboardErrorKind {
 pub trait ClipboardService {
     fn write_text(&self, text: &str) -> Result<(), ClipboardErrorKind>;
 }
+
+impl<T: ClipboardService + ?Sized> ClipboardService for std::rc::Rc<T> {
+    fn write_text(&self, text: &str) -> Result<(), ClipboardErrorKind> {
+        (**self).write_text(text)
+    }
+}

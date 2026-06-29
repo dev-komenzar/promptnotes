@@ -42,3 +42,24 @@ pub trait UndoStack {
     /// (audit / future 検証用、本 slice の application 層では discard)。
     fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote>;
 }
+
+impl<T: TrashService + ?Sized> TrashService for std::rc::Rc<T> {
+    fn move_to_trash(&self, path: &Path) -> Result<(), TrashErrorKind> {
+        (**self).move_to_trash(path)
+    }
+    fn restore_from_trash(&self, path: &Path) -> Result<(), TrashErrorKind> {
+        (**self).restore_from_trash(path)
+    }
+}
+
+impl<T: UndoStack + ?Sized> UndoStack for std::rc::Rc<T> {
+    fn push(&self, deleted: DeletedNote) {
+        (**self).push(deleted)
+    }
+    fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        (**self).find_by_id(id)
+    }
+    fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
+        (**self).remove_by_id(id)
+    }
+}

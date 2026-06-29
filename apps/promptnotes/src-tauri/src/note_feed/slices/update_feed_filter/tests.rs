@@ -152,13 +152,11 @@ fn tp_d2_set_all() {
     assert_eq!(out.filter().date_range(), &DateRangeFilter::All);
 }
 
-/// spec.md#tp-set-date-range TP-D3 — Custom{from,to} 保持
+/// spec.md#tp-set-date-range TP-D3 — Custom{from,to} 保持 (FeedDate VO 経由)
 #[test]
 fn tp_d3_set_custom_range_is_preserved() {
-    let range = DateRangeFilter::Custom {
-        from: "2026-01-01".to_string(),
-        to: "2026-01-31".to_string(),
-    };
+    let range = DateRangeFilter::custom_from_iso("2026-01-01", "2026-01-31")
+        .expect("valid custom range");
     let out = UpdateFeedFilterUseCase::apply(
         empty_feed(),
         UpdateFeedFilterCommand::SetDateRange {

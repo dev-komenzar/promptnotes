@@ -66,19 +66,6 @@ impl NoteRepository for FakeRepo {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl NoteRepository for RcRepo {
-    fn write(&self, n: &Note) -> io::Result<()> {
-        self.0.write(n)
-    }
-    fn storage_dir(&self) -> &Path {
-        self.0.storage_dir()
-    }
-    fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
-        self.0.load_by_id(id)
-    }
-}
-
 #[derive(Default)]
 struct FakeClipboard {
     writes: RefCell<Vec<String>>,
@@ -108,15 +95,8 @@ impl ClipboardService for FakeClipboard {
     }
 }
 
-struct RcClipboard(Rc<FakeClipboard>);
-impl ClipboardService for RcClipboard {
-    fn write_text(&self, text: &str) -> Result<(), ClipboardErrorKind> {
-        self.0.write_text(text)
-    }
-}
-
 type Rig = (
-    CopyNoteBodyUseCase<RcRepo, RcClipboard>,
+    CopyNoteBodyUseCase<Rc<FakeRepo>, Rc<FakeClipboard>>,
     Rc<FakeRepo>,
     Rc<FakeClipboard>,
 );
@@ -124,7 +104,7 @@ type Rig = (
 fn rig() -> Rig {
     let repo = Rc::new(FakeRepo::new());
     let clipboard = Rc::new(FakeClipboard::new());
-    let uc = CopyNoteBodyUseCase::new(RcRepo(repo.clone()), RcClipboard(clipboard.clone()));
+    let uc = CopyNoteBodyUseCase::new(repo.clone(), clipboard.clone());
     (uc, repo, clipboard)
 }
 

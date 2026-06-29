@@ -20,11 +20,9 @@ export type NoteFeedFilterDto = {
 	tag: string | null;
 };
 
-export type UpdateFeedFilterError = {
-	kind: 'invalid_tag';
-	raw: string;
-	reason: 'invalid_char' | 'empty';
-};
+export type UpdateFeedFilterError =
+	| { kind: 'invalid_tag'; raw: string; reason: 'invalid_char' | 'empty' }
+	| { kind: 'invalid_date_range'; reason: 'from_after_to' };
 
 /**
  * Invoke the `update_feed_filter` Tauri command.
@@ -37,8 +35,6 @@ export type UpdateFeedFilterError = {
  * `set_tag.raw` は Tag::new で I-N6 (禁止文字 / 空文字) を検証するため、
  * 失敗時は [`UpdateFeedFilterError`] を返す。
  */
-export async function updateFeedFilter(
-	input: UpdateFeedFilterInput
-): Promise<NoteFeedFilterDto> {
+export async function updateFeedFilter(input: UpdateFeedFilterInput): Promise<NoteFeedFilterDto> {
 	return invoke<NoteFeedFilterDto>('update_feed_filter', { input });
 }

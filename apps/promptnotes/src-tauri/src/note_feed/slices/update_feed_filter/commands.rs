@@ -17,7 +17,6 @@ use super::domain::UpdateFeedFilterCommand;
 use crate::note_capture::shared::types::{Tag, TagError};
 use crate::note_feed::shared::adapters::InMemoryNoteFeedState;
 use crate::note_feed::shared::types::{DateRangeFilter, FeedFilter};
-
 #[derive(Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum UpdateFeedFilterInput {
@@ -50,6 +49,9 @@ impl From<&FeedFilter> for NoteFeedFilterDto {
 pub enum UpdateFeedFilterErrorDto {
     /// Tag::new での I-N6 (禁止文字 / 空文字) 違反。
     InvalidTag { raw: String, reason: String },
+    /// `DateRangeFilter::Custom { from, to }` の `from > to` 違反
+    /// (smart constructor / `validate()` で reject)。
+    InvalidDateRange { reason: String },
 }
 
 impl From<(String, TagError)> for UpdateFeedFilterErrorDto {
@@ -62,10 +64,23 @@ impl From<(String, TagError)> for UpdateFeedFilterErrorDto {
     }
 }
 
+impl From<&crate::note_feed::shared::types::DateRangeFilterError> for UpdateFeedFilterErrorDto {
+    fn from(e: &crate::note_feed::shared::types::DateRangeFilterError) -> Self {
+        use crate::note_feed::shared::types::DateRangeFilterError;
+        let reason = match e {
+            DateRangeFilterError::FromAfterTo { .. } => "from_after_to".to_string(),
+        };
+        Self::InvalidDateRange { reason }
+    }
+}
+
 fn lower(input: UpdateFeedFilterInput) -> Result<UpdateFeedFilterCommand, UpdateFeedFilterErrorDto> {
     Ok(match input {
         UpdateFeedFilterInput::SetQuery { raw } => UpdateFeedFilterCommand::SetQuery { raw },
         UpdateFeedFilterInput::SetDateRange { range } => {
+            range
+                .validate()
+                .map_err(UpdateFeedFilterErrorDto::from)?;
             UpdateFeedFilterCommand::SetDateRange { range }
         }
         UpdateFeedFilterInput::SetTag { raw } => {
