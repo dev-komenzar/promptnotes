@@ -5,8 +5,7 @@ use std::path::PathBuf;
 
 use crate::note_feed::shared::types::NoteFeed;
 use crate::user_preferences::shared::ports::{EventBus, SettingsRepository};
-use crate::user_preferences::shared::types::SettingsEvent;
-use crate::user_preferences::slices::update_settings::domain::UpdateSettingsError;
+use crate::user_preferences::shared::types::{PersistError, SettingsEvent};
 
 use super::domain::{ChangeSortOrderCommand, ChangeSortOrderError};
 
@@ -20,7 +19,7 @@ use super::domain::{ChangeSortOrderCommand, ChangeSortOrderError};
 /// 5. `persist` (`SettingsRepository::save`)
 /// 6. `emit` (`EventBus::publish(SortPreferenceChanged)`)
 ///
-/// PersistError は `UpdateSettingsError::PersistError` を再利用 (C-CSO6)。
+/// PersistError は `shared::types::PersistError` を利用 (ori-hpo.8 / C-CSO6)。
 pub struct ChangeSortOrderUseCase<R: SettingsRepository, B: EventBus> {
     repo: R,
     bus: B,
@@ -58,7 +57,7 @@ impl<R: SettingsRepository, B: EventBus> ChangeSortOrderUseCase<R, B> {
         // 5. persist
         self.repo
             .save(&updated_settings)
-            .map_err(|cause| UpdateSettingsError::PersistError {
+            .map_err(|cause| PersistError {
                 path: self.config_path.clone(),
                 cause,
             })?;

@@ -1,8 +1,10 @@
 //! Domain types for `change-sort-order` slice.
 //!
-//! **PersistError は update-settings の `UpdateSettingsError` を再利用** (C-CSO6)。
-//! 新しい error enum を定義せず、`pub use` で 1 つの型に統一する。
-//! UI 層が両 slice からの error を同一 handler で扱えるようにする。
+//! `ChangeSortOrderError` は `shared::types::PersistError` の alias (ori-hpo.8)。
+//! 従来は `UpdateSettingsError` を `pub use` していたが、これだと slice 間
+//! 直接依存 (oq-cross-bc-import) が残るため、shared 層に抽出した `PersistError`
+//! を直接参照する形に変更した。本 slice は validation を行わないため
+//! `InvalidPath` variant は構造上発生せず、`PersistError` のみで十分。
 
 use crate::user_preferences::shared::types::SortOrder;
 
@@ -12,11 +14,8 @@ pub struct ChangeSortOrderCommand {
     pub new_sort: SortOrder,
 }
 
-/// Slice のエラー型。`UpdateSettingsError` を再利用 (C-CSO6)。
+/// Slice のエラー型。`shared::types::PersistError` を再利用 (ori-hpo.8 / C-CSO6)。
 ///
-/// `UpdateSettingsError::PersistError { path, cause }` variant が
-/// 「settings.json 書き出し失敗」を表す（update-settings と共通）。
-/// 本 slice 自身が validation を行わないため `InvalidPath` variant は構造上発生し得ない
-/// （type は alias なので variant として存在はする）。
-pub use crate::user_preferences::slices::update_settings::domain::UpdateSettingsError
-    as ChangeSortOrderError;
+/// `PersistError { path, cause }` が「settings.json 書き出し失敗」を表す
+/// (`update-settings` slice と共通の shared error type)。
+pub use crate::user_preferences::shared::types::PersistError as ChangeSortOrderError;

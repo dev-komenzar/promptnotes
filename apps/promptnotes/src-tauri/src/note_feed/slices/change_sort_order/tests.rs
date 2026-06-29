@@ -4,7 +4,7 @@
 //!
 //! 設計メモ:
 //! - 本 slice は **NoteFeed と Settings を同時に touch する唯一の slice** (Customer-Supplier の逆流)
-//! - PersistError は update-settings の `UpdateSettingsError::PersistError` を再利用 (C-CSO6)
+//! - PersistError は `shared::types::PersistError` を利用 (ori-hpo.8 / C-CSO6)
 //! - TP-CS1: UseCase の type 構造で「NoteFeed + SettingsRepository 両方を扱う」事を type-level に固定
 
 use std::cell::RefCell;
@@ -15,9 +15,8 @@ use std::rc::Rc;
 use crate::note_feed::shared::types::NoteFeed;
 use crate::user_preferences::shared::ports::{EventBus, SettingsRepository};
 use crate::user_preferences::shared::types::{
-    Settings, SettingsEvent, SortDirection, SortField, SortOrder, StorageDir, Theme,
+    PersistError, Settings, SettingsEvent, SortDirection, SortField, SortOrder, StorageDir, Theme,
 };
-use crate::user_preferences::slices::update_settings::domain::UpdateSettingsError;
 
 use super::application::ChangeSortOrderUseCase;
 use super::domain::{ChangeSortOrderCommand, ChangeSortOrderError};
@@ -166,7 +165,11 @@ fn tp_h2_save_called_once_with_new_sort() {
 
     assert_eq!(repo.save_count(), 1, "TP-H2: save called once");
     let saved = repo.last_saved().unwrap();
-    assert_eq!(saved.sort_preference(), new_sort, "TP-H2: saved sort matches");
+    assert_eq!(
+        saved.sort_preference(),
+        new_sort,
+        "TP-H2: saved sort matches"
+    );
 }
 
 /// spec.md#tp-happy TP-H3 — SortPreferenceChanged 1 件 publish
@@ -255,7 +258,7 @@ fn tp_e1_save_failure_returns_persist_error() {
     let result = uc.execute(NoteFeed::empty(), ChangeSortOrderCommand { new_sort });
 
     assert!(
-        matches!(result, Err(UpdateSettingsError::PersistError { .. })),
+        matches!(result, Err(PersistError { .. })),
         "TP-E1: persist failure surfaces as PersistError"
     );
 }
@@ -289,13 +292,17 @@ fn tp_e3_persist_failure_leaves_repo_state_unchanged() {
     );
 }
 
-/// spec.md#tp-persist-error TP-E4 — error 型が UpdateSettingsError と同一 (C-CSO6 type-level)
+/// spec.md#tp-persist-error TP-E4 — error 型が shared PersistError と同一 (C-CSO6 type-level)
+///
+/// ori-hpo.8: `ChangeSortOrderError` は `shared::types::PersistError` の alias。
+/// `UpdateSettingsError::PersistError(PersistError)` と同じ inner 型を参照する。
 #[test]
-fn tp_e4_error_type_is_update_settings_error() {
-    // type-level: ChangeSortOrderError と UpdateSettingsError が同一型なら、
-    // 関数ポインタとして互換 cast できる。エイリアスが reuse できているかを compile-time に固定。
-    let _: fn(UpdateSettingsError) -> ChangeSortOrderError = |e| e;
-    let _: fn(ChangeSortOrderError) -> UpdateSettingsError = |e| e;
+fn tp_e4_error_type_is_shared_persist_error() {
+    // type-level: ChangeSortOrderError と PersistError が同一型なら、
+    // 関数ポインタとして互換 cast できる。shared 層の型を reuse できているかを
+    // compile-time に固定。
+    let _: fn(PersistError) -> ChangeSortOrderError = |e| e;
+    let _: fn(ChangeSortOrderError) -> PersistError = |e| e;
 }
 
 // ===== TP-A*: atomic transaction =====

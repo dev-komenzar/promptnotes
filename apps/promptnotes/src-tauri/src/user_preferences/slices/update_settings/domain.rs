@@ -1,11 +1,13 @@
 //! Domain types for `update-settings` slice. Pure: no I/O.
 //!
 //! Re-exports `SettingsEvent` from `shared::types` for slice ergonomics.
+//! `PersistError` は `shared::types::PersistError` を利用 (ori-hpo.8 抽出)。
 
 use std::path::PathBuf;
 
 use thiserror::Error;
 
+pub use crate::user_preferences::shared::types::PersistError;
 pub use crate::user_preferences::shared::types::SettingsEvent;
 use crate::user_preferences::shared::types::Theme;
 
@@ -34,18 +36,21 @@ impl SettingsDiff {
 }
 
 /// `update-settings` slice のエラー型 (`workflows/update-settings.md#errors`)。
+///
+/// `PersistError` variant は `shared::types::PersistError` を wrap する (ori-hpo.8)。
+/// これにより `change-sort-order` slice が `shared::types::PersistError` を直接
+/// 参照でき、slice 間直接依存 (oq-cross-bc-import) が解消される。
 #[derive(Debug, Error)]
 pub enum UpdateSettingsError {
     /// I-S1 (絶対パス) または I-S2 (循環参照禁止) 違反。
     #[error("invalid storage_dir path {path:?}: {reason}")]
-    InvalidPath { path: PathBuf, reason: PathErrorReason },
-    /// `SettingsRepository::save` 失敗。
-    #[error("failed to persist settings to {path:?}: {cause}")]
-    PersistError {
+    InvalidPath {
         path: PathBuf,
-        #[source]
-        cause: std::io::Error,
+        reason: PathErrorReason,
     },
+    /// `SettingsRepository::save` 失敗 (`shared::types::PersistError` を wrap)。
+    #[error(transparent)]
+    PersistError(#[from] PersistError),
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]

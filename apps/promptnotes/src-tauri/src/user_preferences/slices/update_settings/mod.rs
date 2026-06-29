@@ -6,4 +6,4 @@ pub mod domain;
 mod tests;
 
 pub use application::UpdateSettingsUseCase;
-pub use domain::{SettingsEvent, UpdateSettingsCommand, UpdateSettingsError};
+pub use domain::{PersistError, SettingsEvent, UpdateSettingsCommand, UpdateSettingsError};

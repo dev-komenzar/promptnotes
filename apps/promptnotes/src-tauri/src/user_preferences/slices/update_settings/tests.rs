@@ -431,14 +431,14 @@ fn tp_e4_save_failure_returns_persist_error_with_no_events() {
     });
 
     match result {
-        Err(UpdateSettingsError::PersistError { path, cause }) => {
+        Err(UpdateSettingsError::PersistError(err)) => {
             assert_eq!(
-                path,
+                err.path,
                 config_path(),
                 "TP-E4: PersistError.path must equal config_path"
             );
             assert_eq!(
-                cause.kind(),
+                err.cause.kind(),
                 io::ErrorKind::PermissionDenied,
                 "TP-E4: PersistError.cause preserves original io::ErrorKind"
             );

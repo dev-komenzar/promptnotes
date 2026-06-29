@@ -4,11 +4,9 @@
 use std::path::{Path, PathBuf};
 
 use crate::user_preferences::shared::ports::{EventBus, SettingsRepository};
-use crate::user_preferences::shared::types::{Settings, SettingsEvent, StorageDir};
+use crate::user_preferences::shared::types::{PersistError, Settings, SettingsEvent, StorageDir};
 
-use super::domain::{
-    PathErrorReason, SettingsDiff, UpdateSettingsCommand, UpdateSettingsError,
-};
+use super::domain::{PathErrorReason, SettingsDiff, UpdateSettingsCommand, UpdateSettingsError};
 
 /// `update-settings` の use case (`workflows/update-settings.md#steps`)。
 ///
@@ -33,10 +31,7 @@ impl<R: SettingsRepository, B: EventBus> UpdateSettingsUseCase<R, B> {
         }
     }
 
-    pub fn execute(
-        &self,
-        cmd: UpdateSettingsCommand,
-    ) -> Result<Settings, UpdateSettingsError> {
+    pub fn execute(&self, cmd: UpdateSettingsCommand) -> Result<Settings, UpdateSettingsError> {
         // 1. load
         let current = self.repo.load();
 
@@ -51,12 +46,12 @@ impl<R: SettingsRepository, B: EventBus> UpdateSettingsUseCase<R, B> {
         if diff.is_noop() {
             return Ok(current);
         }
-        self.repo
-            .save(&updated)
-            .map_err(|cause| UpdateSettingsError::PersistError {
+        self.repo.save(&updated).map_err(|cause| {
+            UpdateSettingsError::PersistError(PersistError {
                 path: self.config_path.clone(),
                 cause,
-            })?;
+            })
+        })?;
 
         // 5. emit conditional (order: storage_dir → theme, C-US5)
         if diff.storage_dir_changed {
@@ -109,8 +104,8 @@ fn apply_changes(
     new_storage_dir: Option<StorageDir>,
     new_theme: Option<crate::user_preferences::shared::types::Theme>,
 ) -> (Settings, SettingsDiff) {
-    let storage_dir_change = new_storage_dir
-        .filter(|nd| nd.as_path() != current.storage_dir().as_path());
+    let storage_dir_change =
+        new_storage_dir.filter(|nd| nd.as_path() != current.storage_dir().as_path());
     let theme_change = new_theme.filter(|nt| *nt != current.theme());
 
     let diff = SettingsDiff {
