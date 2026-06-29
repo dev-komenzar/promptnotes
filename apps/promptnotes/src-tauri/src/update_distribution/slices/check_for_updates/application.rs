@@ -29,8 +29,11 @@ impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
         let current_version = cmd.current_version.clone();
         match self.try_execute(cmd) {
             Ok(channel) => channel,
-            Err(_e) => {
-                // S14 / C-CFU3: silent failure。実 wiring (ori-6l4) 後は `log::warn!("update check failed: {:?}", _e);` を有効化。
+            Err(e) => {
+                // S14 / C-CFU3: silent failure。UI 通知なし、ログ出力のみ。
+                // ori-2lm.10: log crate 直接呼出 (port 抽象化なし)。Update Distribution BC は
+                // generic subdomain であり logging は cross-cutting infra → port 化の ROI なし。
+                log::warn!("update check failed: {:?}", e);
                 UpdateChannel::without_release(current_version)
             }
         }
@@ -38,15 +41,13 @@ impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
 
     /// 内部 pipeline (`workflows/check-for-updates.md#steps`)。`?` で early return。
     /// I-U3 通り fetch は **1 回のみ** (リトライループなし、C-CFU4)。
-    fn try_execute(
-        &self,
-        cmd: CheckForUpdatesCommand,
-    ) -> Result<UpdateChannel, UpdateError> {
+    fn try_execute(&self, cmd: CheckForUpdatesCommand) -> Result<UpdateChannel, UpdateError> {
         let raw = self.updater.fetch_latest_release()?;
         let release = parse_release(raw)?;
         match compare(&cmd.current_version, release) {
             Comparison::NewVersion(release) => {
-                let channel = UpdateChannel::with_release(cmd.current_version.clone(), release.clone());
+                let channel =
+                    UpdateChannel::with_release(cmd.current_version.clone(), release.clone());
                 // C-CFU5: 新版時のみ event 1 件 publish
                 self.bus.publish(NewVersionDetected {
                     current_version: cmd.current_version,

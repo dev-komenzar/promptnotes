@@ -9,6 +9,8 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+use proptest::prelude::*;
+
 use crate::update_distribution::shared::ports::{EventBus, RawRelease, UpdaterPort};
 use crate::update_distribution::shared::types::{
     NewVersionDetected, UpdateChannel, UpdateError, Version,
@@ -171,7 +173,10 @@ fn tp_n3_event_payload_matches_release() {
     let event = bus.events().into_iter().next().unwrap();
     assert_eq!(event.current_version, current_version());
     assert_eq!(event.latest_version, Version::from_str("0.4.0").unwrap());
-    assert_eq!(event.release_url, "https://github.com/x/y/releases/tag/v0.4.0");
+    assert_eq!(
+        event.release_url,
+        "https://github.com/x/y/releases/tag/v0.4.0"
+    );
     assert_eq!(event.release_notes, "Release notes here");
 }
 
@@ -291,12 +296,13 @@ fn tp_s14_4_parse_error_is_silent() {
 
 /// spec.md#tp-s14 TP-S14-4b — UpdaterPort が Ok を返したが version_string が parse 不能 → silent
 ///
-/// oq-version-pre-release の暫定方針「pre-release / build metadata は ParseError で reject」が
-/// 発火する path。`parse_release` 内の `Version::from_str("0.4.0-rc1")` が Err を返し、
+/// semver 仕様に合致しない文字列は `Version::from_str` が `ParseError` を返し、
 /// `try_execute` の `?` で bubble up、`execute` で握り潰される。
+/// (ori-2lm.9 で strict semver 対応に拡張: "0.4.0-rc1" は valid になったため、
+///  ここでは真正に不正な文字列を使用する)
 #[test]
 fn tp_s14_4b_unparseable_version_from_ok_response_is_silent() {
-    let (uc, _u, bus) = rig(Ok(raw("0.4.0-rc1", "https://example.com", "")));
+    let (uc, _u, bus) = rig(Ok(raw("not-a-version", "https://example.com", "")));
 
     let channel = uc.execute(CheckForUpdatesCommand {
         current_version: current_version(),
@@ -306,7 +312,11 @@ fn tp_s14_4b_unparseable_version_from_ok_response_is_silent() {
         channel.latest_release().is_none(),
         "TP-S14-4b: unparseable version_string → None"
     );
-    assert_eq!(bus.count(), 0, "TP-S14-4b: no event on parse failure via Ok path");
+    assert_eq!(
+        bus.count(),
+        0,
+        "TP-S14-4b: no event on parse failure via Ok path"
+    );
 }
 
 /// spec.md#tp-s14 TP-S14-5 — RateLimited も silent
@@ -333,7 +343,11 @@ fn tp_r1_success_path_calls_updater_exactly_once() {
         current_version: current_version(),
     });
 
-    assert_eq!(updater.call_count(), 1, "TP-R1: UpdaterPort called exactly once");
+    assert_eq!(
+        updater.call_count(),
+        1,
+        "TP-R1: UpdaterPort called exactly once"
+    );
 }
 
 /// spec.md#tp-no-retry TP-R1b — UpToDate / OlderVersion path でも UpdaterPort 呼出は 1 回 (C-CFU4 全 path)
@@ -432,4 +446,134 @@ fn tp_i3_none_release_implies_no_event() {
 fn tp_t1_execute_signature_has_no_result() {
     let _: fn(&CheckForUpdatesUseCase<RcUpdater, RcBus>, CheckForUpdatesCommand) -> UpdateChannel =
         CheckForUpdatesUseCase::execute;
+}
+
+// ===== TP-PR*: pre-release / build metadata (ori-2lm.9) =====
+
+/// pre-release 版 (`0.4.0-rc1`) は current (`0.3.1`) より新しければ NewVersion として検出される。
+/// ori-2lm.9 で strict semver 対応に拡張したことで "0.4.0-rc1" が parse 可能になった。
+#[test]
+fn tp_pr1_pre_release_newer_than_current_is_new_version() {
+    let (uc, _u, bus) = rig(Ok(raw("0.4.0-rc1", "https://example.com", "rc notes")));
+
+    let channel = uc.execute(CheckForUpdatesCommand {
+        current_version: current_version(),
+    });
+
+    let release = channel
+        .latest_release()
+        .expect("TP-PR1: 0.4.0-rc1 > 0.3.1 → Some release");
+    assert_eq!(
+        release.version(),
+        &Version::from_str("0.4.0-rc1").unwrap(),
+        "TP-PR1: release.version == 0.4.0-rc1"
+    );
+    assert_eq!(bus.count(), 1, "TP-PR1: pre-release 新版で event 1 件");
+}
+
+/// pre-release 版 (`0.4.0-rc1`) は対応する release 版 (`0.4.0`) より小さい (semver 仕様)。
+/// current=0.4.0, latest=0.4.0-rc1 → OlderVersion → latest_release = None。
+#[test]
+fn tp_pr2_pre_release_older_than_release_is_none() {
+    let (uc, _u, bus) = rig(Ok(raw("0.4.0-rc1", "https://example.com", "")));
+
+    let channel = uc.execute(CheckForUpdatesCommand {
+        current_version: Version::from_str("0.4.0").unwrap(),
+    });
+
+    assert!(
+        channel.latest_release().is_none(),
+        "TP-PR2: 0.4.0-rc1 < 0.4.0 → None (semver pre-release ordering)"
+    );
+    assert_eq!(bus.count(), 0);
+}
+
+/// build metadata (`0.4.0+build123`) は Ord 比較に影響しない (semver 仕様)。
+/// current=0.3.1, latest=0.4.0+build123 → NewVersion (0.4.0+build > 0.3.1)。
+#[test]
+fn tp_pr3_build_metadata_does_not_affect_comparison() {
+    let (uc, _u, _b) = rig(Ok(raw("0.4.0+build123", "https://example.com", "")));
+
+    let channel = uc.execute(CheckForUpdatesCommand {
+        current_version: current_version(),
+    });
+
+    let release = channel
+        .latest_release()
+        .expect("TP-PR3: 0.4.0+build123 > 0.3.1 → Some release");
+    assert_eq!(
+        release.version(),
+        &Version::from_str("0.4.0+build123").unwrap(),
+        "TP-PR3: build metadata を保持したまま parse"
+    );
+}
+
+// ===== property tests (ori-2lm.9) =====
+
+proptest! {
+    /// 任意の (major, minor, patch) に対し Version::from_str が成功する
+    #[test]
+    fn prop_version_parse_basic(
+        major in 0u32..1000,
+        minor in 0u32..1000,
+        patch in 0u32..1000,
+    ) {
+        let s = format!("{}.{}.{}", major, minor, patch);
+        let v = Version::from_str(&s).expect("basic semver must parse");
+        prop_assert_eq!(v, Version::from_str(&s).unwrap());
+    }
+
+    /// pre-release 版は対応する release 版より小さい (semver 仕様)
+    #[test]
+    fn prop_version_prerelease_less_than_release(
+        major in 0u32..1000,
+        minor in 0u32..1000,
+        patch in 0u32..1000,
+        pre in "[a-z][a-z0-9]*",
+    ) {
+        let release = Version::from_str(&format!("{}.{}.{}", major, minor, patch)).unwrap();
+        let prerelease =
+            Version::from_str(&format!("{}.{}.{}-{}", major, minor, patch, pre)).unwrap();
+        prop_assert!(
+            prerelease < release,
+            "pre-release ({:?}) must be < release ({:?})",
+            prerelease,
+            release
+        );
+    }
+
+    /// build metadata の `Ord` 挙作は `semver` crate 1.x 実装に依存する
+    /// (2.0 仕様では無視されるべきだが、1.x では比較対象に含まれる)。
+    /// 同じ build metadata → 等価。異なる build metadata → 不等価 (1.x 挙動の固定化)。
+    #[test]
+    fn prop_version_build_metadata_semver1x_behavior(
+        major in 0u32..1000,
+        minor in 0u32..1000,
+        patch in 0u32..1000,
+        meta1 in "[a-z][a-z0-9]*",
+        meta2 in "[a-z][a-z0-9]*",
+    ) {
+        let v1 = Version::from_str(&format!("{}.{}.{}+{}", major, minor, patch, meta1)).unwrap();
+        let v2 = Version::from_str(&format!("{}.{}.{}+{}", major, minor, patch, meta2)).unwrap();
+        if meta1 == meta2 {
+            prop_assert_eq!(v1, v2, "same build metadata → equal");
+        } else {
+            prop_assert_ne!(v1, v2, "semver 1.x: different build metadata → not equal");
+        }
+    }
+
+    /// Ord の推移性: a > b && b > c => a > c
+    #[test]
+    fn prop_version_ord_transitivity(
+        a in (0u32..100, 0u32..100, 0u32..100),
+        b in (0u32..100, 0u32..100, 0u32..100),
+        c in (0u32..100, 0u32..100, 0u32..100),
+    ) {
+        let va = Version::from_str(&format!("{}.{}.{}", a.0, a.1, a.2)).unwrap();
+        let vb = Version::from_str(&format!("{}.{}.{}", b.0, b.1, b.2)).unwrap();
+        let vc = Version::from_str(&format!("{}.{}.{}", c.0, c.1, c.2)).unwrap();
+        if va > vb && vb > vc {
+            prop_assert!(va > vc, "transitivity: a > b > c => a > c");
+        }
+    }
 }

@@ -10,7 +10,11 @@ pub struct Release {
 
 impl Release {
     pub fn new(version: Version, url: String, notes: String) -> Self {
-        Self { version, url, notes }
+        Self {
+            version,
+            url,
+            notes,
+        }
     }
 
     pub fn version(&self) -> &Version {
