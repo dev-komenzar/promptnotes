@@ -549,7 +549,11 @@ fn tp_le1_load_failure_surfaces_as_load_error_not_persist_error() {
         }
         other => panic!("expected LoadError, got {other:?}"),
     }
-    assert_eq!(timer.cancel_count(), 1, "C-FL1: cancel runs even on LoadError");
+    assert_eq!(
+        timer.cancel_count(),
+        1,
+        "C-FL1: cancel runs even on LoadError"
+    );
     assert_eq!(timer.last_cancelled().unwrap(), id);
     assert_eq!(repo.write_count(), 0);
     assert_eq!(bus.event_count(), 0);

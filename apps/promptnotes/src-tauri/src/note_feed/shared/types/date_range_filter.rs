@@ -33,10 +33,7 @@ pub enum DateRangeFilter {
     #[serde(rename = "all")]
     All,
     #[serde(rename = "custom")]
-    Custom {
-        from: FeedDate,
-        to: FeedDate,
-    },
+    Custom { from: FeedDate, to: FeedDate },
 }
 
 impl DateRangeFilter {
@@ -138,8 +135,7 @@ mod tests {
 
     #[test]
     fn deserialize_rejects_legacy_snake_case_without_digit_underscore() {
-        let result: Result<DateRangeFilter, _> =
-            serde_json::from_str(r#"{"kind":"last7_days"}"#);
+        let result: Result<DateRangeFilter, _> = serde_json::from_str(r#"{"kind":"last7_days"}"#);
         assert!(
             result.is_err(),
             "legacy `last7_days` wire format must be rejected to surface UI/Rust drift"
@@ -191,7 +187,9 @@ mod tests {
         // validate() が防衛検査として機能する事を pin する。
         let json = r#"{"kind":"custom","from":"2026-02-01","to":"2026-01-01"}"#;
         let range: DateRangeFilter = serde_json::from_str(json).expect("deserialize succeeds");
-        let err = range.validate().expect_err("validate must reject from > to");
+        let err = range
+            .validate()
+            .expect_err("validate must reject from > to");
         assert!(matches!(err, DateRangeFilterError::FromAfterTo { .. }));
     }
 

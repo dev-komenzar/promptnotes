@@ -4,7 +4,7 @@ use time::Date;
 
 const ISO_DATE: &[FormatItem<'static>] = format_description!("[year]-[month]-[day]");
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum FeedDateError {
     #[error("date string '{0}' does not match YYYY-MM-DD")]
     InvalidFormat(String),

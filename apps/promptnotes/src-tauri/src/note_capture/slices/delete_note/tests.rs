@@ -141,11 +141,7 @@ impl UndoStack for FakeUndo {
         self.stack.borrow_mut().push(deleted);
     }
     fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
-        self.stack
-            .borrow()
-            .iter()
-            .find(|d| d.id() == id)
-            .cloned()
+        self.stack.borrow().iter().find(|d| d.id() == id).cloned()
     }
     fn remove_by_id(&self, _id: &NoteId) -> Option<DeletedNote> {
         unreachable!("delete-note slice must not call remove_by_id")
@@ -497,7 +493,10 @@ fn tp_sa1_existing_undo_stack_is_not_destroyed() {
 
     let snapshot = undo.snapshot();
     assert_eq!(snapshot.len(), 2, "I-DN8: stack accumulates, does not pop");
-    assert_eq!(snapshot[0], deleted_a_clone, "A must remain at bottom unchanged");
+    assert_eq!(
+        snapshot[0], deleted_a_clone,
+        "A must remain at bottom unchanged"
+    );
     assert_eq!(snapshot[1].id(), &id_b, "B pushed on top with matching id");
     assert_eq!(snapshot[1].original_path(), expected_b.as_path());
 }
@@ -602,13 +601,7 @@ fn tp_as1_execute_signature_returns_result_deleted_note() {
         &DeleteNoteUseCase<R, T, U, C, B>,
         DeleteNoteCommand,
     ) -> Result<DeletedNote, DeleteNoteError>;
-    fn assert_signature<
-        R: NoteRepository,
-        T: TrashService,
-        U: UndoStack,
-        C: Clock,
-        B: EventBus,
-    >() {
+    fn assert_signature<R: NoteRepository, T: TrashService, U: UndoStack, C: Clock, B: EventBus>() {
         let _: ExecuteFn<R, T, U, C, B> = DeleteNoteUseCase::<R, T, U, C, B>::execute;
     }
     assert_signature::<FakeRepo, FakeTrash, FakeUndo, FixedClock, FakeBus>();

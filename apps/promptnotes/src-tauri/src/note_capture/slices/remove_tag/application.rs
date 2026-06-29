@@ -55,10 +55,7 @@ where
         Self { repo, clock, bus }
     }
 
-    pub fn execute(
-        &self,
-        cmd: RemoveTagCommand,
-    ) -> Result<Option<Note>, RemoveTagError> {
+    pub fn execute(&self, cmd: RemoveTagCommand) -> Result<Option<Note>, RemoveTagError> {
         let RemoveTagCommand { note_id, tag_name } = cmd;
 
         // Step 1 — load_note. Read I/O failure is reported as LoadError

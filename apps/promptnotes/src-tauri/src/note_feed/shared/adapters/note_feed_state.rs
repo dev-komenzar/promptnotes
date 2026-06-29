@@ -42,8 +42,8 @@ mod tests {
     #[test]
     fn replace_updates_subsequent_snapshots() {
         let state = InMemoryNoteFeedState::new();
-        let updated = NoteFeed::empty()
-            .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Asc));
+        let updated =
+            NoteFeed::empty().change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Asc));
         state.replace(updated.clone());
         assert_eq!(state.snapshot(), updated);
     }
