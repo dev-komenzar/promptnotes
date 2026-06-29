@@ -38,15 +38,13 @@ impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
 
     /// 内部 pipeline (`workflows/check-for-updates.md#steps`)。`?` で early return。
     /// I-U3 通り fetch は **1 回のみ** (リトライループなし、C-CFU4)。
-    fn try_execute(
-        &self,
-        cmd: CheckForUpdatesCommand,
-    ) -> Result<UpdateChannel, UpdateError> {
+    fn try_execute(&self, cmd: CheckForUpdatesCommand) -> Result<UpdateChannel, UpdateError> {
         let raw = self.updater.fetch_latest_release()?;
         let release = parse_release(raw)?;
         match compare(&cmd.current_version, release) {
             Comparison::NewVersion(release) => {
-                let channel = UpdateChannel::with_release(cmd.current_version.clone(), release.clone());
+                let channel =
+                    UpdateChannel::with_release(cmd.current_version.clone(), release.clone());
                 // C-CFU5: 新版時のみ event 1 件 publish
                 self.bus.publish(NewVersionDetected {
                     current_version: cmd.current_version,

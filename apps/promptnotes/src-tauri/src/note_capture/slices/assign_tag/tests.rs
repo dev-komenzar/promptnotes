@@ -364,7 +364,11 @@ fn tp_n2_normalized_duplicate_skips_write() {
         raw_tag: "  GPT  ".into(),
     });
 
-    assert_eq!(repo.write_count(), 0, "C-AT3: no write when tagset unchanged");
+    assert_eq!(
+        repo.write_count(),
+        0,
+        "C-AT3: no write when tagset unchanged"
+    );
 }
 
 /// spec.md#tp-normalize-dedupe TP-N3
@@ -469,7 +473,11 @@ fn tp_ic2_invalid_tag_skips_load_write_and_publish() {
         raw_tag: "foo,bar".into(),
     });
 
-    assert_eq!(repo.load_count(), 0, "C-AT1: parse_tag runs before load_note");
+    assert_eq!(
+        repo.load_count(),
+        0,
+        "C-AT1: parse_tag runs before load_note"
+    );
     assert_eq!(repo.write_count(), 0);
     assert_eq!(bus.event_count(), 0);
 }
@@ -764,10 +772,8 @@ fn tp_inv3_inv4_tagset_unique_and_normalized() {
 /// will fail to build, not at runtime.
 #[test]
 fn tp_as1_execute_signature_returns_result_option_note() {
-    type ExecuteFn<R, C, E> = fn(
-        &AssignTagUseCase<R, C, E>,
-        AssignTagCommand,
-    ) -> Result<Option<Note>, AssignTagError>;
+    type ExecuteFn<R, C, E> =
+        fn(&AssignTagUseCase<R, C, E>, AssignTagCommand) -> Result<Option<Note>, AssignTagError>;
     fn assert_signature<R: NoteRepository, C: Clock, E: EventBus>() {
         let _: ExecuteFn<R, C, E> = AssignTagUseCase::<R, C, E>::execute;
     }

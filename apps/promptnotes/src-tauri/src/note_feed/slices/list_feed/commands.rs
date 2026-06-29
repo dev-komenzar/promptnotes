@@ -88,7 +88,9 @@ pub async fn list_notes<R: Runtime>(
 
     let feed = feed_state.snapshot();
     let uc = ListFeedUseCase::new(repo);
-    let hydrated = uc.execute(feed, ListFeedCommand).map_err(|e| e.to_string())?;
+    let hydrated = uc
+        .execute(feed, ListFeedCommand)
+        .map_err(|e| e.to_string())?;
     let hydrated = hydrated.change_sort(settings.sort_preference());
 
     let now = OffsetDateTime::now_utc();

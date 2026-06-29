@@ -13,7 +13,7 @@ use time::OffsetDateTime;
 use crate::note_capture::shared::ports::NoteRepository;
 use crate::note_capture::shared::types::{Note, NoteBody, Tag, TagSet, Timestamp};
 use crate::note_capture::slices::create_note::infrastructure::FsNoteRepository;
-use crate::note_feed::shared::types::{DateRangeFilter, FeedFilter, NoteFeed, NormalizedQuery};
+use crate::note_feed::shared::types::{DateRangeFilter, FeedFilter, NormalizedQuery, NoteFeed};
 use crate::user_preferences::shared::types::{SortDirection, SortField, SortOrder};
 
 use super::application::{visible_notes_snapshot, ListFeedUseCase};
@@ -32,7 +32,14 @@ fn note(id_dt: OffsetDateTime, body: &str, tags: &[&str], updated_dt: OffsetDate
     Note::from_persisted(body, TagSet::from_tags(tags), ts(id_dt), ts(updated_dt))
 }
 
-fn write_md(dir: &std::path::Path, id: &str, body: &str, tags_inline: &str, created_at: &str, updated_at: &str) {
+fn write_md(
+    dir: &std::path::Path,
+    id: &str,
+    body: &str,
+    tags_inline: &str,
+    created_at: &str,
+    updated_at: &str,
+) {
     let content = format!(
         "---\ncreatedAt: {created}\nupdatedAt: {updated}\ntags: [{tags}]\n---\n{body}",
         created = created_at,
@@ -68,8 +75,22 @@ fn tp_la1b_missing_storage_dir_yields_empty_vec() {
 #[test]
 fn tp_la2_two_valid_notes_are_returned() {
     let dir = tempfile::tempdir().expect("tempdir");
-    write_md(dir.path(), "20260601100000", "hello", "rust, gpt", "20260601100000", "20260601100000");
-    write_md(dir.path(), "20260601100100", "world", "", "20260601100100", "20260601100100");
+    write_md(
+        dir.path(),
+        "20260601100000",
+        "hello",
+        "rust, gpt",
+        "20260601100000",
+        "20260601100000",
+    );
+    write_md(
+        dir.path(),
+        "20260601100100",
+        "world",
+        "",
+        "20260601100100",
+        "20260601100100",
+    );
     let repo = FsNoteRepository::new(dir.path().to_path_buf());
     let notes = repo.list_all().expect("list_all ok");
     assert_eq!(notes.len(), 2);
@@ -82,7 +103,14 @@ fn tp_la2_two_valid_notes_are_returned() {
 #[test]
 fn tp_la3_malformed_files_are_skipped() {
     let dir = tempfile::tempdir().expect("tempdir");
-    write_md(dir.path(), "20260601100000", "ok", "", "20260601100000", "20260601100000");
+    write_md(
+        dir.path(),
+        "20260601100000",
+        "ok",
+        "",
+        "20260601100000",
+        "20260601100000",
+    );
     fs::write(dir.path().join("20260601100100.md"), "not a frontmatter").unwrap();
     let repo = FsNoteRepository::new(dir.path().to_path_buf());
     let notes = repo.list_all().expect("list_all ok");
@@ -94,7 +122,14 @@ fn tp_la3_malformed_files_are_skipped() {
 #[test]
 fn tp_la4_non_md_files_are_ignored() {
     let dir = tempfile::tempdir().expect("tempdir");
-    write_md(dir.path(), "20260601100000", "ok", "", "20260601100000", "20260601100000");
+    write_md(
+        dir.path(),
+        "20260601100000",
+        "ok",
+        "",
+        "20260601100000",
+        "20260601100000",
+    );
     fs::write(dir.path().join("README.txt"), "readme").unwrap();
     fs::write(dir.path().join("notes.json"), "{}").unwrap();
     let repo = FsNoteRepository::new(dir.path().to_path_buf());
@@ -106,9 +141,24 @@ fn tp_la4_non_md_files_are_ignored() {
 
 fn three_notes() -> Vec<Note> {
     vec![
-        note(datetime!(2026-06-01 10:00 UTC), "first body about gpt", &["rust"], datetime!(2026-06-01 10:00 UTC)),
-        note(datetime!(2026-06-15 10:00 UTC), "second talks about other things", &["coding", "gpt"], datetime!(2026-06-15 10:00 UTC)),
-        note(datetime!(2026-06-26 10:00 UTC), "third unrelated", &[], datetime!(2026-06-26 10:00 UTC)),
+        note(
+            datetime!(2026-06-01 10:00 UTC),
+            "first body about gpt",
+            &["rust"],
+            datetime!(2026-06-01 10:00 UTC),
+        ),
+        note(
+            datetime!(2026-06-15 10:00 UTC),
+            "second talks about other things",
+            &["coding", "gpt"],
+            datetime!(2026-06-15 10:00 UTC),
+        ),
+        note(
+            datetime!(2026-06-26 10:00 UTC),
+            "third unrelated",
+            &[],
+            datetime!(2026-06-26 10:00 UTC),
+        ),
     ]
 }
 
@@ -157,7 +207,10 @@ fn tp_f5_last_7_days() {
     let filter = FeedFilter::initial().with_date_range(DateRangeFilter::Last7Days);
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
     let visible = feed.visible_notes(NOW);
-    let ids: Vec<_> = visible.iter().map(|n| n.id().as_str().to_string()).collect();
+    let ids: Vec<_> = visible
+        .iter()
+        .map(|n| n.id().as_str().to_string())
+        .collect();
     // 2026-06-01 と 2026-06-15 は 7 日より前。2026-06-26 のみ通る。
     assert_eq!(ids, vec!["20260626100000".to_string()]);
 }
@@ -194,7 +247,10 @@ fn tp_s1_sort_created_at_desc() {
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::CreatedAt, SortDirection::Desc));
     let visible = feed.visible_notes(NOW);
-    let ids: Vec<_> = visible.iter().map(|n| n.id().as_str().to_string()).collect();
+    let ids: Vec<_> = visible
+        .iter()
+        .map(|n| n.id().as_str().to_string())
+        .collect();
     assert_eq!(
         ids,
         vec![
@@ -212,7 +268,10 @@ fn tp_s2_sort_created_at_asc() {
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::CreatedAt, SortDirection::Asc));
     let visible = feed.visible_notes(NOW);
-    let ids: Vec<_> = visible.iter().map(|n| n.id().as_str().to_string()).collect();
+    let ids: Vec<_> = visible
+        .iter()
+        .map(|n| n.id().as_str().to_string())
+        .collect();
     assert_eq!(
         ids,
         vec![
@@ -227,8 +286,18 @@ fn tp_s2_sort_created_at_asc() {
 #[test]
 fn tp_s3_sort_updated_at_desc() {
     let notes = vec![
-        note(datetime!(2026-06-01 10:00 UTC), "a", &[], datetime!(2026-06-26 10:00 UTC)),
-        note(datetime!(2026-06-15 10:00 UTC), "b", &[], datetime!(2026-06-15 10:00 UTC)),
+        note(
+            datetime!(2026-06-01 10:00 UTC),
+            "a",
+            &[],
+            datetime!(2026-06-26 10:00 UTC),
+        ),
+        note(
+            datetime!(2026-06-15 10:00 UTC),
+            "b",
+            &[],
+            datetime!(2026-06-15 10:00 UTC),
+        ),
     ];
     let feed = NoteFeed::empty()
         .hydrate(notes)
@@ -242,14 +311,27 @@ fn tp_s3_sort_updated_at_desc() {
 #[test]
 fn tp_s4_tiebreak_by_id() {
     let notes = vec![
-        note(datetime!(2026-06-01 10:00 UTC), "a", &[], datetime!(2026-06-26 10:00 UTC)),
-        note(datetime!(2026-06-15 10:00 UTC), "b", &[], datetime!(2026-06-26 10:00 UTC)),
+        note(
+            datetime!(2026-06-01 10:00 UTC),
+            "a",
+            &[],
+            datetime!(2026-06-26 10:00 UTC),
+        ),
+        note(
+            datetime!(2026-06-15 10:00 UTC),
+            "b",
+            &[],
+            datetime!(2026-06-26 10:00 UTC),
+        ),
     ];
     let feed = NoteFeed::empty()
         .hydrate(notes)
         .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Desc));
     let visible = feed.visible_notes(NOW);
-    let ids: Vec<_> = visible.iter().map(|n| n.id().as_str().to_string()).collect();
+    let ids: Vec<_> = visible
+        .iter()
+        .map(|n| n.id().as_str().to_string())
+        .collect();
     assert_eq!(
         ids,
         vec!["20260615100000".to_string(), "20260601100000".to_string()],
@@ -291,7 +373,10 @@ fn tp_s12_2_startup_respects_sort_preference() {
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Asc));
     let visible = feed.visible_notes(NOW);
-    let ids: Vec<_> = visible.iter().map(|n| n.id().as_str().to_string()).collect();
+    let ids: Vec<_> = visible
+        .iter()
+        .map(|n| n.id().as_str().to_string())
+        .collect();
     assert_eq!(
         ids,
         vec![

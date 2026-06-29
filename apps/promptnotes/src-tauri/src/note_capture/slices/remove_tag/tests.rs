@@ -16,9 +16,7 @@ use time::OffsetDateTime;
 
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus, NoteRepository};
-use crate::note_capture::shared::types::{
-    Note, NoteBody, NoteId, Tag, TagSet, Timestamp,
-};
+use crate::note_capture::shared::types::{Note, NoteBody, NoteId, Tag, TagSet, Timestamp};
 
 use super::application::RemoveTagUseCase;
 use super::domain::{RemoveTagCommand, RemoveTagError};
@@ -161,7 +159,10 @@ fn fixture_note(body: &str, tags: &[&str], created_at: OffsetDateTime) -> Note {
 }
 
 fn tag_names(set: &TagSet) -> Vec<String> {
-    set.as_slice().iter().map(|t| t.name().to_string()).collect()
+    set.as_slice()
+        .iter()
+        .map(|t| t.name().to_string())
+        .collect()
 }
 
 // ===== TP-H*: happy path (spec.md#tp-happy) =====
@@ -610,10 +611,8 @@ fn tp_ai1_post_removal_tagset_keeps_aggregate_invariants() {
 /// spec.md#io-output TP-SIG — execute returns `Result<Option<Note>, RemoveTagError>`.
 #[test]
 fn tp_sig_execute_signature() {
-    type ExecuteFn<R, C, E> = fn(
-        &RemoveTagUseCase<R, C, E>,
-        RemoveTagCommand,
-    ) -> Result<Option<Note>, RemoveTagError>;
+    type ExecuteFn<R, C, E> =
+        fn(&RemoveTagUseCase<R, C, E>, RemoveTagCommand) -> Result<Option<Note>, RemoveTagError>;
     fn assert_signature<R: NoteRepository, C: Clock, E: EventBus>() {
         let _: ExecuteFn<R, C, E> = RemoveTagUseCase::<R, C, E>::execute;
     }

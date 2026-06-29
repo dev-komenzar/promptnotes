@@ -4,7 +4,7 @@
 //! Repository / EventBus 等の port を取らない。これにより read model / 揮発 / no-event を
 //! type-level に保証する (TP-SE1)。
 
-use crate::note_feed::shared::types::{FeedFilter, NoteFeed, NormalizedQuery};
+use crate::note_feed::shared::types::{FeedFilter, NormalizedQuery, NoteFeed};
 
 use super::domain::UpdateFeedFilterCommand;
 

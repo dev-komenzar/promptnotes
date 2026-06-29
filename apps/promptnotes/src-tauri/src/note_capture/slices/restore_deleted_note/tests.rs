@@ -16,9 +16,7 @@ use time::OffsetDateTime;
 
 use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::{Clock, EventBus, NoteRepository};
-use crate::note_capture::shared::types::{
-    DeletedNote, Note, NoteBody, NoteId, TagSet, Timestamp,
-};
+use crate::note_capture::shared::types::{DeletedNote, Note, NoteBody, NoteId, TagSet, Timestamp};
 use crate::note_capture::slices::delete_note::{TrashErrorKind, TrashService, UndoStack};
 
 use super::application::RestoreDeletedNoteUseCase;
@@ -195,11 +193,7 @@ impl UndoStack for FakeUndo {
         // Always log: NoUndoAvailable paths still need positive proof that
         // find_by_id was the gating step (review Pass 1 MED-6).
         self.order_log.borrow_mut().push("find");
-        self.stack
-            .borrow()
-            .iter()
-            .find(|d| d.id() == id)
-            .cloned()
+        self.stack.borrow().iter().find(|d| d.id() == id).cloned()
     }
     fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
         self.remove_count.set(self.remove_count.get() + 1);
@@ -418,8 +412,10 @@ fn tp_tp1_middle_element_pop_preserves_others_in_order() {
     undo.seed(make_deleted(nb, pb));
     undo.seed(make_deleted(nc, pc));
 
-    uc.execute(RestoreDeletedNoteCommand { note_id: id_b.clone() })
-        .expect("must succeed");
+    uc.execute(RestoreDeletedNoteCommand {
+        note_id: id_b.clone(),
+    })
+    .expect("must succeed");
 
     let snapshot = undo.snapshot();
     assert_eq!(snapshot.len(), 2);
@@ -705,9 +701,7 @@ fn tp_nn1_no_undo_path_does_not_touch_any_side_effect() {
     let (uc, repo, trash, undo, bus, _log) = rig(now);
     let missing = NoteId::from_timestamp(Timestamp::from_offset_datetime(now));
 
-    let _ = uc.execute(RestoreDeletedNoteCommand {
-        note_id: missing,
-    });
+    let _ = uc.execute(RestoreDeletedNoteCommand { note_id: missing });
 
     assert_eq!(trash.restore_count(), 0);
     assert_eq!(repo.load_count(), 0);
@@ -766,13 +760,7 @@ fn tp_sig_execute_signature() {
         &RestoreDeletedNoteUseCase<R, T, U, C, B>,
         RestoreDeletedNoteCommand,
     ) -> Result<Note, RestoreDeletedNoteError>;
-    fn assert_signature<
-        R: NoteRepository,
-        T: TrashService,
-        U: UndoStack,
-        C: Clock,
-        B: EventBus,
-    >() {
+    fn assert_signature<R: NoteRepository, T: TrashService, U: UndoStack, C: Clock, B: EventBus>() {
         let _: ExecuteFn<R, T, U, C, B> = RestoreDeletedNoteUseCase::<R, T, U, C, B>::execute;
     }
     assert_signature::<FakeRepo, FakeTrash, FakeUndo, FixedClock, FakeBus>();

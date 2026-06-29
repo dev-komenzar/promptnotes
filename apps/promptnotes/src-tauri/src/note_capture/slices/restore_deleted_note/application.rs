@@ -46,28 +46,24 @@ where
         }
     }
 
-    pub fn execute(
-        &self,
-        cmd: RestoreDeletedNoteCommand,
-    ) -> Result<Note, RestoreDeletedNoteError> {
+    pub fn execute(&self, cmd: RestoreDeletedNoteCommand) -> Result<Note, RestoreDeletedNoteError> {
         let RestoreDeletedNoteCommand { note_id } = cmd;
 
         // Step 1 — find (I-RDN1: NoUndoAvailable は 4 副作用未呼出)
-        let deleted: DeletedNote = self
-            .undo
-            .find_by_id(&note_id)
-            .ok_or_else(|| RestoreDeletedNoteError::NoUndoAvailable {
+        let deleted: DeletedNote = self.undo.find_by_id(&note_id).ok_or_else(|| {
+            RestoreDeletedNoteError::NoUndoAvailable {
                 id: note_id.clone(),
-            })?;
+            }
+        })?;
         let original_path = deleted.original_path().to_path_buf();
 
         // Step 2 — restore_from_trash (I-RDN3: 失敗時 load/remove/event 未呼出)
-        self.trash.restore_from_trash(&original_path).map_err(|cause| {
-            RestoreDeletedNoteError::TrashRestoreError {
+        self.trash
+            .restore_from_trash(&original_path)
+            .map_err(|cause| RestoreDeletedNoteError::TrashRestoreError {
                 path: original_path.clone(),
                 cause,
-            }
-        })?;
+            })?;
 
         // Step 3 — reload (I-RDN4 + oq-read-error-ok-none-policy:
         // io::Err と Ok(None) の両方を ReadError へ collapse)

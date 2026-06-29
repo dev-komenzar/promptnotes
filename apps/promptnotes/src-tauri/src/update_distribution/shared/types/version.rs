@@ -17,7 +17,11 @@ pub struct Version {
 
 impl Version {
     pub fn new(major: u32, minor: u32, patch: u32) -> Self {
-        Self { major, minor, patch }
+        Self {
+            major,
+            minor,
+            patch,
+        }
     }
 
     /// `"0.3.1"` を parse。3 つの dot-separated digit 以外 (pre-release / build metadata 含む) は
@@ -39,7 +43,11 @@ impl FromStr for Version {
             return Err(UpdateError::ParseError);
         }
         let parse = |x: &str| x.parse::<u32>().map_err(|_| UpdateError::ParseError);
-        Ok(Self::new(parse(parts[0])?, parse(parts[1])?, parse(parts[2])?))
+        Ok(Self::new(
+            parse(parts[0])?,
+            parse(parts[1])?,
+            parse(parts[2])?,
+        ))
     }
 }
 

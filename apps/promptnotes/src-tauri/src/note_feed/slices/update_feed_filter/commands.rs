@@ -20,10 +20,16 @@ use crate::note_feed::shared::types::{DateRangeFilter, FeedFilter};
 #[derive(Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum UpdateFeedFilterInput {
-    SetQuery { raw: String },
-    SetDateRange { range: DateRangeFilter },
+    SetQuery {
+        raw: String,
+    },
+    SetDateRange {
+        range: DateRangeFilter,
+    },
     /// `raw = None` で tag filter を解除。
-    SetTag { raw: Option<String> },
+    SetTag {
+        raw: Option<String>,
+    },
     ClearAll,
 }
 
@@ -64,8 +70,8 @@ impl From<(String, TagError)> for UpdateFeedFilterErrorDto {
     }
 }
 
-impl From<&crate::note_feed::shared::types::DateRangeFilterError> for UpdateFeedFilterErrorDto {
-    fn from(e: &crate::note_feed::shared::types::DateRangeFilterError) -> Self {
+impl From<crate::note_feed::shared::types::DateRangeFilterError> for UpdateFeedFilterErrorDto {
+    fn from(e: crate::note_feed::shared::types::DateRangeFilterError) -> Self {
         use crate::note_feed::shared::types::DateRangeFilterError;
         let reason = match e {
             DateRangeFilterError::FromAfterTo { .. } => "from_after_to".to_string(),
@@ -74,13 +80,13 @@ impl From<&crate::note_feed::shared::types::DateRangeFilterError> for UpdateFeed
     }
 }
 
-fn lower(input: UpdateFeedFilterInput) -> Result<UpdateFeedFilterCommand, UpdateFeedFilterErrorDto> {
+fn lower(
+    input: UpdateFeedFilterInput,
+) -> Result<UpdateFeedFilterCommand, UpdateFeedFilterErrorDto> {
     Ok(match input {
         UpdateFeedFilterInput::SetQuery { raw } => UpdateFeedFilterCommand::SetQuery { raw },
         UpdateFeedFilterInput::SetDateRange { range } => {
-            range
-                .validate()
-                .map_err(UpdateFeedFilterErrorDto::from)?;
+            range.validate().map_err(UpdateFeedFilterErrorDto::from)?;
             UpdateFeedFilterCommand::SetDateRange { range }
         }
         UpdateFeedFilterInput::SetTag { raw } => {

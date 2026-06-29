@@ -171,7 +171,10 @@ fn tp_n3_event_payload_matches_release() {
     let event = bus.events().into_iter().next().unwrap();
     assert_eq!(event.current_version, current_version());
     assert_eq!(event.latest_version, Version::from_str("0.4.0").unwrap());
-    assert_eq!(event.release_url, "https://github.com/x/y/releases/tag/v0.4.0");
+    assert_eq!(
+        event.release_url,
+        "https://github.com/x/y/releases/tag/v0.4.0"
+    );
     assert_eq!(event.release_notes, "Release notes here");
 }
 
@@ -306,7 +309,11 @@ fn tp_s14_4b_unparseable_version_from_ok_response_is_silent() {
         channel.latest_release().is_none(),
         "TP-S14-4b: unparseable version_string → None"
     );
-    assert_eq!(bus.count(), 0, "TP-S14-4b: no event on parse failure via Ok path");
+    assert_eq!(
+        bus.count(),
+        0,
+        "TP-S14-4b: no event on parse failure via Ok path"
+    );
 }
 
 /// spec.md#tp-s14 TP-S14-5 — RateLimited も silent
@@ -333,7 +340,11 @@ fn tp_r1_success_path_calls_updater_exactly_once() {
         current_version: current_version(),
     });
 
-    assert_eq!(updater.call_count(), 1, "TP-R1: UpdaterPort called exactly once");
+    assert_eq!(
+        updater.call_count(),
+        1,
+        "TP-R1: UpdaterPort called exactly once"
+    );
 }
 
 /// spec.md#tp-no-retry TP-R1b — UpToDate / OlderVersion path でも UpdaterPort 呼出は 1 回 (C-CFU4 全 path)

@@ -47,9 +47,10 @@ impl<R: Runtime> EventBus for TauriEventBus<R> {
     fn publish(&self, event: SettingsEvent) {
         match event {
             SettingsEvent::StorageDirChanged { old_dir, new_dir } => {
-                let _ = self
-                    .app
-                    .emit(STORAGE_DIR_CHANGED_EVENT, StorageDirChangedPayload { old_dir, new_dir });
+                let _ = self.app.emit(
+                    STORAGE_DIR_CHANGED_EVENT,
+                    StorageDirChangedPayload { old_dir, new_dir },
+                );
             }
             SettingsEvent::ThemeChanged { new_theme } => {
                 let _ = self

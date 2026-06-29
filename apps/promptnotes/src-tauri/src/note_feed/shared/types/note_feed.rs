@@ -83,7 +83,12 @@ fn matches_filter(note: &Note, filter: &FeedFilter, now: OffsetDateTime) -> bool
         }
     }
     if let Some(tag) = filter.tag() {
-        if !note.tags().as_slice().iter().any(|t| t.name() == tag.name()) {
+        if !note
+            .tags()
+            .as_slice()
+            .iter()
+            .any(|t| t.name() == tag.name())
+        {
             return false;
         }
     }

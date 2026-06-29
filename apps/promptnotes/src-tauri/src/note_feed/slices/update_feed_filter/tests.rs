@@ -51,7 +51,11 @@ fn tp_q2_fullwidth_query_is_nfc_lowercased() {
         },
     );
     let q = out.filter().query().expect("query must be Some");
-    assert_eq!(q.as_str(), "gpt", "TP-Q2 / S8: 全角は NFC で半角化 + lowercase");
+    assert_eq!(
+        q.as_str(),
+        "gpt",
+        "TP-Q2 / S8: 全角は NFC で半角化 + lowercase"
+    );
 }
 
 /// spec.md#tp-set-query TP-Q3 — "" → None (空文字解除)
@@ -60,9 +64,7 @@ fn tp_q3_empty_string_yields_none() {
     let feed = empty_feed();
     let out = UpdateFeedFilterUseCase::apply(
         feed,
-        UpdateFeedFilterCommand::SetQuery {
-            raw: String::new(),
-        },
+        UpdateFeedFilterCommand::SetQuery { raw: String::new() },
     );
     assert!(out.filter().query().is_none());
 }
@@ -155,8 +157,8 @@ fn tp_d2_set_all() {
 /// spec.md#tp-set-date-range TP-D3 — Custom{from,to} 保持 (FeedDate VO 経由)
 #[test]
 fn tp_d3_set_custom_range_is_preserved() {
-    let range = DateRangeFilter::custom_from_iso("2026-01-01", "2026-01-31")
-        .expect("valid custom range");
+    let range =
+        DateRangeFilter::custom_from_iso("2026-01-01", "2026-01-31").expect("valid custom range");
     let out = UpdateFeedFilterUseCase::apply(
         empty_feed(),
         UpdateFeedFilterCommand::SetDateRange {
@@ -219,10 +221,7 @@ fn tp_t2_set_none_clears_tag() {
             tag: Some(tag("coding")),
         },
     );
-    let out = UpdateFeedFilterUseCase::apply(
-        base,
-        UpdateFeedFilterCommand::SetTag { tag: None },
-    );
+    let out = UpdateFeedFilterUseCase::apply(base, UpdateFeedFilterCommand::SetTag { tag: None });
     assert_eq!(out.filter().tag(), None);
 }
 
@@ -309,14 +308,8 @@ fn tp_c1_clear_all_resets_filter_to_initial() {
 /// spec.md#tp-clear-all TP-C2 — ClearAll 2 回適用同値
 #[test]
 fn tp_c2_clear_all_is_idempotent() {
-    let first = UpdateFeedFilterUseCase::apply(
-        empty_feed(),
-        UpdateFeedFilterCommand::ClearAll,
-    );
-    let second = UpdateFeedFilterUseCase::apply(
-        first.clone(),
-        UpdateFeedFilterCommand::ClearAll,
-    );
+    let first = UpdateFeedFilterUseCase::apply(empty_feed(), UpdateFeedFilterCommand::ClearAll);
+    let second = UpdateFeedFilterUseCase::apply(first.clone(), UpdateFeedFilterCommand::ClearAll);
     assert_eq!(first, second);
 }
 
@@ -378,10 +371,7 @@ proptest! {
 #[test]
 fn tp_i6_clear_all_matches_initial_filter() {
     let initial = FeedFilter::initial();
-    let out = UpdateFeedFilterUseCase::apply(
-        empty_feed(),
-        UpdateFeedFilterCommand::ClearAll,
-    );
+    let out = UpdateFeedFilterUseCase::apply(empty_feed(), UpdateFeedFilterCommand::ClearAll);
     assert_eq!(out.filter(), &initial);
 }
 

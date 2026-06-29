@@ -100,8 +100,8 @@ pub async fn remove_tag<R: Runtime>(
 fn parse_note_id(raw: &str) -> NoteId {
     match Timestamp::parse_yyyymmddhhmmss(raw) {
         Ok(ts) => NoteId::from_timestamp(ts),
-        Err(_) => NoteId::from_timestamp(Timestamp::from_offset_datetime(
-            OffsetDateTime::UNIX_EPOCH,
-        )),
+        Err(_) => {
+            NoteId::from_timestamp(Timestamp::from_offset_datetime(OffsetDateTime::UNIX_EPOCH))
+        }
     }
 }
