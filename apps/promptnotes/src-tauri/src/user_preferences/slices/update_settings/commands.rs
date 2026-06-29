@@ -43,9 +43,9 @@ impl From<UpdateSettingsError> for UpdateSettingsErrorDto {
                     PathErrorReason::ContainsConfigPath => "contains_config_path".into(),
                 },
             },
-            UpdateSettingsError::PersistError { path, cause } => Self::PersistError {
-                path: path.display().to_string(),
-                reason: cause.to_string(),
+            UpdateSettingsError::PersistError(err) => Self::PersistError {
+                path: err.path.display().to_string(),
+                reason: err.cause.to_string(),
             },
         }
     }

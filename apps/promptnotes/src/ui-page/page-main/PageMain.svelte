@@ -10,15 +10,15 @@
 	import ToastRegion from './regions/ToastRegion.svelte';
 	import ToolbarRegion from './regions/ToolbarRegion.svelte';
 	import { feedStore } from './stores/feed.svelte';
-	import {
-		pendingFlushRegistry,
-		type PendingFlushRegistry
-	} from './stores/pending-flush.svelte';
+	import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
+	import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
 	import { toastStore } from './stores/toasts.svelte';
 
 	type CloseRequestedEvent = { preventDefault: () => void };
 	type QuitWindow = {
-		onCloseRequested: (cb: (event: CloseRequestedEvent) => void | Promise<void>) => Promise<() => void>;
+		onCloseRequested: (
+			cb: (event: CloseRequestedEvent) => void | Promise<void>
+		) => Promise<() => void>;
 		destroy: () => Promise<void>;
 	};
 
@@ -73,6 +73,12 @@
 	$effect(() => {
 		toastStore.setOnRestored((note) => feedStore.prependNote(note));
 		return () => toastStore.setOnRestored(undefined);
+	});
+
+	$effect(() => {
+		const subscriber = createSortPreferenceSubscriber();
+		void subscriber.start();
+		return () => subscriber.stop();
 	});
 
 	// ori-73q / spec.md#impl-quit-orchestration: S13 連続 Flush の orchestration。

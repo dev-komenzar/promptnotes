@@ -20,7 +20,6 @@ use crate::user_preferences::shared::types::{SortOrder, StorageDir};
 use crate::user_preferences::slices::load_settings::application::LoadSettingsUseCase;
 use crate::user_preferences::slices::load_settings::domain::LoadSettingsCommand;
 use crate::user_preferences::slices::load_settings::infrastructure::{FixedOsDirs, StdFileSystem};
-use crate::user_preferences::slices::update_settings::domain::PathErrorReason;
 
 #[derive(Debug, Deserialize)]
 pub struct ChangeSortOrderInput {
@@ -35,28 +34,15 @@ pub struct NoteFeedDto {
 #[derive(Debug, serde::Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ChangeSortOrderErrorDto {
-    /// PersistError は update-settings の `UpdateSettingsError::PersistError` を再利用
-    /// (C-CSO6)。
+    /// `shared::types::PersistError` を surface (ori-hpo.8 / C-CSO6)。
     PersistError { path: String, reason: String },
-    /// `InvalidPath` variant は `change-sort-order` slice 上は構造上発生しないが、
-    /// type alias 経由で variant が存在するため網羅性のため握る。
-    InvalidPath { path: String, reason: String },
 }
 
 impl From<ChangeSortOrderError> for ChangeSortOrderErrorDto {
-    fn from(e: ChangeSortOrderError) -> Self {
-        match e {
-            ChangeSortOrderError::PersistError { path, cause } => Self::PersistError {
-                path: path.display().to_string(),
-                reason: cause.to_string(),
-            },
-            ChangeSortOrderError::InvalidPath { path, reason } => Self::InvalidPath {
-                path: path.display().to_string(),
-                reason: match reason {
-                    PathErrorReason::NotAbsolute => "not_absolute".into(),
-                    PathErrorReason::ContainsConfigPath => "contains_config_path".into(),
-                },
-            },
+    fn from(err: ChangeSortOrderError) -> Self {
+        Self::PersistError {
+            path: err.path.display().to_string(),
+            reason: err.cause.to_string(),
         }
     }
 }
@@ -102,9 +88,12 @@ pub async fn change_sort_order<R: Runtime>(
 
     let feed = feed_state.snapshot();
     let updated_feed = uc
-        .execute(feed, ChangeSortOrderCommand {
-            new_sort: input.new_sort,
-        })
+        .execute(
+            feed,
+            ChangeSortOrderCommand {
+                new_sort: input.new_sort,
+            },
+        )
         .map_err(ChangeSortOrderErrorDto::from)?;
 
     let sort = updated_feed.sort();
