@@ -12,6 +12,7 @@
 	import { feedStore } from './stores/feed.svelte';
 	import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
 	import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
+	import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
 	import { toastStore } from './stores/toasts.svelte';
 
 	type CloseRequestedEvent = { preventDefault: () => void };
@@ -47,6 +48,14 @@
 	let settingsModalOpen = $state(false);
 	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 
+	const themeSubscriber = createThemeSubscriber({
+		onThemeChanged: (theme) => {
+			// theme_changed event で currentSettings.theme を更新 (SSoT)。
+			// 下の $effect が currentSettings.theme に reactive に反応して setTheme → DOM 反映する。
+			currentSettings = { ...currentSettings, theme };
+		}
+	});
+
 	$effect(() => {
 		// I-PM3 partial: load-settings → list-feed on mount.
 		// Silent fallback per aggregates.md#settings-loading (no warning region).
@@ -79,6 +88,17 @@
 		const subscriber = createSortPreferenceSubscriber();
 		void subscriber.start();
 		return () => subscriber.stop();
+	});
+
+	$effect(() => {
+		void themeSubscriber.start();
+		return () => themeSubscriber.stop();
+	});
+
+	$effect(() => {
+		// currentSettings.theme が変わったら DOM に反映 (I-PM16/17/18)。
+		// load-settings 後 / theme_changed event 後 / settings save 後 の全 case を cover。
+		themeSubscriber.setTheme(currentSettings.theme);
 	});
 
 	// ori-73q / spec.md#impl-quit-orchestration: S13 連続 Flush の orchestration。
