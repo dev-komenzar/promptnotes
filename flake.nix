@@ -85,16 +85,64 @@
           categories = [ "Utility" "Office" ];
         };
 
+        # FOD: bun dependencies (node_modules tarball)
+        # bun install は sandbox 内でネットワーク不可なため、FOD で先に deps を
+        # fetch する。出力 hash で検証されるため FOD は network access を許可される。
+        # node_modules は shebang に nix store path を含むため、directory 出力だと
+        # FOD の参照制約に引っかかる。tarball で出力して回避する。
+        bunDeps = pkgs.stdenvNoCC.mkDerivation {
+          name = "promptnotes-bun-deps";
+
+          # package.json と bun.lock のみ入力 (source code に依存しない)
+          src = pkgs.runCommand "promptnotes-bun-inputs" {} ''
+            mkdir $out
+            cp ${./apps/promptnotes/package.json} $out/package.json
+            cp ${./apps/promptnotes/bun.lock} $out/bun.lock
+          '';
+
+          impureEnvVars = pkgs.lib.fetchers.proxyImpureEnvVars;
+
+          nativeBuildInputs = with pkgs; [
+            bun
+            nodejs_22
+            cacert
+          ];
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME=$(mktemp -d)
+            export BUN_INSTALL_CACHE_DIR=$HOME/.bun/cache
+            # --ignore-scripts: prepare (svelte-kit sync) は本 build で実行するため FOD では skip
+            bun install --frozen-lockfile --ignore-scripts
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner \
+              -cf $out node_modules
+            runHook postInstall
+          '';
+
+          outputHashMode = "flat";
+          outputHash = "sha256-qpSxAQecwMpaMuEVXWhMGhhQ5oB3MpVF5LduCu6N3nY=";
+        };
+
+        # FOD: cargo dependencies (vendored crates)
+        # fetchCargoVendor が Cargo.lock から crate を download して vendor dir を生成する。
+        cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+          name = "promptnotes-cargo-deps";
+          src = ./apps/promptnotes/src-tauri;
+          hash = "sha256-hye+w9UhgcRyb+sPwTfdqcSsoR/QfH05O8tUsd2bKTo=";
+        };
+
         # NixOS 個人利用向けの PromptNotes パッケージ。
-        # bun install / cargo fetch がネットワークを要するため __noChroot で
-        # sandbox をバイパスする (要 `--option sandbox relaxed` か daemon 側設定)。
-        # 公開 distribution (flathub / nixpkgs PR) を行う段階では FOD / buildBunModule に置き換える前提の preview ビルド。
+        # bun install / cargo fetch は上記 FOD で事前実行するため、本 derivation は
+        # pure sandbox で network access 不要 (sandbox = relaxed も不要)。
         promptnotesPackage = pkgs.stdenv.mkDerivation {
           pname = "promptnotes";
           version = "0.1.0";
           src = ./.;
-
-          __noChroot = true;
 
           nativeBuildInputs = with pkgs; [
             rustToolchain
@@ -117,8 +165,34 @@
             export HOME=$(mktemp -d)
             export CARGO_HOME=$HOME/.cargo
             export XDG_CACHE_HOME=$HOME/.cache
+            export CARGO_NET_OFFLINE=true
+
             cd apps/promptnotes
-            bun install --frozen-lockfile
+
+            # FOD で事前 fetch した node_modules tarball を展開 (network 不要)
+            tar -xf ${bunDeps} -C .
+            chmod -R +w ./node_modules
+
+            # sandbox 内に /usr/bin/env が無いため、node_modules 内の
+            # shebang を nix store path に patch する。
+            # .bin/ の symlink target にも実行権限が必要なため全体に +x 付与。
+            chmod -R +x ./node_modules
+            patchShebangs ./node_modules
+
+            # prepare script (svelte-kit sync) は FOD で skip したためここで実行
+            bun run prepare || true
+
+            # cargo が FOD の vendored crates を使うよう .cargo/config.toml を設定
+            # fetchCargoVendor は source-registry-0/ サブディレクトリに crates を配置する
+            mkdir -p src-tauri/.cargo
+            cat > src-tauri/.cargo/config.toml <<EOF
+            [source.crates-io]
+            replace-with = "vendored-sources"
+
+            [source.vendored-sources]
+            directory = "${cargoDeps}/source-registry-0"
+            EOF
+
             runHook postConfigure
           '';
 
@@ -127,6 +201,7 @@
             # cargo tauri build は tauri.conf.json の beforeBuildCommand
             # (bun run build) を自動で呼ぶ。--no-bundle で deb/AppImage 等の
             # bundling は省き、生 binary のみ生成する (Nix 側で wrap するため)。
+            # CARGO_NET_OFFLINE=true により cargo は network に access しない。
             cargo tauri build --no-bundle
             runHook postBuild
           '';
