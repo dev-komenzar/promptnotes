@@ -1,16 +1,17 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-27
+  last_derived: 2026-06-29
   upstream:
     - domain/workflows/list-feed.md#list-feed
     - domain/aggregates.md#note-feed-aggregate
     - domain/bounded-contexts.md#note-feed
     - domain/validation.md#s12-startup-state
   hash:
-    domain/workflows/list-feed.md#.*: c5b5e65e566a
-    domain/aggregates.md#.*: 5beb07a42810
-    domain/bounded-contexts.md#.*: 2dc895d7be08
+    domain/workflows/list-feed.md#.*: 84c43c64cca4
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
@@ -89,7 +90,7 @@ I-F1 / I-F6 は filter の構築側 (`update-feed-filter` slice) で確立済。
 - **C-LF2**: `apply_filter` は `&Vec<Note>` を消費せず `Vec<&Note>` を返す (read pipeline は所有権を奪わない)
 - **C-LF3**: `apply_sort` は **stable sort** で I-F3 を satisfy する (`slice::sort_by` は stable)
 - **C-LF4**: `apply_filter` は `query` `date_range` `tag` の **3 軸 AND** (I-F4) を **早期 short-circuit** で評価 (どれかが弾けば次軸を見ない)
-- **C-LF5**: query 比較は `note.body().contains(q.as_str())` + `tag.name().contains(q.as_str())` の **substring + lowercase-only** (I-F1 で `q` が NFC + lowercase 済なので、`body` / `tag.name` 側も `to_lowercase()` してから比較)
+- **C-LF5**: query 比較は `note.body().contains(q.as_str())` + `tag.name().contains(q.as_str())` の **substring + lowercase-only** (I-F1 で `q` が NFKC (compatibility normalization) + lowercase 済なので、`body` / `tag.name` 側も `to_lowercase()` してから比較)
 - **C-LF6**: 本 slice は **domain event を発行しない** (read 側、揮発)
 - **C-LF7**: `hydrate` 後の `NoteFeed.source` は I-F7 を満たす (port 契約 `list_all` が trash 済を除外する責務)
 - **C-LF8**: `date_range` の比較は `Note.created_at` ベース (Q7 補足: filter 軸は created)。`Custom { from, to }` の `from > to` は空集合に降格 (`update-feed-filter` の oq-date-range-validation と整合)

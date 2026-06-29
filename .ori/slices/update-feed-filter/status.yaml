@@ -1,5 +1,5 @@
 slice_id: update-feed-filter
-derived_at: 2026-06-26T06:40:25.582Z
+derived_at: 2026-06-29T00:00:00.000Z
 beads:
   epic: ori-64x
   current_phase: null
@@ -29,3 +29,4 @@ followup:
   - id: ori-64x.12
 proposals:
   - accepted/2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc.md  # accepted 2026-06-28
+  - accepted/2026-06-29-update-feed-filter-nfkc-spread.md  # accepted 2026-06-29
