@@ -606,6 +606,36 @@ fn tp_to1_repo_write_not_called_during_delete() {
     );
 }
 
+/// spec.md#tp-trash-only TP-TO2 — 構造的 unlink guard (review L-1, I-DN2)
+///
+/// `include_str!` で slice の production source file を compile-time に読み込み、
+/// `fs::remove_` パターン（`std::fs::remove_file` / `std::fs::remove_dir_all` 等）
+/// が出現しないことを assert する。TP-TO1 (behavioral) と相補的な構造チェックで、
+/// 将来 contributor が unlink API を直接呼ぶ regression を機械的に検出する。
+///
+/// `tests.rs` 自身はチェック対象外 (test が `fs::remove_*` を言及する事があるため)。
+#[test]
+fn tp_to2_no_unlink_api_in_slice_source() {
+    let sources: &[(&str, &str)] = &[
+        ("application.rs", include_str!("application.rs")),
+        ("commands.rs", include_str!("commands.rs")),
+        ("domain.rs", include_str!("domain.rs")),
+        ("ports.rs", include_str!("ports.rs")),
+        ("mod.rs", include_str!("mod.rs")),
+    ];
+
+    const FORBIDDEN_PATTERN: &str = "fs::remove_";
+
+    for (file_name, source) in sources {
+        assert!(
+            !source.contains(FORBIDDEN_PATTERN),
+            "I-DN2 violation: `{file_name}` contains forbidden unlink API pattern \
+             `{FORBIDDEN_PATTERN}`. File deletion must go through \
+             TrashService::move_to_trash only (spec.md#tp-trash-only, I-DN2)."
+        );
+    }
+}
+
 // ===== TP-AS*: type-level API surface =====
 
 /// spec.md#io-output TP-AS1 — execute returns `Result<DeletedNote, DeleteNoteError>`.
