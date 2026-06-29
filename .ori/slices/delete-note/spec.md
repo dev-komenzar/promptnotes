@@ -76,7 +76,7 @@ domain/workflows/delete-note.md#errors は `NoteNotFound` / `TrashError` の 2 v
 
 ### slice 固有制約 {#invariants-slice-specific}
 
-- **I-DN1（path resolution）**: `original_path` は `storage_dir / <note_id>.md` で決定論的に導出される（domain/workflows/delete-note.md#steps step 2）。slice 内で別経路（symlink 解決・絶対パス再構築 等）を通さない。`storage_dir` は Settings Aggregate から application service が解決した値を port 入力として受け取る
+- **I-DN1（path resolution）**: `original_path` は `storage_dir / <note_id>.md` で決定論的に導出される（domain/workflows/delete-note.md#steps step 2）。slice 内で別経路（symlink 解決・絶対パス再構築 等）を通さない。`storage_dir` は `NoteRepository::storage_dir()` 経由で取得する（review Pass 1 M-2 解消: `SettingsReader` port は廃止し、auto-save-note / create-note / copy-note-body slice と一貫して `NoteRepository::storage_dir()` を再利用。`NoteRepository` への `storage_dir` 注入は Tauri command 境界で Settings Aggregate から hydrate される）
 - **I-DN2（trash 経由のみ）**: ファイル削除は必ず `TrashService::move_to_trash` 経由で行い、`std::fs::remove_file` 等の unlink API を slice 内で呼ばない（domain/bounded-contexts.md#note-capture-ubiquitous-language の DeleteToTrash 定義）。これは「OS のゴミ箱から復帰」可能性を保証するための構造的不変条件
 - **I-DN3（副作用順序: load 失敗時）**: `NoteNotFound`（および I-DN6 で collapse された load io::Err）の場合、`TrashService::move_to_trash` / `UndoStack::push` / `EventBus::publish` は呼ばれない（read 段階で短絡）
 - **I-DN4（副作用順序: trash 失敗時）**: `TrashError` の場合、`UndoStack::push` と `EventBus::publish` は呼ばれない（trash 移動が成功しないと Undo 不可能 + state 不整合のため）
@@ -131,25 +131,28 @@ happy path で push される `DeletedNote.id` が input の `note_id` と一致
 
 ### trash 経路のみ（unlink 不使用） {#tp-trash-only}
 
-本 slice の impl コードに `std::fs::remove_file` / `std::fs::remove_dir_all` 等の unlink API への直接依存が出現しないことを構造的に確認（I-DN2）。test では fake `TrashService` がただ一度呼ばれ、`NoteRepository` 上の write 系 method（仮にあれば）が呼ばれないことを assert。
+本 slice の impl コードに `std::fs::remove_file` / `std::fs::remove_dir_all` 等の unlink API への直接依存が出現しないことを構造的に確認（I-DN2）。確認は 2 段構成:
+
+- **TP-TO1 (behavioral)**: fake `TrashService` がただ一度呼ばれ、`NoteRepository` 上の write 系 method（仮にあれば）が呼ばれないことを assert
+- **TP-TO2 (structural, review L-1)**: `include_str!` で slice の production source file（`application.rs` / `commands.rs` / `domain.rs` / `ports.rs` / `mod.rs`）を compile-time に読み込み、`fs::remove_` パターンが出現しないことを assert。将来 contributor が unlink API を直接呼ぶ regression を機械的に検出する
 
 ## 実装ノート {#impl-notes}
 
 ### 依存 interface（port） {#impl-ports}
 
 - `NoteRepository::load_by_id(&NoteId) -> Result<Note, NoteRepositoryError>` — read only。auto-save-note / copy-note-body slice で既に Rust 側に存在するものを再利用
+- `NoteRepository::storage_dir() -> &Path` — `storage_dir` 解決用。`NoteRepository` port の既存 method を再利用（review Pass 1 M-2 解消: `SettingsReader` port は廃止。auto-save-note / create-note / copy-note-body slice と一貫）。`NoteRepository` 実装への `storage_dir` 注入は Tauri command 境界 (`commands.rs`) で Settings Aggregate から hydrate する
 - `TrashService::move_to_trash(&Path) -> Result<(), TrashErrorKind>` — **新規 port**。`TrashErrorKind` は最小集合 `PermissionDenied` / `Io(String)` / `Unsupported` の 3 variant。OS 依存実装（macOS: `NSWorkspace.recycleURLs` / Linux: XDG trash / Windows: `SHFileOperation`）は phase 7 finalize で `commands.rs`（Tauri 境界）と併せて実装する。slice 単体テストは fake trash で完結する設計。crate 候補：`trash`（cross-platform）または Tauri plugin
 - `UndoStack` — application service 層が保持する `Vec<DeletedNote>`。slice からは `UndoStack::push(DeletedNote)` のみを呼ぶ trait として抽出。restore-deleted-note slice と共有する想定（実装は phase 4 で最小化、本 slice では push のみ）
 - `EventBus::publish(NoteDeletedToTrash) -> ()` — 既存 event bus port を再利用（auto-save-note slice の publish 経路と同型）
 - `Clock::now() -> Timestamp` — `deleted_at` 取得用。auto-save-note slice の Clock を再利用
-- `SettingsReader::storage_dir() -> &Path` — `storage_dir` 解決用。port として抽出し、application service 層で Settings Aggregate から hydrate する
 
 ### slice layout（DDD-VSA-Hex） {#impl-layout}
 
 - Rust（primary、Tauri command 層）: `apps/promptnotes/src-tauri/src/note_capture/slices/delete_note/`
   - `commands.rs` — Tauri command として `#[tauri::command]` で expose
   - `handler.rs` — application service（`DeleteNoteCommand → Result<DeletedNote, DeleteNoteError>`）
-  - `ports.rs` — `TrashService` / `UndoStack` / `SettingsReader` trait 定義
+  - `ports.rs` — `TrashService` / `UndoStack` trait 定義（review Pass 1 M-2 解消: `SettingsReader` は廃止）
 - TS（UI 連携）: `apps/promptnotes/src/lib/note-capture/slices/delete-note/`
   - tauri-specta 生成 bindings 経由でホバーボタン onClick から呼ぶ
   - Toast 表示・per-Toast TTL タイマー開始は UI 層の責務（本 slice の output を受けて起動）
