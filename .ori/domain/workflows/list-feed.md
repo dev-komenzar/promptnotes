@@ -55,7 +55,7 @@ struct ListFeedCommand {
 3. `applyFilter: (Vec<Note>, FeedFilter) → Vec<&Note>`
    - I-F4: AND 合成 (date_range ∧ tag ∧ query)
    - I-F5: マッチング対象は `body` 全文 + `tags[*].name` のみ
-   - I-F1: query は NFC + lowercase 済 (filter 構築時に確立済)
+   - I-F1: query は NFKC (compatibility normalization) + lowercase 済 (filter 構築時に確立済)
    - I-F7: 削除 (trash) された Note は除外 (本 slice では `source` から既に除外されている前提)
 4. `applySort: (Vec<&Note>, SortOrder) → Vec<&Note>`
    - I-F3: sort key が同値の場合は `id` で tiebreak (決定論性)

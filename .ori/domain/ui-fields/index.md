@@ -28,7 +28,7 @@ ui-fields 層でも遵守する。
 | `NoteBody` | textarea (CodeMirror 6) | `NoteBody::try_from_string` で frontmatter delimiter を reject |
 | `Tag` | chip input + plain text | `Tag::try_from_string` で正規化 + 禁止文字 reject |
 | `TagSet` | chip list (順序保持) | `TagSet::insert` で重複排除 |
-| `NormalizedQuery` | search input | `NormalizedQuery::from_raw` で NFC + lowercase |
+| `NormalizedQuery` | search input | `NormalizedQuery::from_raw` で NFKC (compatibility normalization) + lowercase |
 | `DateRangeFilter` | preset segmented control + date picker | enum 直接マッピング |
 | `SortField` | enum select / segmented | `CreatedAt | UpdatedAt` |
 | `SortDirection` | toggle button / icon | `Asc | Desc` |

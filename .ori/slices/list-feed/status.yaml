@@ -1,5 +1,5 @@
 slice_id: list-feed
-derived_at: 2026-06-27
+derived_at: 2026-06-29
 beads:
   epic: ori-84i
   current_phase: finalize
@@ -40,4 +40,5 @@ phases:
 dirty: []
 finalized_at: 2026-06-27
 followup: []
-proposals: {}
+proposals:
+  - accepted/2026-06-29-update-feed-filter-nfkc-spread.md  # accepted 2026-06-29

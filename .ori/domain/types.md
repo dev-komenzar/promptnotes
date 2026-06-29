@@ -81,7 +81,7 @@ bd memory `promptnotes-1-invariant-2-tag-normalizedquery-storagedir-3` で確定
 |--|--|
 | **thiserror** | ドメインエラー型の derive |
 | **garde** | derive(Validate) ベースの個別 VO 検証（現状は手書きのみ、Phase 11 で本格採用） |
-| **unicode-normalization** | NFC 正規化（NormalizedQuery, body マッチング、I-F1 / I-F5） |
+| **unicode-normalization** | NFKC (compatibility normalization) 正規化（NormalizedQuery, body マッチング、I-F1 / I-F5） |
 | **time** | Timestamp の秒精度操作（OffsetDateTime + 秒切り捨て）|
 | **serde** | Settings の JSON 永続化 / Note の frontmatter 形成（src 側で実装） |
 | **url** | Release.url の型安全な URL 表現 |
@@ -98,7 +98,7 @@ field-level バリデーションが増えた段階で再評価する。
 | Aggregate | 型定義ファイル | 不変条件の表現 |
 |--|--|--|
 | Note | note.rs | private fields + 構築/更新 method 経由のみ。`updatedAt` は更新メソッド内で必ず代入（I-N4）。`Tag::try_from_string` で I-N6 を集中管理 |
-| NoteFeed | note_feed.rs | `visible_notes()` 内で filter→sort、`SortOrder` で tiebreak（I-F3）。query は `NormalizedQuery::from_raw` で必ず NFC + lowercase（I-F1） |
+| NoteFeed | note_feed.rs | `visible_notes()` 内で filter→sort、`SortOrder` で tiebreak（I-F3）。query は `NormalizedQuery::from_raw` で必ず NFKC (compatibility normalization) + lowercase（I-F1） |
 | Settings | settings.rs | `StorageDir::try_from_path` で絶対パス検証（I-S1）。デフォルト値は `Settings::defaults` 経由（I-S3） |
 | UpdateChannel | update_channel.rs | `with_release` で `latest > current` のみ Some に保持（I-U2）|
 

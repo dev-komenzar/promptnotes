@@ -88,7 +88,7 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 
 ### NormalizedQuery {#glossary-normalized-query}
 
-- **定義**: 検索バー入力を NFC 正規化 + lowercase 化した文字列
+- **定義**: 検索バー入力を NFKC (compatibility normalization) 正規化 + lowercase 化した文字列
 - **kind**: VO
 - **値域**: 1 文字以上のとき `Some`、空文字は `None`
 
@@ -268,7 +268,7 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 
 - Note Capture: ファイル IO / debounce / focus イベント / OS ゴミ箱 API の世界。
   操作の主体（command を受け取る側）
-- Note Feed: in-memory index / NFC 正規化 / 検索文字列マッチの世界。
+- Note Feed: in-memory index / NFKC (compatibility normalization) 正規化 / 検索文字列マッチの世界。
   検索・並べ替えの対象（query を受ける側）
 - 同じ型を共有しても、責務の側面が違うため両 BC の独立性は保たれる
   （Phase 4 で Shared Kernel として明示）
