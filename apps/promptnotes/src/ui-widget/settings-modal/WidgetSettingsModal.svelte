@@ -30,7 +30,7 @@
 
 	// Modal は parent の {#if settingsModalOpen} で mount/unmount 制御するため、
 	// initial / updateSettingsFn は mount 時の値で確定して良い（再開時は新 instance）。
-	const store = untrack(() => createSettingsModalStore(initial, { updateSettingsFn }));
+	const store = untrack(() => createSettingsModalStore(initial, { updateSettingsFn, onPreviewTheme: previewTheme }));
 
 	let dialogEl: HTMLDialogElement | null = $state(null);
 
@@ -43,6 +43,23 @@
 		{ value: 'Light', label: 'Light' },
 		{ value: 'Dark', label: 'Dark' }
 	];
+
+	// ---- theme preview (I-SM5) ------------------------------------------------
+
+	function effectiveDark(theme: Theme, matches: boolean): boolean {
+		if (theme === 'Dark') return true;
+		if (theme === 'Light') return false;
+		return matches;
+	}
+
+	function previewTheme(theme: Theme): void {
+		if (typeof document === 'undefined') return;
+		const mql = window.matchMedia('(prefers-color-scheme: dark)');
+		const dark = effectiveDark(theme, mql.matches);
+		document.documentElement.classList.toggle('dark', dark);
+	}
+
+	// ---- form handlers --------------------------------------------------------
 
 	function pathErrorMessage(error: UpdateSettingsError): string | null {
 		if (error.kind !== 'invalid_path') return null;
@@ -78,11 +95,15 @@
 
 	function handleCancel(event: Event) {
 		event.preventDefault();
+		// I-SM5: cancel 時に mount 時の theme に rollback
+		previewTheme(initial.theme);
 		onClose();
 	}
 
 	function handleDialogCancel() {
 		// <dialog> の Esc → cancel event。preventDefault せず close は親に委ねる。
+		// I-SM5: Esc 時も mount 時の theme に rollback
+		previewTheme(initial.theme);
 		onClose();
 	}
 </script>

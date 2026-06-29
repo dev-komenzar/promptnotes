@@ -26,7 +26,7 @@ const defaultListenFn: ThemeListener = async (handler) =>
 		handler(event.payload);
 	});
 
-function effectiveDark(theme: Theme, matches: boolean): boolean {
+export function effectiveDark(theme: Theme, matches: boolean): boolean {
 	if (theme === 'Dark') return true;
 	if (theme === 'Light') return false;
 	return matches;
