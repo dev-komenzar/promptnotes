@@ -37,5 +37,13 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJDOEY1Q0QwOEY4ODUzODUKUldTRlU0aVAwRnlQdk1kUzg3VWwwVjljL1Nyd2EvVWlISFJHZzQ1RUVCb2lNdU1TL3Y1UWpacUUK",
+      "endpoints": [
+        "https://github.com/dev-komenzar/promptnotes/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

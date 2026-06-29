@@ -111,7 +111,7 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
   - `latest == current` → `Comparison::UpToDate` → `latest_release: None` + event 非発行
   - `latest < current` → `Comparison::OlderVersion` → `latest_release: None` + event 非発行
   （I-U2 を施行）
-- **C-CFU3**: `UpdateError` は use case 内で握り潰し、UI 層には伝搬しない（S14）。ログ出力のみ（`log` crate 経由想定、本 slice の test では log 抑制）
+- **C-CFU3**: `UpdateError` は use case 内で握り潰し、UI 層には伝搬しない（S14）。ログ出力のみ（`log` crate 経由、ori-2lm.10 で確定）
 - **C-CFU4**: 本 slice は **リトライしない**（I-U3）。`UpdaterPort::fetch_latest_release` を 1 回呼んで終わり。複数回呼出 (e.g. transient network failure 時のリカバリ) は scope 外
 - **C-CFU5**: 新版検出時は **1 件だけ** `NewVersionDetected` を publish する（複数発行しない）。event の payload は `current_version` / `latest_version` / `release_url` / `release_notes`
 - **C-CFU6**: 失敗時 / UpToDate 時 / OlderVersion 時 のいずれでも `EventBus::publish` は **一度も呼ばれない**（S14 + I-U2）
@@ -189,10 +189,10 @@ apps/promptnotes/src-tauri/src/update_distribution/
 
 ### `Version` VO の実装 {#impl-version}
 
-- semver 文字列 (`0.3.1`) を `(major, minor, patch)` の triple として保持
-- `Ord` derive または手動実装で `<` / `==` / `>` 比較を提供
-- `from_str(&str) -> Result<Version, UpdateError::ParseError>` smart constructor
-- 本 slice では **3-tuple の lexicographic 比較で十分**（pre-release / build metadata は YAGNI、後続 follow-up で必要なら拡張）
+- `semver` crate の `semver::Version` を newtype で wrap (`Version(semver::Version)`)
+- `Ord` / `PartialOrd` は inner に委譲 (`semver` crate 1.x 実装準拠: pre-release < release。build metadata は 2.0 仕様と異なり 1.x では `Ord` に影響する点に注意)
+- `from_str(&str) -> Result<Version, UpdateError::ParseError>` smart constructor (`semver::Version::parse` へ委譲)
+- ori-2lm.9 で strict semver 対応に拡張 (pre-release / build metadata を含む全 semver 文字列を parse 可能)
 
 ### `UpdaterPort` の境界 {#impl-updater-port}
 
@@ -235,8 +235,8 @@ step 1 / 2 のいずれかが `Err` を返した場合、application service の
 pub fn execute(&self, cmd: CheckForUpdatesCommand) -> UpdateChannel {
     match self.try_execute(cmd.clone()) {
         Ok(uc) => uc,
-        Err(_e) => {
-            // log::warn!("update check failed: {:?}", _e);
+        Err(e) => {
+            log::warn!("update check failed: {:?}", e);
             UpdateChannel::without_release(cmd.current_version)
         }
     }
@@ -266,12 +266,14 @@ pub fn execute(&self, cmd: CheckForUpdatesCommand) -> UpdateChannel {
 
 ### oq-version-pre-release {#oq-version-pre-release}
 
-- **問**: `Version` の比較で pre-release（`0.4.0-rc1`）/ build metadata（`0.4.0+deadbeef`）をどう扱うか
+- **問**: `Version` の比較で pre-release（`0.4.0-rc1`）/ build metadata（`0.4.0+sha`）をどう扱うか
 - **暫定方針**: 本 slice では `major.minor.patch` の 3-tuple 比較のみ実装。pre-release / build metadata を含む文字列は `Version::from_str` で `ParseError` を返す（保守的 reject）
 - **解決方向**: ori-6l4 wiring 時に GitHub Releases の tag 形式を確認 → 必要なら follow-up issue で `Version` を strict semver 対応に拡張
+- **解決** (ori-2lm.9): `semver` crate ベースの strict semver 対応に拡張。`Version(semver::Version)` newtype として pre-release / build metadata を含む全 semver 文字列を parse・比較可能。GitHub Releases に tag が存在しない状態だが、standard semver tag 慣行 (`v0.4.0-rc1` 等) を想定し先行対応。注: `semver` crate 1.x では build metadata が `Ord` に影響する (2.0 仕様とは異なる)。PromptNotes のユースケース (起動時 1 回チェック) では build metadata 違いで判定が変わることは実運用上無害。
 
 ### oq-log-coupling {#oq-log-coupling}
 
 - **問**: S14 silent failure で「ログは出すが UI 通知はしない」とあるが、本 slice の application layer に `log` crate 依存を入れるか
 - **暫定方針**: `log::warn!` を application.rs で使用（既存 lib.rs に `tauri-plugin-log` があるため依存追加なし）
 - **解決方向**: 副作用 (logging) を port で抽象化するかは follow-up で議論。テストでは log 出力を assert しない（実害なし）
+- **解決** (ori-2lm.10): `log` crate 直接呼出 (port 抽象化なし)。Update Distribution BC は generic subdomain であり、logging は cross-cutting infrastructure → port 化の ROI なし。`tauri-plugin-log` が既に依存にあるため追加依存なし。テストでは log 出力を assert しない。

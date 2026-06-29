@@ -10,8 +10,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        // tauri_plugin_updater requires plugins.updater.{endpoints, pubkey} + a signing key.
-        // Wire in once release infrastructure is ready.
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(note_feed::shared::adapters::InMemoryNoteFeedState::new())
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .setup(|app| {
