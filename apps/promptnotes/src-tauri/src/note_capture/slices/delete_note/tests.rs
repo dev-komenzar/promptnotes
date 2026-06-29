@@ -76,19 +76,6 @@ impl NoteRepository for FakeRepo {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl NoteRepository for RcRepo {
-    fn write(&self, n: &Note) -> io::Result<()> {
-        self.0.write(n)
-    }
-    fn storage_dir(&self) -> &Path {
-        self.0.storage_dir()
-    }
-    fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
-        self.0.load_by_id(id)
-    }
-}
-
 #[derive(Default)]
 struct FakeTrash {
     moves: RefCell<Vec<PathBuf>>,
@@ -129,16 +116,6 @@ impl TrashService for FakeTrash {
     }
 }
 
-struct RcTrash(Rc<FakeTrash>);
-impl TrashService for RcTrash {
-    fn move_to_trash(&self, p: &Path) -> Result<(), TrashErrorKind> {
-        self.0.move_to_trash(p)
-    }
-    fn restore_from_trash(&self, p: &Path) -> Result<(), TrashErrorKind> {
-        self.0.restore_from_trash(p)
-    }
-}
-
 #[derive(Default)]
 struct FakeUndo {
     stack: RefCell<Vec<DeletedNote>>,
@@ -172,19 +149,6 @@ impl UndoStack for FakeUndo {
     }
     fn remove_by_id(&self, _id: &NoteId) -> Option<DeletedNote> {
         unreachable!("delete-note slice must not call remove_by_id")
-    }
-}
-
-struct RcUndo(Rc<FakeUndo>);
-impl UndoStack for RcUndo {
-    fn push(&self, d: DeletedNote) {
-        self.0.push(d);
-    }
-    fn find_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
-        self.0.find_by_id(id)
-    }
-    fn remove_by_id(&self, id: &NoteId) -> Option<DeletedNote> {
-        self.0.remove_by_id(id)
     }
 }
 
@@ -230,15 +194,8 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: DomainEvent) {
-        self.0.publish(e);
-    }
-}
-
 type Rig = (
-    DeleteNoteUseCase<RcRepo, RcTrash, RcUndo, FixedClock, RcBus>,
+    DeleteNoteUseCase<Rc<FakeRepo>, Rc<FakeTrash>, Rc<FakeUndo>, FixedClock, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeTrash>,
     Rc<FakeUndo>,
@@ -254,11 +211,11 @@ fn rig(now: OffsetDateTime) -> Rig {
     let clock = FixedClock::new(now);
     let bus = Rc::new(FakeBus::new(order_log.clone()));
     let uc = DeleteNoteUseCase::new(
-        RcRepo(repo.clone()),
-        RcTrash(trash.clone()),
-        RcUndo(undo.clone()),
+        repo.clone(),
+        trash.clone(),
+        undo.clone(),
         clock,
-        RcBus(bus.clone()),
+        bus.clone(),
     );
     (uc, repo, trash, undo, bus, order_log)
 }

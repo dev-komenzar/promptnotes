@@ -116,33 +116,8 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl RcRepo {
-    fn fail_next_load(&self, kind: io::ErrorKind) {
-        self.0.fail_next_load(kind);
-    }
-}
-impl NoteRepository for RcRepo {
-    fn write(&self, n: &Note) -> io::Result<()> {
-        self.0.write(n)
-    }
-    fn storage_dir(&self) -> &Path {
-        self.0.storage_dir()
-    }
-    fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
-        self.0.load_by_id(id)
-    }
-}
-
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: DomainEvent) {
-        self.0.publish(e);
-    }
-}
-
 type Rig = (
-    AutoSaveNoteUseCase<RcRepo, FixedClock, RcBus>,
+    AutoSaveNoteUseCase<Rc<FakeRepo>, FixedClock, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
 );
@@ -150,11 +125,7 @@ type Rig = (
 fn rig(now: OffsetDateTime) -> Rig {
     let repo = Rc::new(FakeRepo::new());
     let bus = Rc::new(FakeBus::new());
-    let uc = AutoSaveNoteUseCase::new(
-        RcRepo(repo.clone()),
-        FixedClock::new(now),
-        RcBus(bus.clone()),
-    );
+    let uc = AutoSaveNoteUseCase::new(repo.clone(), FixedClock::new(now), bus.clone());
     (uc, repo, bus)
 }
 
@@ -456,7 +427,7 @@ fn tp_le1_load_failure_surfaces_as_load_error_not_persist_error() {
     let id = NoteId::from_timestamp(Timestamp::from_offset_datetime(datetime!(
         2026-06-20 09:00:00 UTC
     )));
-    RcRepo(repo.clone()).fail_next_load(io::ErrorKind::PermissionDenied);
+    repo.fail_next_load(io::ErrorKind::PermissionDenied);
 
     let err = uc
         .execute(AutoSaveNoteCommand {

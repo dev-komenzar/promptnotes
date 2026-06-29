@@ -67,7 +67,7 @@ enum UpdateFeedFilterCommand {
 
 - `SetQuery { raw: "" }` / 空白のみ → `NormalizedQuery` が `None` に降格（=ClearAll の query 相当）
 - `SetTag { tag: None }` → tag filter を解除（Tag VO 構築は呼出側責務）
-- `SetDateRange` の `DateRangeFilter::Custom { from, to }` の `from > to` のような不正組合せは VO 構築側で reject する想定だが、現 domain 文書では明示無し → 本 slice では受理し、`Custom` を そのまま保持する（VO レベルバリデーションは将来の DateRangeFilter VO 強化で扱う、[#oq-date-range-validation](#oq-date-range-validation)）
+- `SetDateRange` の `DateRangeFilter::Custom { from, to }` の `from > to` のような不正組合せは `DateRangeFilter::custom` smart constructor および `DateRangeFilter::validate` で reject する (ori-64x.12 follow-up で `FeedDate` VO + `from <= to` validation を導入済。Tauri command 境界の `lower()` で `validate()` を呼び `InvalidDateRange` error を返す)
 
 ## 不変条件 {#invariants}
 
@@ -221,8 +221,7 @@ match cmd {
 ### oq-date-range-validation {#oq-date-range-validation}
 
 - **問**: `DateRangeFilter::Custom { from, to }` で `from > to` の場合の挙動が domain 文書に明示無い
-- **暫定方針**: 本 slice では VO を smart constructor 化せず enum variant としてそのまま受理する。`visible_notes` 側で範囲フィルタ計算時に空集合になるだけで実害なし
-- **解決方向**: Phase 7 (validation) で S 系シナリオに追加する or follow-up issue で `DateRangeFilter::custom(from, to) -> Result<Self, _>` 化
+- **解決済** (ori-64x.12 follow-up): `Custom { from, to }` を `FeedDate` (day-precision `time::Date` newtype) VO で型強化し、`DateRangeFilter::custom(from, to) -> Result<Self, DateRangeFilterError>` smart constructor で `from > to` を reject。Tauri command 境界 (`lower()`) で serde deserialize 後に `validate()` を呼び `InvalidDateRange { reason: "from_after_to" }` error DTO を返す。wire format は `YYYY-MM-DD` ISO date 文字列 (RFC 3339 datetime は `FeedDate::parse_iso` で reject)。domain 側の `DateRangeFilter` 要素定義への反映は別 proposal で扱う
 
 ### oq-source-shape {#oq-source-shape}
 

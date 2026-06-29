@@ -107,6 +107,8 @@ domain/workflows/remove-tag.md#errors は `NoteNotFound` / `PersistError` の 2 
 
 `tags = [Tag("rust")]` → `tag_name="python"` で削除 → Ok(None)、`NoteRepository::write` / `EventBus::publish` のいずれも呼ばれない (I-RT2)。
 
+空文字 `tag_name=""` も同一経路で no-op になる (TP-NM2)。`Tag::name` は I-N6 により空文字を含み得ないため、I-RT1 の完全一致比較で必ず miss する。UI 契約違反時の安全側挙動を TP-NU1 (未正規化文字列) と並んで pin する。
+
 ### no-op: 空 TagSet {#tp-noop-empty-tagset}
 
 `tags = []` の Note → 任意の `tag_name` で削除 → Ok(None)、write / event 未呼出 (I-RT2)。
@@ -184,7 +186,7 @@ assign-tag slice と並列構造:
 ### 既存 slice との関係 {#impl-related-slices}
 
 - assign-tag slice の `AssignTagUseCase` と対称: parse_tag step を省き、TagDiff variant を `Removed` に変える以外は同形
-- auto-save-note の `BodyDiff` / assign-tag の `TagDiff` と同様、`RemoveTagDiff = Unchanged | Removed` を application 層で定義
+- auto-save-note の `BodyDiff` / assign-tag の `TagDiff` と同様、`RemoveTagDiff = Unchanged | Removed(Tag)` を application 層で定義。`Removed` が対象 `Tag` を運ぶ事で downstream が TagSet 再検索不要になる (review Pass 1 HIGH-A。domain/workflows/remove-tag.md#steps step 2 の `TagDiff = Unchanged | Removed(Tag)` と同形)
 - `NoteTagsChanged` event は assign-tag と共有 (domain/domain-events.md#note-tags-changed-trigger が両方を含む)
 
 ### 非責務 {#impl-non-responsibility}

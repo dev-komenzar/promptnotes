@@ -44,3 +44,36 @@ pub trait EventBus {
 pub trait DebounceTimer {
     fn cancel(&self, note_id: &NoteId);
 }
+
+impl<T: NoteRepository + ?Sized> NoteRepository for std::rc::Rc<T> {
+    fn write(&self, note: &Note) -> std::io::Result<()> {
+        (**self).write(note)
+    }
+    fn storage_dir(&self) -> &Path {
+        (**self).storage_dir()
+    }
+    fn load_by_id(&self, id: &NoteId) -> std::io::Result<Option<Note>> {
+        (**self).load_by_id(id)
+    }
+    fn list_all(&self) -> std::io::Result<Vec<Note>> {
+        (**self).list_all()
+    }
+}
+
+impl<T: Clock + ?Sized> Clock for std::rc::Rc<T> {
+    fn now(&self) -> Timestamp {
+        (**self).now()
+    }
+}
+
+impl<T: EventBus + ?Sized> EventBus for std::rc::Rc<T> {
+    fn publish(&self, event: DomainEvent) {
+        (**self).publish(event)
+    }
+}
+
+impl<T: DebounceTimer + ?Sized> DebounceTimer for std::rc::Rc<T> {
+    fn cancel(&self, note_id: &NoteId) {
+        (**self).cancel(note_id)
+    }
+}

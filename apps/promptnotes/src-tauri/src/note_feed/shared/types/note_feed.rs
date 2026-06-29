@@ -1,4 +1,4 @@
-use time::{Date, Duration, OffsetDateTime};
+use time::{Duration, OffsetDateTime};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::note_capture::shared::types::Note;
@@ -108,7 +108,9 @@ fn matches_query(note: &Note, query: &NormalizedQuery) -> bool {
         .any(|t| t.name().contains(needle))
 }
 
-/// C-LF8: `Note.created_at` ベース。`Custom { from, to }` は `from > to` で空集合に降格。
+/// C-LF8: `Note.created_at` ベース。`Custom { from, to }` は `FeedDate` (day-precision) で
+/// 型強化済み。`from > to` は `DateRangeFilter::custom` / `validate` で reject されるため、
+/// 本関数に到達した `Custom` は `from <= to` を満たす前提で matching する。
 fn matches_date_range(note: &Note, range: &DateRangeFilter, now: OffsetDateTime) -> bool {
     let note_dt = note.created_at().into_offset_datetime();
     match range {
@@ -117,24 +119,10 @@ fn matches_date_range(note: &Note, range: &DateRangeFilter, now: OffsetDateTime)
         DateRangeFilter::Last30Days => note_dt >= now - Duration::days(30),
         DateRangeFilter::Last90Days => note_dt >= now - Duration::days(90),
         DateRangeFilter::Custom { from, to } => {
-            let Some(from_d) = parse_iso_date(from) else {
-                return false;
-            };
-            let Some(to_d) = parse_iso_date(to) else {
-                return false;
-            };
-            if from_d > to_d {
-                return false;
-            }
             let note_d = note_dt.date();
-            note_d >= from_d && note_d <= to_d
+            note_d >= from.as_date() && note_d <= to.as_date()
         }
     }
-}
-
-fn parse_iso_date(s: &str) -> Option<Date> {
-    let format = time::macros::format_description!("[year]-[month]-[day]");
-    Date::parse(s, format).ok()
 }
 
 /// C-LF3: stable sort + I-F3: 同 sort key は `id` (= created_at 秒精度) で tiebreak。

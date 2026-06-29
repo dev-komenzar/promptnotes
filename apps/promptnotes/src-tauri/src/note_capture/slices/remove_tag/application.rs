@@ -74,6 +74,12 @@ where
         // Step 2 + 3 — compute diff and branch on Unchanged (I-RT2).
         // `Removed(Tag)` carries the matched aggregate Tag for symmetry with
         // the domain workflow contract (review Pass 1 HIGH-A).
+        //
+        // `_matched` is currently discarded: the aggregate's `remove_tag` will
+        // re-find the Tag internally. We keep the binding (rather than `_`) so
+        // that a future audit-log hook can emit "removed tag X from note Y"
+        // without re-walking the TagSet — the Tag is already in hand here.
+        // (review Pass 2 LOW-O)
         let _matched = match compute_diff(&existing, &tag_name) {
             RemoveTagDiff::Unchanged => return Ok(None),
             RemoveTagDiff::Removed(t) => t,
