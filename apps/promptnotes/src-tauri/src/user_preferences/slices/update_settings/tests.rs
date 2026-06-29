@@ -156,7 +156,10 @@ fn tp_h1_storage_dir_only_update_emits_storage_dir_changed() {
     assert_eq!(repo.save_count(), 1, "TP-H1: save called once");
     assert_eq!(bus.count(), 1, "TP-H1: exactly one event published");
     match bus.events().into_iter().next().unwrap() {
-        SettingsEvent::StorageDirChanged { old_dir, new_dir: nd } => {
+        SettingsEvent::StorageDirChanged {
+            old_dir,
+            new_dir: nd,
+        } => {
             assert_eq!(old_dir, PathBuf::from("/old/notes"));
             assert_eq!(nd, new_dir);
         }
@@ -202,7 +205,11 @@ fn tp_b1_both_fields_update_emits_two_events_in_order() {
         })
         .expect("both-field update should succeed");
 
-    assert_eq!(repo.save_count(), 1, "TP-B1: save called once for combined diff");
+    assert_eq!(
+        repo.save_count(),
+        1,
+        "TP-B1: save called once for combined diff"
+    );
     let events = bus.events();
     assert_eq!(events.len(), 2, "TP-B1: two events published");
     assert!(
@@ -233,9 +240,9 @@ fn tp_n1_both_none_is_no_op() {
     assert_eq!(bus.count(), 0, "TP-N1: no event published");
 }
 
-/// spec.md#tp-noop TP-N2 — 個別フィールドが現在値と同一 → そのフィールド分の event 0 (C-US2)
+/// spec.md#tp-noop TP-N2 (theme case) — new_theme が現在値と同一 → そのフィールド分の event 0 (C-US2)
 #[test]
-fn tp_n2_same_value_does_not_emit_event() {
+fn tp_n2_theme_same_value_does_not_emit_event() {
     let (uc, repo, bus) = rig();
     // current.theme == Theme::System、同じ値を指定
     let _ = uc
@@ -245,8 +252,42 @@ fn tp_n2_same_value_does_not_emit_event() {
         })
         .expect("same-value update should succeed");
 
-    assert_eq!(repo.save_count(), 0, "TP-N2: save not called when no diff");
-    assert_eq!(bus.count(), 0, "TP-N2: no event when value equals current");
+    assert_eq!(
+        repo.save_count(),
+        0,
+        "TP-N2 (theme): save not called when no diff"
+    );
+    assert_eq!(
+        bus.count(),
+        0,
+        "TP-N2 (theme): no event when value equals current"
+    );
+}
+
+/// spec.md#tp-noop TP-N2 (storage_dir case) — new_storage_dir が現在値と同一 → そのフィールド分の event 0 (C-US2)
+///
+/// `Some(/old/notes)` 単独の同値ケース。TP-N3 (両 field 同値) と対で spec.md#tp-noop を完全カバーする。
+#[test]
+fn tp_n2_storage_dir_same_value_does_not_emit_event() {
+    let (uc, repo, bus) = rig();
+    // current.storage_dir == /old/notes、同じ値を指定
+    let _ = uc
+        .execute(UpdateSettingsCommand {
+            new_storage_dir: Some(PathBuf::from("/old/notes")),
+            new_theme: None,
+        })
+        .expect("same-value storage_dir update should succeed");
+
+    assert_eq!(
+        repo.save_count(),
+        0,
+        "TP-N2 (storage_dir): save not called when storage_dir equals current"
+    );
+    assert_eq!(
+        bus.count(),
+        0,
+        "TP-N2 (storage_dir): no event when storage_dir equals current"
+    );
 }
 
 /// spec.md#tp-noop TP-N3 — 両フィールド同値 → no-op
@@ -288,7 +329,10 @@ fn tp_s11_1_storage_dir_change_persists_and_emits() {
     let events = bus.events();
     assert_eq!(events.len(), 1);
     match &events[0] {
-        SettingsEvent::StorageDirChanged { old_dir, new_dir: nd } => {
+        SettingsEvent::StorageDirChanged {
+            old_dir,
+            new_dir: nd,
+        } => {
             assert_eq!(old_dir, &PathBuf::from("/old/notes"));
             assert_eq!(nd, &new_dir);
         }
@@ -321,7 +365,10 @@ fn tp_e1_relative_storage_dir_returns_invalid_path() {
         new_theme: None,
     });
 
-    assert!(matches!(result, Err(UpdateSettingsError::InvalidPath { .. })));
+    assert!(matches!(
+        result,
+        Err(UpdateSettingsError::InvalidPath { .. })
+    ));
     assert_eq!(repo.save_count(), 0, "TP-E1: no save on InvalidPath");
     assert_eq!(bus.count(), 0, "TP-E1: no event on InvalidPath");
 }
@@ -357,7 +404,10 @@ fn tp_e3_invalid_storage_dir_blocks_theme_update() {
         new_theme: Some(Theme::Dark),
     });
 
-    assert!(matches!(result, Err(UpdateSettingsError::InvalidPath { .. })));
+    assert!(matches!(
+        result,
+        Err(UpdateSettingsError::InvalidPath { .. })
+    ));
     assert_eq!(repo.save_count(), 0);
     assert_eq!(bus.count(), 0);
     // current value 不変
@@ -367,6 +417,9 @@ fn tp_e3_invalid_storage_dir_blocks_theme_update() {
 // ===== TP-E*: PersistError =====
 
 /// spec.md#tp-persist-error TP-E4 — save 失敗 → PersistError、event 0 件 (C-US4, C-US6)
+///
+/// `PersistError.path` が use case に渡した `config_path` と一致することを assert して
+/// regression に備える (application.rs で `self.config_path.clone()` を埋め込む実装を固定)。
 #[test]
 fn tp_e4_save_failure_returns_persist_error_with_no_events() {
     let (uc, repo, bus) = rig();
@@ -377,7 +430,24 @@ fn tp_e4_save_failure_returns_persist_error_with_no_events() {
         new_theme: None,
     });
 
-    assert!(matches!(result, Err(UpdateSettingsError::PersistError { .. })));
+    match result {
+        Err(UpdateSettingsError::PersistError { path, cause }) => {
+            assert_eq!(
+                path,
+                config_path(),
+                "TP-E4: PersistError.path must equal config_path"
+            );
+            assert_eq!(
+                cause.kind(),
+                io::ErrorKind::PermissionDenied,
+                "TP-E4: PersistError.cause preserves original io::ErrorKind"
+            );
+        }
+        other => panic!(
+            "TP-E4: expected Err(UpdateSettingsError::PersistError), got {:?}",
+            other
+        ),
+    }
     assert_eq!(bus.count(), 0, "TP-E4: no event on PersistError");
 }
 
@@ -426,6 +496,32 @@ fn tp_i2_config_path_not_inside_storage_dir() {
         "TP-I2: config_path must not be descendant of storage_dir"
     );
     let _ = new_dir;
+}
+
+/// spec.md#tp-invariants TP-I2 (boundary) — config_path と同じ親を share する storage_dir は受理される
+///
+/// TP-E2 は violation 側 (`storage_dir` が `config_path` の親) のみ cover。本 test は
+/// `config_path = /tmp/promptnotes-test-config/settings.json` に対して
+/// `new_storage_dir = /tmp/promptnotes-test-config/notes` (settings.json と同じ親の子) を
+/// 受理する positive 境界を明示化する (I-S2: `config_path.starts_with(storage_dir) == false`)。
+#[test]
+fn tp_i2_sibling_storage_dir_is_accepted() {
+    let (uc, repo, _bus) = rig();
+    let new_dir = PathBuf::from("/tmp/promptnotes-test-config/notes");
+
+    let result = uc
+        .execute(UpdateSettingsCommand {
+            new_storage_dir: Some(new_dir.clone()),
+            new_theme: None,
+        })
+        .expect("sibling storage_dir should be accepted (I-S2 boundary)");
+
+    assert_eq!(result.storage_dir().as_path(), new_dir.as_path());
+    assert!(
+        !config_path().starts_with(result.storage_dir().as_path()),
+        "TP-I2 (boundary): config_path must not be descendant of sibling storage_dir"
+    );
+    assert_eq!(repo.save_count(), 1, "sibling case should persist");
 }
 
 // ===== TP-O*: event 順序 =====
