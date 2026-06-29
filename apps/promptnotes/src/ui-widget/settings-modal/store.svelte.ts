@@ -16,6 +16,8 @@ import {
 
 export type SettingsModalStoreDeps = {
 	updateSettingsFn?: typeof defaultUpdateSettings;
+	/** I-SM5: theme 選択時の即時 preview callback（DOM 操作の注入点） */
+	onPreviewTheme?: (theme: Theme) => void;
 };
 
 export type SaveState =
@@ -43,6 +45,7 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 	function setTheme(next: Theme): void {
 		theme = next;
 		if (saveState.kind === 'error') saveState = { kind: 'idle' };
+		deps.onPreviewTheme?.(next);
 	}
 
 	function buildInput(): UpdateSettingsInput {

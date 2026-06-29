@@ -128,4 +128,32 @@ describe('widget:widget-settings-modal store', () => {
 
 		expect(store.dirty).toBe(false);
 	});
+
+	it('spec#I-SM5 — setTheme で onPreviewTheme callback が呼ばれる', () => {
+		const onPreviewTheme = vi.fn();
+		const store = createSettingsModalStore(makeSettings({ theme: 'System' }), {
+			updateSettingsFn: vi.fn(),
+			onPreviewTheme
+		});
+
+		store.setTheme('Dark');
+
+		expect(onPreviewTheme).toHaveBeenCalledTimes(1);
+		expect(onPreviewTheme).toHaveBeenCalledWith('Dark');
+	});
+
+	it('spec#I-SM5 — Light → Dark → System と連続選択で preview が毎回呼ばれる', () => {
+		const onPreviewTheme = vi.fn();
+		const store = createSettingsModalStore(makeSettings({ theme: 'System' }), {
+			updateSettingsFn: vi.fn(),
+			onPreviewTheme
+		});
+
+		store.setTheme('Light');
+		store.setTheme('Dark');
+		store.setTheme('System');
+
+		expect(onPreviewTheme).toHaveBeenCalledTimes(3);
+		expect(onPreviewTheme.mock.calls).toEqual([['Light'], ['Dark'], ['System']]);
+	});
 });
