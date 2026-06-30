@@ -50,6 +50,9 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 | id | label | 型 | 必須 | UI | 備考 |
 |--|--|--|--|--|--|
 | `{#screen-1-draft-body}` | 本文 | `String → NoteBody` | - | CodeMirror 6 (readOnly: false) | フィード最上部に常時固定。Markdown シンタックスハイライト + [入力補助](#notes-markdown-helpers) 適用。`Cmd+N` で focus、`Enter` で改行、`Cmd+Enter` で確定 |
+| `{#screen-1-draft-tag-chip}` | 下書きタグ | `Tag` | - | chip | 本文入力欄の下に表示。`Cmd+Enter` 確定時に `create-note` の `raw_tags` に渡される |
+| `{#screen-1-draft-tag-input}` | 新規タグ入力 | `String → Tag` | - | text input (Draft 領域内) | 本文入力欄の下、タグチップの右。Enter で確定 → chip として追加。`Tag::try_from_string` 失敗時は [cross-tag-error](#cross-tag-error) 準拠で reject |
+| `{#screen-1-draft-tag-remove}` | タグ削除 | (action) | - | × icon on chip | クリックで下書きタグから削除 |
 | `{#screen-1-draft-submit}` | ＋追加 | (action) | - | button | クリックで `Cmd+Enter` と同等 |
 
 ### Block region (各 Note 1 ブロック) {#fields-block}
@@ -103,8 +106,9 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 
 ### Draft の Cmd+Enter 確定後 {#cross-draft-submit}
 
-- 入力欄を即時クリア
-- 新規 Block がフィード最上部に挿入
+- 入力欄（本文 + 下書きタグ）を即時クリア
+- 下書きタグを `raw_tags` として `create-note` に渡す
+- 新規 Block がフィード最上部に挿入（作成日時 + タグチップ付き）
 - フォーカスは新規 Block に移動（FOCUSED 状態、Q5: Esc で IDLE へ）
 
 ### Toast の表示制約 {#cross-toast-display}
@@ -135,7 +139,7 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 ### Tag 入力の禁止文字エラー {#cross-tag-error}
 
 - `Tag::try_from_string` が `TagError::InvalidChar` を返した場合、
-  `screen-1-block-tag-input` の直下に inline error 表示
+  `screen-1-block-tag-input` または `screen-1-draft-tag-input` の直下に inline error 表示
 - メッセージ: 「タグに使えない文字（カンマ・ブラケット・空白）が含まれています」
 - Enter キーは reject されたまま、入力欄はクリアしない
 

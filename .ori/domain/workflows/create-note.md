@@ -17,7 +17,7 @@ Draft 入力欄に入力された本文を Cmd+Enter で確定し、新規 Note 
 ```rust
 struct CreateNoteCommand {
   raw_body: String,        // Draft 入力欄の生テキスト
-  raw_tags: Vec<String>,   // optional: 初期タグ（spec では Draft からタグ付与しないが将来拡張）
+  raw_tags: Vec<String>,   // 初期タグ（Draft 入力時に指定可能）
 }
 ```
 

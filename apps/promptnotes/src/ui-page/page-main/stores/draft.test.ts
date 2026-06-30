@@ -7,20 +7,100 @@ function created(id = 'note-1', createdAt = '2026-06-26T00:00:00Z'): CreateNoteO
 }
 
 describe('page:page-main draft store', () => {
-	it('spec#tp-golden-create — submit が created を返すと body をクリアする', async () => {
+	it('spec#tp-golden-create — submit が created を返すと body と tags をクリアする', async () => {
 		const create = vi.fn().mockResolvedValue(created('note-1'));
 		const store = createDraftStore({ create });
 
 		store.setBody('hello');
+		store.addTag('work');
+		store.addTag('ai');
 		const outcome = await store.submit();
 
-		expect(create).toHaveBeenCalledWith('hello', []);
+		expect(create).toHaveBeenCalledWith('hello', ['work', 'ai']);
 		expect(outcome).toStrictEqual({
 			outcome: 'created',
 			id: 'note-1',
 			created_at: '2026-06-26T00:00:00Z'
 		});
 		expect(store.body).toBe('');
+		expect(store.tags).toStrictEqual([]);
+	});
+
+	it('submit に tags が渡される', async () => {
+		const create = vi.fn().mockResolvedValue(created('note-1'));
+		const store = createDraftStore({ create });
+
+		store.setBody('draft');
+		store.addTag('urgent');
+		await store.submit();
+
+		expect(create).toHaveBeenCalledWith('draft', ['urgent']);
+	});
+
+	it('addTag は重複を追加しない', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		store.addTag('work');
+		store.addTag('work');
+		store.addTag('Work'); // case-insensitive due to lowercase
+
+		expect(store.tags).toStrictEqual(['work']);
+	});
+
+	it('addTag は不正な文字を含むタグを reject する', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		expect(store.addTag('bad tag').outcome).toBe('invalid');
+		expect(store.addTag('bad,tag').outcome).toBe('invalid');
+		expect(store.addTag('[bracket]').outcome).toBe('invalid');
+
+		expect(store.tags).toStrictEqual([]);
+	});
+
+	it('addTag は空文字列を reject する', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		expect(store.addTag('').outcome).toBe('invalid');
+		expect(store.addTag('   ').outcome).toBe('invalid');
+
+		expect(store.tags).toStrictEqual([]);
+	});
+
+	it('addTag は空白を trim し lowercase で正規化する', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		store.addTag('  Work  ');
+		expect(store.tags).toStrictEqual(['work']);
+	});
+
+	it('removeTag は指定タグを削除する', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		store.addTag('work');
+		store.addTag('ai');
+		store.removeTag('work');
+
+		expect(store.tags).toStrictEqual(['ai']);
+	});
+
+	it('removeTag は存在しないタグでもエラーにならない', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		store.addTag('work');
+		store.removeTag('nonexistent');
+
+		expect(store.tags).toStrictEqual(['work']);
+	});
+
+	it('clear() は body と tags の両方をクリアする', () => {
+		const store = createDraftStore({ create: vi.fn() });
+
+		store.setBody('draft');
+		store.addTag('work');
+		store.clear();
+
+		expect(store.body).toBe('');
+		expect(store.tags).toStrictEqual([]);
 	});
 
 	it('spec#tp-empty-body-noop — outcome が no_op の場合 body は変えない', async () => {
@@ -65,14 +145,5 @@ describe('page:page-main draft store', () => {
 		await first;
 		const secondOutcome = await second;
 		expect(secondOutcome).toStrictEqual({ outcome: 'no_op' });
-	});
-
-	it('clear() は body を空にする', () => {
-		const store = createDraftStore({ create: vi.fn() });
-
-		store.setBody('draft');
-		store.clear();
-
-		expect(store.body).toBe('');
 	});
 });
