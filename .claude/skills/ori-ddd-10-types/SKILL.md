@@ -101,7 +101,7 @@ description: distill-ddd Phase 10（Types）。aggregate / workflow を言語別
    |-----------|-----------|------|
    | Note | code/typescript/note.ts | code/rust/note.rs |
    ```
-8. `bash scripts/lint-domain.sh .ori/domain/types.md` を実行して自己検証
+8. `bash ./scripts/lint-domain.sh .ori/domain/types.md` を実行して自己検証
 9. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間判断
 
 ## 出力テンプレート（TypeScript）

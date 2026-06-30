@@ -1,10 +1,10 @@
 lockfile_version: '1'
-generated_at: '2026-06-25T07:42:11.081668+00:00'
+generated_at: '2026-06-30T07:37:27.874803+00:00'
 apm_version: 0.11.0
 dependencies:
 - repo_url: dev-komenzar/ori
   host: github.com
-  resolved_commit: d22ea17cdbfbc0384d6f3c6fab1e0746b1c9a97a
+  resolved_commit: 0e042b5ce23b1817e001f8b410e9da66624865f9
   package_type: apm_package
   deployed_files:
   - .claude/agents/ori-reviewer.md
@@ -51,13 +51,13 @@ dependencies:
   - .claude/skills/ori-test-red
   deployed_file_hashes:
     .claude/agents/ori-reviewer.md: sha256:59b412ca81b05a21dc55484d0bfefaeaba014fc1a55477838e89655fe337c459
-    .claude/rules/ddd-rust.md: sha256:92075d6a1c0f2e1e39b0b40f9b9644279600fa658065067698a256c95ee44ce1
+    .claude/rules/ddd-rust.md: sha256:576d7f78a8009089213c0db57565b0237414e9bdf4702d2574019373456c621e
     .claude/rules/ddd-test.md: sha256:f581e45455b83651435e46226ddddccc781e7bcd08631a906be2773b3bd32f96
-    .claude/rules/ddd-typescript.md: sha256:0d4a700d19245b1cf6e41f22c087d57f40328e7c913d3a8c49713ecf60ae72d3
+    .claude/rules/ddd-typescript.md: sha256:99ed66a56a945701c9939ce1554f6f0d653e9afd3e69ba0bf7540f01b7c3f5a2
     .claude/rules/domain-phase.md: sha256:3ff915ce26f9ae436f907ab8733e85803a6813123cfbed5d9eefc600a08cac54
-    .claude/rules/feature-manifest.md: sha256:6f730790fc0847895f68fc293e8ecb0b355e0f6f8fe2e15c0e5b7216f0c2dc55
-    .claude/rules/feature-spec.md: sha256:0299d61cb0b6b047e535e437f78ebb918abde0f97ecee156dd811820aed87d11
+    .claude/rules/feature-manifest.md: sha256:a297c79f9f3e5e06b0cd5a6991c7859a7020aaaa7a69b43cb076202a50371f9a
+    .claude/rules/feature-spec.md: sha256:3b46a931712c927bf5c68d6936ec5240c14106760c5f89a8826d787d0097fd3f
     .claude/rules/ori-conventions.md: sha256:d8afaa2bf5be5849dc76f56c8533859ed14bb585f4026eb168926d1ce74ad0a0
-    .claude/rules/task-management.md: sha256:33013689d352c7d36beb23c64d62c7f82356a1a7febdd7d36e6be53b58295f46
-    .claude/rules/ui-test.md: sha256:7d1d0950d51a7501b5763344c4e3618ea6e7f5b8eda7321fc2db32eaaa6f8cf6
-  content_hash: sha256:118e309f1aff925fe39160e1755f9949b5caf9b8138c40120a32cf7872710761
+    .claude/rules/task-management.md: sha256:ab825d822229c6961e0960252d9df017e3199b9a41e776384f878b1095183dc8
+    .claude/rules/ui-test.md: sha256:3b4f640d1d2f65cb1985a56ddcfc108f20bc9dbac82dd80ce38fa73c5b7b71ee
+  content_hash: sha256:fc24e83886e6e0286b857a8ed1280bcc842f93ce58a1413f8ac250f426e76401

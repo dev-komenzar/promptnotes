@@ -38,7 +38,7 @@ description: distill-ddd Phase 7（Validation）。use case シナリオを Give
    - 「Then の event が domain-events.md に未定義ではないか」
    - 「並行 command 時の振る舞いは決定的か」
 5. **文書生成**：単一ファイル `.ori/domain/validation.md` にシナリオを列挙
-6. `bash scripts/lint-domain.sh .ori/domain/validation.md` を実行して自己検証
+6. `bash ./scripts/lint-domain.sh .ori/domain/validation.md` を実行して自己検証
 7. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間判断
 
 ## 出力テンプレート

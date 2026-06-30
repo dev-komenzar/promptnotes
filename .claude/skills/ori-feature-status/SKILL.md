@@ -84,8 +84,8 @@ Next action:
    - 引数あり → 個別 slice (or page) を詳細表示
 2. **データ収集**：
    ```bash
-   bash scripts/list-slices.sh
-   bash scripts/list-pages.sh
+   bash ./scripts/list-slices.sh
+   bash ./scripts/list-pages.sh
    ```
    - `--dirty` オプションで dirty な slice のみ表示も可能
 3. **dirty マーク検出**：

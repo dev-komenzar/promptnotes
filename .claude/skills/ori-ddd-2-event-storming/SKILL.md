@@ -35,7 +35,7 @@ description: distill-ddd Phase 2（Event Storming）。domain events / commands 
    - 「同じ aggregate に属する event がどれか」
    - 「actor が複数いる event は分割できるか」
 7. **文書生成**：合意した内容のみ Markdown で記述
-8. `bash scripts/lint-domain.sh .ori/domain/event-storming.md` を実行して自己検証
+8. `bash ./scripts/lint-domain.sh .ori/domain/event-storming.md` を実行して自己検証
 9. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間に判断委ねる
 
 ## 出力テンプレート

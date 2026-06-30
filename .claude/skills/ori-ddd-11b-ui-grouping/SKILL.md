@@ -46,7 +46,7 @@ description: ori 独自 Phase 11b（Page Grouping）。ui-fields の依存関係
 7. **page ↔ slice マッピングを `.ori/pages/<id>/manifest.yaml` に反映**：
     - 確定した `depends_on` (page-groups.md) から `.ori/architecture.md` の `## Page Map` section を自動生成
     - マーカー（`<!-- BEGIN ori-distill phase-11b auto-generated; do not edit between markers -->` ～ `<!-- END ori-distill phase-11b auto-generated -->`）の外側は保持される
-8. `for f in .ori/domain/ui-fields/*.md; do bash scripts/lint-domain.sh "$f"; done` を実行して自己検証
+8. `for f in .ori/domain/ui-fields/*.md; do bash ./scripts/lint-domain.sh "$f"; done` を実行して自己検証
 9. lint 失敗時は **1 回だけ** 自動修正を試み、それでも失敗ならユーザに判断を委ねる
 
 ### Phase 完了時：page の一括 scaffold 提案

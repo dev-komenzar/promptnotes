@@ -29,10 +29,10 @@ description: distill-ddd phase 1-11 + ori 独自 phase 11b（Page grouping）を
 
 ## 手順
 
-1. **`.ori/domain/` の既存文書を確認**：`for f in .ori/domain/*.md; do bash scripts/lint-domain.sh "$f"; done` を実行
+1. **`.ori/domain/` の既存文書を確認**：`for f in .ori/domain/*.md; do bash ./scripts/lint-domain.sh "$f"; done` を実行
 2. **指定 phase（または最も近い未完 phase）から開始**
 3. 対話的に質問を投げ、ユーザの返答を文書に反映
-4. `bash scripts/lint-domain.sh .ori/domain/<generated-file>.md` を実行して生成ファイルを自己検証
+4. `bash ./scripts/lint-domain.sh .ori/domain/<generated-file>.md` を実行して生成ファイルを自己検証
 5. **Phase 9 完了時**: workflow ごとに新規 slice 作成を提案（手動 OK / 自動 OK の選択）
 6. **Phase 11b 完了時**: 各 page について同様に新規 page 作成を提案
 

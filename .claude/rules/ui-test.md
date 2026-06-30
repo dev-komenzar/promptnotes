@@ -45,6 +45,54 @@ VSA + ddd-vsa-hex 構造 (`apps/<app>/src/<bc>/slices/<slice-id>/`, `apps/<app>/
 - 命名規則・selector 優先順位は同じ
 - E2E ランナー選択 (tauri-driver / Playwright + webview / WebdriverIO / Selenium 等) は本規約の **scope 外**。各プロジェクトが採用する E2E スタックに本ファイルの testid 規約を被せる前提
 
+## 6. Production fixture convention (Slice DoD rule 3) {#production-fixture}
+
+`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done"
+rule 3「test fixtures は production wiring 必須」を UI test 層で具体化する規約。
+**normative** (= 規範。downstream プロジェクトは本規約に従うこと)。
+
+### `setupProductionBuilder()` 規約
+
+slice の DoD test は、**production の adapter set で構築された builder** を
+fixture として注入する。fake / mock adapter で組んだ slice は DoD カウントに
+含めない (rule 3)。
+
+- **fixture の置き場**: `apps/<app>/src/<bc>/shared/test-fixtures/`
+  - 関数名は **`setupProductionBuilder`** (export name 固定)
+  - 戻り値は `tauri-specta` の `Builder` 相当 (Tauri stack) もしくは
+    各 stack の production wiring を返す
+- **slice 跨ぎで再利用**: 同 BC 内の全 slice DoD test は同じ
+  `setupProductionBuilder()` を import する。slice ごとに fixture 関数を
+  分けない (production 配線は BC 内で 1 通りに揃える原則)
+- **`mockIPC` との組合せ (Tauri stack)**:
+  ```ts
+  import { mockIPC } from "@tauri-apps/api/mocks";
+  import { setupProductionBuilder } from "<bc>/shared/test-fixtures";
+  beforeEach(() => mockIPC(setupProductionBuilder()));
+  ```
+  これにより slice tests は `<bc>/shared/ipc/bindings` 経由の `commands.*`
+  呼び出しを **production と同じ invoke_handler 配線** で受けることになる
+  (DoD rule 2 と整合)
+
+### fake fixture との分離
+
+- fake/mock 用の `setup*Builder` (例: `setupFakeBuilder`) を作るのは OK だが、
+  **`slices/<slice-id>/tests/` の DoD test から import するのは禁止**。
+  fake fixture は `application/` 内部の orchestration unit test 用に限定する
+- 内部 unit test と DoD test の境界線は **import している fixture** で判定する。
+  `/ori-doctor` は `slices/<slice-id>/tests/` 配下の import を AST で検査し、
+  `setupProductionBuilder` 以外の builder を import している test は DoD 違反として
+  起票する (`task-management.instructions.md` 参照)
+
+### Stack 別補足
+
+- **typescript-tauri stack**: 上記がそのまま適用。`setupProductionBuilder()` は
+  Rust 側 `commands.rs` で `#[tauri::command]` 公開された関数群と一致する
+  invoke handler を返す (`ddd-rust.instructions.md` 参照)
+- **typescript-only stack** (browser / node のみ): `mockIPC` は使わず、
+  `setupProductionBuilder()` は production の DI container や HTTP fake を含む
+  fixture を返す。命名規約 (`setupProductionBuilder` export name) は同じ
+
 ## 責務分離
 
 - 本ファイル = UI selector / testid namespace の規約

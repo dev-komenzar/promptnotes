@@ -47,8 +47,8 @@ description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮
    - `pnpm -F <slice-pkg> test` GREEN を最終確認
 2. **slice の締め処理**：
    ```bash
-   bash scripts/clear-dirty.sh <slice-id>
-   bash scripts/update-hash.sh <slice-id>
+   bash ./scripts/clear-dirty.sh <slice-id>
+   bash ./scripts/update-hash.sh <slice-id>
    ```
    - `status.yaml.dirty[]` を空に
    - `spec.md` の `hash:` を最新に更新

@@ -100,6 +100,36 @@ ori:
   検証を deterministic に。
 - UUID 等の sample id は slice 内で 1 つ constant に固める (`SAMPLE_ID = "..."`)。
 
+## Slice Definition of Done (AI への指示)
+
+`pattern.md` の "Slice Definition of Done" section が slice 完成の normative 定義。
+AI agent が `/ori-flow` で slice を生成 / 完了判定する際は、以下を強制する:
+
+1. **sub_layers の全埋め**: `domain` / `application` / `infrastructure` /
+   `presentation` / `tests` のいずれかが空 or placeholder のままなら slice は未完。
+   `tests/` 不在で "後で書く" と先送りしない。
+
+2. **boundary test の経路選択**:
+   - 当該 slice の layer が `cross_root` contract に参加している場合
+     (例: Tauri stack の rust 側 `domain` slice が tauri-specta の生成側)、
+     test は **generator が吐いた binding** 経由で呼ぶ。
+     Rust 内部から `application::handle_xxx(...)` を直叩きするのは DoD 違反。
+   - `cross_root` がない slice では、test は slice の `<public_entry>`
+     (`index.ts` / `mod.rs`)のみ経由で import する。
+     `slices/<slice-id>/domain/...` 直 import は不可。
+
+3. **production wiring 強制**: boundary test (rule 2)では production の adapter
+   set で slice を構築する。fake/mock を使った orchestration test を DoD として
+   数えない。fake test を書きたい場合は `application/` 内部の test module に
+   閉じ込め、DoD カウントから除外する。
+
+4. **`cross_root` 同期**: rust 側 source を変えたら specta 等の generator を
+   走らせて TS 側 binding を再生成する。`flow-impl-red` / `flow-impl-green`
+   の phase hook で rebuild 済か確認 (stack template の指示に従う)。
+
+DoD を満たさない slice は `/ori-review` の test 結果 check で失敗する想定。AI agent
+は slice を "完了" と報告する前に、上記 4 点を **生成物単位で** 自己照合すること。
+
 ## Migration
 
 ### 既存プロジェクトを ddd-vsa-hex に寄せる
@@ -114,7 +144,7 @@ ori:
 4. **public entry 作成**: 各 slice の `<public_entry>` を作って、外から触られていた API
    を re-export。それ以外を internal にして cross-slice の import を全部この経路に
    集約。
-5. **lint enforce**: `.ori/architecture.md` を書き、`node .apm/skills/ori-arch/scripts/export.js`
+5. **lint enforce**: `.ori/architecture.md` を書き、`node ./scripts/export.js` (ori-arch skill bundle 相対)
    で adapter config を生成 → CI に組み込み、新規違反を block。
 
 ### ddd-vsa-hex から離脱する場合

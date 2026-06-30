@@ -45,6 +45,7 @@ cross_bc:
   via: [apps/{{APP_NAME}}/src/shared/contracts, apps/{{APP_NAME}}/src/shared/events]
   same_event_bus: true
 page_map_marker: phase-11b
+phase_hooks: {}   # no cross_root contracts in this stack, so no specta-style rebuild hooks
 ---
 
 # Architecture ({{APP_NAME}} — ddd-vsa-hex / typescript)

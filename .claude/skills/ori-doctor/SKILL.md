@@ -55,12 +55,25 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 - `bd doctor` を呼び出し結果を取り込む
 - `bd orphans` で参照切れ issue
 
+### 8. Slice DoD sweep {#dod-sweep}
+
+各 slice について Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done") 4 rule を sweep する。
+
+- `rule:dod-1` — `manifest.yaml` の `expected_deliverables.sub_layers` で宣言した layer が `<source_root>/<bc>/slices/<slice-id>/<layer>/` (TS) or `apps/<app>/src-tauri/src/<bc_rs>/slices/<slice_rs>/<layer>.rs` (Rust) に実体を持つか
+- `rule:dod-2` — Tauri stack の slice について tests が `<bc>/shared/ipc/bindings` 経由で invoke しているか、かつ `application/` を直 import していないか
+- `rule:dod-3` — tests が `setupProductionBuilder` を経由しているか (heuristic、参照無し → 違反疑い)。`--run-tests` 指定時は production fixture 経由で test を実 invoke し fail を rule:dod-3 違反として記録
+- `rule:dod-4` — `commands.rs` の mtime が `bindings.ts` より新しい場合は specta 再生成漏れとして起票 (再生成 path は `apm-scripts/specta-build.sh --app-dir apps/<app>` — `architecture.md` の `phase_hooks.flow-impl-green-post` 由来)
+
+read-only mode (default) は report のみ。`--dod-sweep` (= 内部 script `--emit-issues`) 指定時のみ bd issue を自動起票する。issue の label / title / description 規約は `.apm/instructions/task-management.instructions.md` の "`/ori-doctor` violation issue の label convention" を SSoT として参照 (このスキル内に hardcoded 化しない)。
+
+**Idempotency**: 起票前に `bd list --label=dod-violation --label=slice:<id> --label=rule:<rule-id> --status=open` を check し、既存 open issue があれば re-file しない (slice + rule の組で dedupe)。
+
 ## 手順
 
 1. **`.ori/` 存在確認**：なければ「`/ori-init` で初期化してください」と返す
 2. **スクリプトで全検査を実行**：
    ```bash
-   bash .apm/skills/ori-doctor/scripts/run-checks.sh
+   bash ./scripts/run-checks.sh
    ```
    個別検査は以下で構成：
    - `check-domain-schema.sh` — ドメイン文書の frontmatter + anchor 検証
@@ -68,12 +81,21 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
    - `check-hash-consistency.sh` — 派生ファイルの upstream 参照実在確認
    - `check-cross-ref.sh` — derives_from / upstream の cross-reference 検証
    - `check-proposals.sh` — pending proposal カウント
+   - `check-dod-sweep.sh` — Slice DoD 4 rule の sweep (read-only mode、report のみ)
    - `lint.js` — `.ori/` の Markdown anchor / id 規約検証（JS）：
      ```bash
-     node .apm/skills/ori-doctor/scripts/lint.js [<path>] [--strict]
+     node ./scripts/lint.js [<path>] [--strict]
      ```
-3. **結果を集約**してレポートを生成
-4. **報告 only**：自動修復は行わない
+3. **`/ori-doctor --dod-sweep` 指定時**: 上記に加えて DoD sweep を **issue auto-emit mode** で再実行：
+   ```bash
+   bash ./scripts/check-dod-sweep.sh --emit-issues
+   # CI/full-check mode (heavy):
+   bash ./scripts/check-dod-sweep.sh --emit-issues --run-tests
+   ```
+   - 違反ごとに bd issue を起票 (label 規約 SSoT は `task-management.instructions.md`)
+   - idempotent: `bd list --label=dod-violation --label=slice:<id> --label=rule:<rule-id> --status=open` が hit するなら re-file しない
+4. **結果を集約**してレポートを生成
+5. **報告 only**：自動修復は行わない (DoD sweep の auto-emit は例外として bd issue を作るが、code は触らない)
 
 ## レポートフォーマット
 
@@ -108,8 +130,18 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 ═══ Beads ═══
 ✓ bd doctor: all green
 
+═══ DoD Sweep ═══
+✗ [rule:dod-2] create-note — tests が application/ を直 import
+    detail: apps/notes/src/note_taking/slices/create-note/tests/create-note.test.ts:5:import handle_create_note from "../application/...
+    ✓ filed bd issue (dod-violation, slice:create-note, rule:dod-2)
+✗ [rule:dod-4] archive-task — commands.rs が bindings.ts より新しい (specta 再生成漏れ)
+    detail: bash apm-scripts/specta-build.sh --app-dir apps/notes を実行して同期し、再 sweep してください
+    INFO: existing open issue found — skipping re-file (idempotent)
+
+=== DoD sweep summary: 2 violation(s) across 3 slice(s) ===
+
 ═══ Summary ═══
-✗ 2 errors  ⚠ 2 warnings  ℹ 2 info
+✗ 4 errors  ⚠ 2 warnings  ℹ 2 info
 recommended action: fix broken cross-ref first (blocks /ori-flow on edit-past-note-start)
 ```
 
@@ -129,4 +161,5 @@ recommended action: fix broken cross-ref first (blocks /ori-flow on edit-past-no
 - **proposal 残存パス**：`/ori-review-proposals` で人間判断
 - **orphan domain パス**：意図的なら無視、不要なら削除を検討
 - **beads 不整合パス**：`bd dolt push` / `bd dolt pull` で再同期、`bd orphans` で個別対処
+- **DoD 違反パス**: 該当 slice の missing artifact を `/ori-impl-red` (b3 stub) / `/ori-impl-green` (real impl + production wiring + specta post) で生成。`rule:dod-4` は `bash apm-scripts/specta-build.sh --app-dir apps/<app>` で再同期
 - **全部 green パス**：`/ori-feature-status` で次の作業候補を選ぶ

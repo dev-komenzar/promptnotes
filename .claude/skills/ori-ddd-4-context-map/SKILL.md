@@ -58,7 +58,7 @@ description: distill-ddd Phase 4（Context Map）。bounded context 間の関係
      NC -- "event: NoteSaved (PL)" --> TM
      TM -- "ACL" --> NC
    ```
-6. `bash scripts/lint-domain.sh .ori/domain/context-map.md` を実行して自己検証
+6. `bash ./scripts/lint-domain.sh .ori/domain/context-map.md` を実行して自己検証
 7. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間判断
 
 ## 出力テンプレート

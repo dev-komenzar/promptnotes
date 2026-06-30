@@ -41,7 +41,7 @@ agent=ori-reviewer override: capability=reasoning
 ユーザが「現状を見せて」と言ったら：
 
 ```bash
-node .apm/skills/ori-model/scripts/show.js
+node ./scripts/show.js
 ```
 
 を実行し、capability × phase の model 割当を整形提示。

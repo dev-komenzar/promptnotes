@@ -20,7 +20,9 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
 ## 入力 / 出力
 
 - 入力：
-  - `.ori/slices/<id>/spec.md`（phase 1 で生成）
+  - `.ori/slices/<id>/spec.md`（phase 1 で生成。`## 境界契約 {#boundary-contract}` を含む — `feature-spec.instructions.md` 参照）
+  - `.ori/slices/<id>/manifest.yaml`（`expected_deliverables` から DoD 必須成果物を読む — `feature-manifest.instructions.md` 参照）
+  - `.ori/architecture.md`（`stack:` field で b3 sub-step を含めるか判定。`typescript-tauri` なら specta build / production fixture step を plan に追加）
   - 規約 ID の下流 beads issue (= 存在すれば既存利用、不在なら scaffold 対象):
     - `ori-test-red-<id>` / `ori-impl-green-<id>` / `ori-refactor-<id>` / `ori-review-<id>` / `ori-finalize-<id>`
   - 親 (parent): slice epic `ori-slice-<id>` (= `formatEpicId("slice", id)` 規約、`packages/slice-runner/src/beads.ts:7-11`)
@@ -28,6 +30,16 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
   - 不在 issue に対し: `bd create --id ori-<phase>-<id> --parent ori-slice-<id> --type=task --priority=2 --title "..."`
   - 既存 / 新規いずれも: `bd update ori-<phase>-<id> --description=... --notes="checklist..."`
   - 各 phase は test-red / impl-green / refactor / review / finalize 全 5 件
+
+## SSoT 参照表 (DoD 由来の checklist 項目を埋めるために参照)
+
+| 規定 | 参照 |
+| --- | --- |
+| Slice DoD rules 1-4 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
+| b3 emit 仕様 (stub → invoke_handler → specta rebuild → fixture → dod.test.ts) | `.apm/skills/ori-test-red/SKILL.md` "手順" (ori-fzr.8 で normative 化) |
+| production fixture 規約 (`setupProductionBuilder()`) | `.apm/instructions/ui-test.instructions.md` "Production fixture convention" |
+| 境界契約 section 必須化 | `.apm/instructions/feature-spec.instructions.md` "境界契約 section 必須化" |
+| `expected_deliverables` schema | `.apm/instructions/feature-manifest.instructions.md` "expected_deliverables の宣言" |
 
 ## なぜ plan.md を作らないか
 
@@ -67,34 +79,59 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
      - `bd show <nonexistent>` は stderr に "no issue found" を出すが **exit code は 0**。`if bd show ...; then` では判定不能 → 必ず `bd search` の JSON を読む
      - `bd create --id <existing>` は**既存 issue を上書き**してしまう (title / description / status が初期化される) → 必ず `bd search` で先行確認すること
 2. **spec.md を読み解く**：
-   - `## テスト観点 {#test-perspectives}` → test-red の description
+   - `## テスト観点 {#test-points}` → test-red の description
+   - `## 境界契約 {#boundary-contract}` → test-red の b3 sub-step (stack=typescript-tauri 時) / impl-green の production wiring step
    - `## 不変条件 {#invariants}` → impl-green の checklist
    - `## 実装ノート {#impl-notes}` → impl-green / refactor の description
 3. **各下流 issue を更新**（Bash）：
-   - **test-red**：観点リストを `- [ ]` で description に埋める
+   - **test-red**：観点リスト + (stack=typescript-tauri 時) b3 sub-step を `- [ ]` で description に埋める
      ```bash
      bd update ori-test-red-<id> --description="$(cat <<'EOF'
-     spec.md#test-perspectives から導出した観点：
+     spec.md#test-points から導出した観点：
 
      - [ ] happy path: 通常入力 → 期待 event
      - [ ] empty body: 空白のみ → 破棄
      - [ ] non-existent: 不明 id → NoteNotFound
      - [ ] timestamp monotonic: updatedAt 増分検証
+
+     b3 emit sub-step (Slice DoD rule 2/3 — stack=typescript-tauri):
+     spec.md#boundary-contract で宣言した binding 経由で boundary test を組む。
+     詳細は .apm/skills/ori-test-red/SKILL.md "手順" を参照。
+
+     - [ ] stub commands.rs を `apps/<app>/src-tauri/src/<bc_rs>/slices/<slice_rs>/commands.rs` に emit (`#[tauri::command]` + `Err("pending")`)
+     - [ ] `lib.rs` / `src-tauri/src/bin/export-types.rs` の `collect_commands![...]` に `<slice_rs>_cmd` を追記 (invoke_handler 登録)
+     - [ ] `bash apm-scripts/specta-build.sh --app-dir apps/<app>` で `<bc>/shared/ipc/bindings.ts` を再生成 (DoD rule 4 cross_root 同期)
+     - [ ] `<bc>/shared/test-fixtures/setupProductionBuilder.ts` に新 slice の case (pending throw) を追記
+     - [ ] `<source_root>/<bc>/slices/<slice-id>/tests/dod.test.ts` を emit (bindings + `setupProductionBuilder()` 経由のみ。`application/*` 直 import 禁止)
+     - [ ] `pnpm -F <app> test` で `Error: pending` propagation の RED を確認
+
+     stack≠typescript-tauri の場合は b3 sub-step を skip し、vitest domain test 単独で RED 確認。
      EOF
      )"
      ```
-   - **impl-green**：不変条件を保護する実装ステップを列挙
+     - **TBD: stack=typescript-tauri 時は spec.md `## 境界契約 {#boundary-contract}` で `<bc_rs>` / `<slice_rs>` / command 名 / inputs を確定させてから checklist を埋める**。binding contact point が宣言されていなければ手順 4 (TBD の扱い) に従い `/ori-derive` に戻す
+   - **impl-green**：不変条件を保護する実装ステップ + (stack=typescript-tauri 時) production wiring step を列挙
      ```bash
      bd update ori-impl-green-<id> --description="$(cat <<'EOF'
      - [ ] domain/vo/note-body.ts: smart constructor (whitespace reject)
      - [ ] domain/note.ts: editBody + updatedAt monotonic 保証
      - [ ] application/capture-auto-save.ts: pipeline composition
      - [ ] infrastructure/note-repository-memory.ts: in-memory impl for tests
+
+     production wiring step (Slice DoD rule 3 — stack=typescript-tauri):
+     stub を本実装に差し替え、test-red で書いた dod.test.ts を GREEN にする。
+
+     - [ ] `commands.rs` の `Err("pending")` を本実装 (application use-case 呼び出し) に差し替え
+     - [ ] commands.rs のシグネチャ (inputs / Result 型) を変えたら `bash apm-scripts/specta-build.sh --app-dir apps/<app>` で bindings.ts を再生成 (DoD rule 4)
+     - [ ] `<bc>/shared/test-fixtures/setupProductionBuilder.ts` の該当 slice case を本実装に置換 (`throw new Error("pending")` → 本物の dispatch)。slice 内 deps (新 VO / 新 repository 等) が増えたら fixture でも反映
+     - [ ] dod.test.ts が GREEN になることを確認 (boundary 経由 production wiring 完成)
+
+     stack≠typescript-tauri の場合は production wiring step を skip。
      EOF
      )"
      ```
    - **refactor**：観点（重複除去・抽象化候補）を列挙。空でも良い
-   - **review**：レビュー観点を列挙
+   - **review**：spec ↔ impl の意味的乖離に絞った観点を列挙。**DoD 個別 rules は checklist に書かない** (`/ori-review` が 3 structural gate で構造強制するので drift 源になる、`.apm/skills/ori-review/SKILL.md` "なぜ DoD 個別 rules を review checklist にしないか" 参照)
      ```bash
      bd update ori-review-<id> --description="$(cat <<'EOF'
      - [ ] spec.md と impl の挙動乖離
@@ -119,6 +156,8 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
 - **サブ issue を切らない**：description 内 `- [ ]` checklist で対応
 - **TBD は積極的に詰める**：phase 2 の主目的の一つ
 - **スキル自動化との関係**：`/ori-plan` は CLI を介さず、直接 spec.md を読み beads issue を更新する
+- **b3 sub-step は stack で分岐**：`.ori/architecture.md` の `stack:` が `typescript-tauri` でない場合、specta build / production fixture / DoD rule 4 checklist は emit しない (混乱の元)。ただし他 stack を将来追加した時に同等の boundary 契約サブステップが必要になる前提で、本 skill は stack 別 checklist 生成器として拡張可能な構造を保つ
+- **fixture 更新は test-red と impl-green の両方で発生する**：test-red では pending case を追記、impl-green では本実装に置換する。slice 内 deps が増えた (新 VO / 新 repository) 場合は impl-green checklist の "fixture 反映" 項目で吸収する (refactor 段階に持ち越さない)
 
 ## 次のアクション
 

@@ -163,6 +163,33 @@ cross_root:
 例: tauri-specta が Rust の `#[tauri::command]` から TS の bindings.ts を生成する
 ケース等。生成物は片方の root から手書きで触らない。
 
+## Slice Definition of Done
+
+A slice is "complete" iff:
+
+1. **All declared `slice_internal.sub_layers` have content**
+   (e.g., `domain`, `application`, `infrastructure`, `presentation`, `tests`).
+
+2. **Tests exercise the slice through its declared external boundary**:
+   - If the slice's enclosing layer participates in a `cross_root` contract
+     (e.g., Tauri command surface bridged by tauri-specta),
+     tests MUST invoke through the generator-produced binding,
+     not through internal Rust/application calls.
+   - Otherwise, tests MUST import only via the slice's `public_entry`.
+
+3. **Test fixtures use the production wiring**, not fakes/mocks for adapters
+   that the slice depends on. Unit-level tests with fakes MAY live in
+   `application/`-internal test modules but DO NOT count toward DoD.
+   Boundary tests (rule 2) MUST construct the slice with its production
+   adapter set.
+
+4. **Every `cross_root` contract is up-to-date**: the generator-produced
+   file matches the latest source side. Phase hooks SHOULD rebuild on
+   `flow-impl-red` and `flow-impl-green`.
+
+Each stack template instantiates rules 2–4 with concrete file paths and
+tooling (see `stacks/<stack>/`).
+
 ## Naming conventions
 
 - **BC name (TS / kebab-case)**: `task-management`, `billing`, `order-fulfillment` 等。

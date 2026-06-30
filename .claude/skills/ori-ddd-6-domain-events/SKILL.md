@@ -36,7 +36,7 @@ description: distill-ddd Phase 6（Domain Events）。各 aggregate が発行す
    - 「payload が aggregate 全体を含んでいないか？ 必要最小限か」
    - 「subscriber が context map に書いた関係と整合しているか」
 5. **文書生成**：H2 = aggregate、H3 = event
-6. `bash scripts/lint-domain.sh .ori/domain/domain-events.md` を実行して自己検証
+6. `bash ./scripts/lint-domain.sh .ori/domain/domain-events.md` を実行して自己検証
 7. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間判断
 
 ## 出力テンプレート

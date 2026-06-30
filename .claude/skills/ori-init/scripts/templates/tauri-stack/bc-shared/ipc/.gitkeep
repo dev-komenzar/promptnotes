@@ -1,0 +1,3 @@
+# tauri-specta bindings.ts は phase_hooks (flow-impl-red-pre / green-post)
+# が `cargo run --bin export-types` 経由で生成する。手書き禁止。
+# 詳細: .ori/architecture.md / Slice DoD rule 4

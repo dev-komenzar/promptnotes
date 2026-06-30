@@ -8,7 +8,7 @@ description: 溜まった proposal を人間と一緒にレビューし、accept
 ## スクリプト — 一覧表示
 
 ```bash
-node .apm/skills/ori-review-proposals/scripts/list.js [--check]
+node ./scripts/list.js [--check]
 ```
 
 - `--check` — pending proposal が 1 件以上あれば非ゼロ終了（CI モード）
@@ -17,7 +17,7 @@ node .apm/skills/ori-review-proposals/scripts/list.js [--check]
 
 1. **一覧表示**：
    ```bash
-   node .apm/skills/ori-review-proposals/scripts/list.js
+   node ./scripts/list.js
    ```
 2. **各 proposal について**：
    - 内容を読み上げ（target、by、reason、diff）

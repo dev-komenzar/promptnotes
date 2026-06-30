@@ -36,7 +36,7 @@ description: distill-ddd Phase 3（Bounded Contexts）。event cluster から bo
    - 「core / supporting / generic の区別の根拠は？」
    - 「context を分けすぎていないか？ 1 トランザクションで完結する境界か？」
 5. **文書生成**：H2 = BC、H3 = 必須 4 種
-6. `bash scripts/lint-domain.sh .ori/domain/bounded-contexts.md` を実行して自己検証
+6. `bash ./scripts/lint-domain.sh .ori/domain/bounded-contexts.md` を実行して自己検証
 7. lint 失敗時は **1 回だけ** 自動修正、それでもダメなら人間判断
 
 ## 出力テンプレート
