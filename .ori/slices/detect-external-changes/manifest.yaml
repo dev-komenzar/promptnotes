@@ -1,0 +1,17 @@
+slice_id: "detect-external-changes"
+type: "command"
+derives_from:
+  - domain/workflows/detect-external-changes.md#detect-external-changes
+  - domain/aggregates.md#note-feed-aggregate
+  - domain/bounded-contexts.md#note-feed
+  - domain/domain-events.md#note-file-created-externally
+  - domain/domain-events.md#note-file-modified-externally
+  - domain/domain-events.md#note-file-deleted-externally
+  - domain/domain-events.md#storage-dir-changed
+relations: []
+implementation:
+  language: rust
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src-tauri/src/note_feed/slices/detect_external_changes/
+    - apps/promptnotes/src/lib/note-feed/shared/ipc/bindings.ts
