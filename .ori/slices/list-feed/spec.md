@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-29
+  last_derived: 2026-06-30
   upstream:
     - domain/workflows/list-feed.md#list-feed
     - domain/aggregates.md#note-feed-aggregate
@@ -25,11 +25,16 @@ ori:
 
 `storage_dir` 配下の Note `.md` を全件読み込んで NoteFeed の `source: Vec<Note>` を hydrate し、現在の `filter` / `sort` を適用した `visible_notes` を返す **read pipeline** slice。
 
-> domain/workflows/list-feed.md より：「アプリ起動時に `storage_dir/*.md` を全件 parse し、`NoteFeed.source` を hydrate して `filter` / `sort` を適用した `visible_notes` を返す。書き込みは伴わず domain event を発行しない（揮発 read model）」
+> domain/workflows/list-feed.md より：「`storage_dir` 配下の Note `.md` を全件読み込んで `NoteFeed.source`（`Vec<Note>`）を hydrate し、現在の `filter` / `sort` を適用した `visible_notes` を返す read pipeline」
 >
 > domain/bounded-contexts.md#note-feed-purpose より：「Note 集合に対する read side を司る」
 
-トリガーは (1) アプリ起動時 (load-settings 完了直後)、(2) 手動 Refresh (本 MVP では UI 未配線、binding のみ用意)。本 slice によって NoteFeed BC の read query が初めて end-to-end で繋がる (update-feed-filter / change-sort-order は state mutation のみで `source` を持たなかった)。
+トリガーは 3 種類（workflows/list-feed.md より）:
+1. **アプリ起動時**: load-settings 完了後に 1 回、全件 hydrate
+2. **手動再読込**: Refresh UI ボタン（全件 hydrate。MVP では UI 未配線、binding のみ用意）
+3. **外部変更検知時**: `detect-external-changes` workflow が発行する domain event を購読し、`upsert_note` / `remove_note` で差分更新（I-F8）。全件 hydrate は行わない
+
+本 slice の scope は **トリガー 1, 2**（全件 hydrate パス）。トリガー 3 の差分更新パスは `detect-external-changes` workflow の責務。
 
 oq-source-shape (`Vec<Note>` vs `Vec<NoteId>`) は `Vec<Note>` で確定 (update-feed-filter / change-sort-order の deferred follow-up を本 slice で吸収)。理由は workflows/list-feed.md#notes / aggregates.md#note-feed-aggregate-elements に明記済。
 
@@ -61,6 +66,8 @@ struct NoteSummary {
 }
 ```
 
+> workflows/list-feed.md では DTO を `NoteView` と呼称。実装側では page-main との整合性を優先し `NoteSummary` を使用する（両者は等価）。
+
 - 副作用は **state replace のみ** (read pipeline は pure)
 - domain event 発行なし (C-LF6)
 
@@ -76,13 +83,14 @@ struct NoteSummary {
 
 > domain/aggregates.md#note-feed-aggregate-invariants より引用：
 
+- **I-F1**: `query` は常に **NFKC 正規化済み + lowercase 済み**（マッチング時に再正規化しない）。NFKC を使う理由: 全角 Latin / 半角 Latin、半角カナ / 全角カナ等の互換等価文字を同一視するため
 - **I-F2**: filter が空のとき `source` 全件を sort 順で返す
 - **I-F3**: sort tiebreak は `id` (タイムスタンプ秒精度) — 決定論性
 - **I-F4**: filter は AND 合成 (date_range ∧ tag ∧ query)
 - **I-F5**: マッチング対象は `body` 全文 + `tags[*].name` のみ
+- **I-F6**: 起動時、`filter` は常に空状態で初期化（フィルター・検索は揮発）
 - **I-F7**: 削除 (trash) された Note は除外 (本 slice は `list_all` の port 契約に委譲)
-
-I-F1 / I-F6 は filter の構築側 (`update-feed-filter` slice) で確立済。
+- **I-F8**: NoteFeed は外部ファイル変更の検知を契機とした差分更新を受け付ける。`upsert_note` / `remove_note` 操作により部分更新可能。本 slice の全件 hydrate パスは I-F8 を使わない（差分更新は `detect-external-changes` workflow の責務）
 
 ### slice 固有制約 {#invariants-slice-specific}
 
@@ -90,11 +98,20 @@ I-F1 / I-F6 は filter の構築側 (`update-feed-filter` slice) で確立済。
 - **C-LF2**: `apply_filter` は `&Vec<Note>` を消費せず `Vec<&Note>` を返す (read pipeline は所有権を奪わない)
 - **C-LF3**: `apply_sort` は **stable sort** で I-F3 を satisfy する (`slice::sort_by` は stable)
 - **C-LF4**: `apply_filter` は `query` `date_range` `tag` の **3 軸 AND** (I-F4) を **早期 short-circuit** で評価 (どれかが弾けば次軸を見ない)
-- **C-LF5**: query 比較は `note.body().contains(q.as_str())` + `tag.name().contains(q.as_str())` の **substring + lowercase-only** (I-F1 で `q` が NFKC (compatibility normalization) + lowercase 済なので、`body` / `tag.name` 側も `to_lowercase()` してから比較)
+- **C-LF5**: query 比較は `note.body().to_lowercase().contains(q.as_str())` + `tag.name().to_lowercase().contains(q.as_str())` の **substring + lowercase** (I-F1 で `q` が NFKC + lowercase 済なので、`body` / `tag.name` 側も `to_lowercase()` してから比較)
 - **C-LF6**: 本 slice は **domain event を発行しない** (read 側、揮発)
 - **C-LF7**: `hydrate` 後の `NoteFeed.source` は I-F7 を満たす (port 契約 `list_all` が trash 済を除外する責務)
-- **C-LF8**: `date_range` の比較は `Note.created_at` ベース (Q7 補足: filter 軸は created)。`Custom { from, to }` の `from > to` は空集合に降格 (`update-feed-filter` の oq-date-range-validation と整合)
+- **C-LF8**: `date_range` の比較は `Note.created_at` ベース。`Custom { from, to }` の `from > to` は空集合に降格 (`update-feed-filter` の oq-date-range-validation と整合)
 - **C-LF9**: `list_notes` Tauri command は **冪等**: 同じ `storage_dir` 内容で何度呼んでも同じ `visible_notes` を返す
+
+## 境界契約 {#boundary-contract}
+
+- **kind**: `query` (read-only, domain event 発行なし)
+- **contact_point**: `#[tauri::command] pub async fn list_notes()` in `apps/promptnotes/src-tauri/src/note_feed/slices/list_feed/commands.rs`
+- **cross_root**: Rust → TypeScript via **tauri-specta** (`apps/promptnotes/src-tauri/src/note_capture/slices/list_feed/commands.rs` → `apps/promptnotes/src/lib/note-capture/shared/ipc/bindings.ts`)
+- **public_entry**: `apps/promptnotes/src-tauri/src/note_feed/slices/list_feed/mod.rs` (Rust), `apps/promptnotes/src/lib/note-feed/slices/list-feed/index.ts` (TS bindings wrapper)
+- **production_fixture**: `apps/promptnotes/src-tauri/src/note_feed/shared/test-fixtures/` (未設置なら追加)
+- **forbidden_imports**: 他 slice の直接 import 禁止。cross-slice は `note_capture::shared` 経由のみ
 
 ## テスト観点 {#test-perspectives}
 
@@ -135,6 +152,10 @@ I-F1 / I-F6 は filter の構築側 (`update-feed-filter` slice) で確立済。
 - **TP-S12-1**: Given storage_dir に 3 件 `.md`、When 起動 (= load-settings → list-feed)、Then visible_notes は 3 件 (filter 空 + sort default で全件)
 - **TP-S12-2**: Given Settings.sort_preference = `{ updated_at, asc }`、When 起動、Then visible_notes は updated_at 昇順
 
+### Boundary test {#tp-boundary}
+
+- **TP-B1**: tauri-specta bindings 経由で `listNotes()` を invoke → `NoteFeedDto { notes: [...] }` を返す（DoD rule 2。boundary test は production fixture 経由でのみ構築 — DoD rule 3）
+
 ### 副作用 {#tp-side-effects}
 
 - **TP-SE1**: `ListFeedUseCase::execute` は `Repository` だけを inject、`EventBus` を取らない (C-LF6 を type-level に固定)
@@ -143,7 +164,9 @@ I-F1 / I-F6 は filter の構築側 (`update-feed-filter` slice) で確立済。
 
 ### アーキ層 {#impl-layers}
 
-DDD-VSA-Hex / typescript-tauri に従い Rust 側で実装する。Note Feed BC の slice ディレクトリに追加：
+DDD-VSA-Hex / typescript-tauri に従い Rust 側で実装する。全 sub_layers (`domain` / `application` / `infrastructure` / `presentation` / `tests`) を埋め込む（DoD rule 1）。
+
+Note Feed BC の slice ディレクトリに追加：
 
 ```
 apps/promptnotes/src-tauri/src/note_feed/
@@ -162,11 +185,14 @@ apps/promptnotes/src-tauri/src/note_feed/
 
 - `note_capture::shared::ports::NoteRepository` に `list_all(&self) -> std::io::Result<Vec<Note>>` を default impl (`unimplemented!`) で追加
 - `FsNoteRepository::list_all` を実装：`fs::read_dir(storage_dir)` で `.md` のみフィルタ → 既存の `parse_note_md` を再利用 → parse 失敗は log + skip
-- `NoteFeed::hydrate(self, notes: Vec<Note>) -> NoteFeed` と `NoteFeed::visible_notes(&self, now: time::OffsetDateTime) -> Vec<&Note>` を追加 (`now` は date_range 計算用、test では fixed time inject)
+- `NoteFeed::hydrate(self, notes: Vec<Note>) -> NoteFeed` と `NoteFeed::visible_notes(&self) -> Vec<&Note>` を追加
+  - `visible_notes` は `date_range` 評価に `OffsetDateTime::now_utc()` を使用（aggregates.md で `now` パラメータが削除された。テスト時は `time` crate の mock または排他的にテスト用 clock を注入する adapter 層で対応）
 - 既存 `update-feed-filter` の `InMemoryNoteFeedState` を再利用 (NoteFeed 単一インスタンス)
 - 既存 `change-sort-order` の Settings 経路 (config_path / default_storage_dir resolve) を `list_notes` でも再利用
 
 ### Tauri command 配線 {#impl-tauri}
+
+> **RED state b3 (DoD rule 2)**: 実装着手時は `commands.rs` を `Err("pending")` 返す stub として先に配置し、tauri-specta bindings を再生成してから TS 側 boundary test (dod.test.ts) を書き起こす。
 
 ```rust
 #[tauri::command]
@@ -177,12 +203,17 @@ pub async fn list_notes<R: Runtime>(
   // 1. resolve storage_dir from settings.json (load-settings の経路を再利用)
   // 2. FsNoteRepository::new(storage_dir).list_all()
   // 3. feed_state.snapshot().hydrate(notes)
-  // 4. feed.visible_notes(now) → NoteSummary[] に投影
+  // 4. feed.visible_notes() → NoteSummary[] に投影
   // 5. feed_state.replace(feed)
 }
 ```
 
 `AppHandle` から `app_data_dir().join("notes")` を default で取り、`settings.json` がある場合はそこから上書きする。`list_settings()` を再呼出する形が一番安全。
+
+### production fixture / specta phase hooks {#impl-fixture-hooks}
+
+- **production fixture (DoD rule 3)**: `apps/promptnotes/src-tauri/src/note_feed/shared/test-fixtures/` を構築（未設置なら追加）。boundary test はこの fixture 経由でのみ構築する
+- **specta 再生成 (DoD rule 4)**: `cross_root_contracts` を持つ slice のため、`phase_hooks.flow-impl-red-pre` で `commands.rs` の stub 配置後に `cargo test` (specta export) を実行し TS bindings を再生成、`phase_hooks.flow-impl-green-post` で実装後に再度 specta 再生成
 
 ### TS bindings {#impl-ts}
 
@@ -198,6 +229,7 @@ apps/promptnotes/src/lib/note-feed/slices/list-feed/index.ts
 
 ### Out of scope {#out-of-scope}
 
+- **外部変更検知による差分更新** (I-F8 の `upsert_note` / `remove_note` 経路) — `detect-external-changes` workflow の責務
 - **手動 Refresh の UI** (binding のみ用意、ボタン配線は別 issue)
 - **NoteCreated event 購読での incremental update** (create-note slice が直接 `feedStore.prependNote` を呼ぶ既存挙動を維持)
 - **DateRangeFilter VO smart constructor** (`update-feed-filter` の oq-date-range-validation を継承)
@@ -206,8 +238,4 @@ apps/promptnotes/src/lib/note-feed/slices/list-feed/index.ts
 
 ## Open Questions {#open-questions}
 
-### oq-list-feed-now-injection {#oq-list-feed-now-injection}
-
-- **問**: date_range filter (`Last7Days` 等) の評価に `now: OffsetDateTime` が必要。aggregates.md / workflows/list-feed.md には現時点で `now` の依存が明記されていない
-- **暫定方針**: `NoteFeed::visible_notes(&self, now)` に `now` を引数で注入。テスト容易性を優先
-- **解決方向**: `change-sort-order` の `Timestamp` injection 規約と整合させた upstream proposal を `.ori/proposals/` に出す候補
+> oq-list-feed-now-injection は aggregates.md の改訂（`visible_notes(&self)` から `now` パラメータ削除）により upstream で解決済み。本 spec からは削除する。

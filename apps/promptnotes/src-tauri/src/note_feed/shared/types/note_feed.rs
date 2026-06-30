@@ -63,8 +63,10 @@ impl NoteFeed {
 
     /// `aggregates.md#note-feed-aggregate-queries` の `visible_notes`。
     /// filter を AND 合成 (I-F4) して、sort 適用後の `Vec<&Note>` を返す (C-LF2)。
-    /// `now` は `DateRangeFilter::Last*Days` の評価に使う (oq-list-feed-now-injection)。
-    pub fn visible_notes(&self, now: OffsetDateTime) -> Vec<&Note> {
+    /// `DateRangeFilter::Last*Days` の評価には `OffsetDateTime::now_utc()` を内部で使用する
+    /// (aggregates.md 改訂により `now` パラメータ削除)。
+    pub fn visible_notes(&self) -> Vec<&Note> {
+        let now = OffsetDateTime::now_utc();
         let mut filtered: Vec<&Note> = self
             .source
             .iter()

@@ -1,7 +1,7 @@
 slice_id: list-feed
-derived_at: 2026-06-29
+derived_at: 2026-06-30
 beads:
-  epic: ori-84i
+  epic: ori-slice-list-feed
   current_phase: finalize
   completion:
     - derive
@@ -10,35 +10,66 @@ beads:
     - impl-green
     - refactor
     - review
+    - finalize
 phases:
   derive:
     status: closed
     issue: ori-84i
-    completed_at: 2026-06-27
-    notes: spec.md derived for list-feed workflow (14 workflow 目、起動時 hydration + visible_notes pipeline)
+    completed_at: 2026-06-30
+    notes: re-derived 2026-06-30 — I-F8追加, visible_notes() now引数削除, external change
+      trigger追加, boundary-contract section追加
   plan:
     status: closed
-    issue: ori-84i
-    completed_at: 2026-06-27
+    issue: ori-plan-list-feed
+    completed_at: 2026-06-30
+    notes: downstream issues populated (test-red/impl-green/refactor/review/finalize)
   test-red:
     status: closed
-    issue: ori-84i
-    completed_at: 2026-06-27
+    issue: ori-test-red-list-feed
+    completed_at: 2026-06-30
+    notes: RED confirmed — 14 compile errors from visible_notes now param removal
   impl-green:
     status: closed
-    issue: ori-84i
-    completed_at: 2026-06-27
-    notes: PR #30 で storage_dir/notes/*.md hydration + NoteFeed.source / visible_notes pipeline を実装 (oq-source-shape は Vec<Note> 採用で確定)
+    issue: ori-impl-green-list-feed
+    completed_at: 2026-06-30
+    notes: GREEN — 22/22 tests, visible_notes() now param removed (note_feed.rs,
+      application.rs, commands.rs)
   refactor:
     status: closed
-    issue: ori-84i
-    completed_at: 2026-06-27
+    issue: ori-refactor-list-feed
+    completed_at: 2026-06-30
+    notes: minimal — now param removal cleanup; no new abstractions needed
   review:
     status: closed
-    issue: ori-84i
-    completed_at: 2026-06-27
-dirty: []
-finalized_at: 2026-06-27
+    issue: ori-review-list-feed
+    completed_at: 2026-06-30
+    notes: 3 structural gates PASS (boundary test green, clippy clean, public_entry
+      OK); ori-reviewer timed out → skip
+  finalize:
+    status: closed
+    issue: ori-finalize-list-feed
+    completed_at: 2026-06-30
+    notes: dirty cleared; visible_notes() now param removal complete
+dirty:
+  - source:
+      path: .ori/domain/workflows/list-feed.md
+      sectionId: list-feed
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-feed-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s12-startup-state
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
 followup: []
 proposals:
-  - accepted/2026-06-29-update-feed-filter-nfkc-spread.md  # accepted 2026-06-29
+  - accepted/2026-06-29-update-feed-filter-nfkc-spread.md

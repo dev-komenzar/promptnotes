@@ -9,7 +9,6 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, Runtime, State};
-use time::OffsetDateTime;
 
 use super::application::{visible_notes_snapshot, ListFeedUseCase};
 use super::domain::ListFeedCommand;
@@ -93,8 +92,7 @@ pub async fn list_notes<R: Runtime>(
         .map_err(|e| e.to_string())?;
     let hydrated = hydrated.change_sort(settings.sort_preference());
 
-    let now = OffsetDateTime::now_utc();
-    let visible = visible_notes_snapshot(&hydrated, now);
+    let visible = visible_notes_snapshot(&hydrated);
     let dto = NoteFeedDto {
         notes: visible.iter().map(NoteSummaryDto::from).collect(),
     };
