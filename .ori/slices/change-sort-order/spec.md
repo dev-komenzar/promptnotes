@@ -1,16 +1,10 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
-  upstream:
-    - domain/workflows/change-sort-order.md#change-sort-order
-    - domain/aggregates.md#note-feed-aggregate
-    - domain/aggregates.md#settings-aggregate
-    - domain/aggregates.md#notes-sort-side-effect
-    - domain/domain-events.md#sort-preference-changed
+  last_derived: 2026-06-30
   hash:
     domain/workflows/change-sort-order.md#.*: 137e642d209c
-    domain/aggregates.md#.*: 9f9048f5816b
+    domain/aggregates.md#.*: 82947dbfd3f6
     domain/domain-events.md#.*: 8abdfac78084
 ori:
   schema:
@@ -102,6 +96,7 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
 ### NoteFeed / Settings Aggregate 由来 {#invariants-aggregates}
 
 - **I-F2 / I-F3 (NoteFeed)**: 本 slice の責務範囲外（`visible_notes` / sort 適用ロジックは未実装。本 slice は **`sort` field の保持と書換え** のみ）
+- **I-F8 (NoteFeed)**: 外部ファイル変更の差分更新（`upsert_note` / `remove_note`）は本 slice の範囲外。sort 軸変更は source の内容に依存しないため I-F8 に違反しない
 - **I-S1 / I-S2 (Settings)**: `storage_dir` は触らないため自動的に保持される
 - **新規**: `NoteFeed.sort == Settings.sort_preference` を **本 slice 経由のみ** で同期する（spec 内不変条件、`#notes-sort-side-effect` を impl level に落としたもの）
 
