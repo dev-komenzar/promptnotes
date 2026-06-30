@@ -1,5 +1,6 @@
 use crate::errors::{NoteBodyError, NoteIdError, TagError};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use time::OffsetDateTime;
 
@@ -37,6 +38,21 @@ impl NoteBody {
         } else {
             Ok(Self(raw))
         }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BodyHash(String);
+
+impl BodyHash {
+    pub fn from_body(body: &NoteBody) -> Self {
+        let mut hasher = Sha256::new();
+        hasher.update(body.as_str().as_bytes());
+        Self(hex::encode(hasher.finalize()))
     }
 
     pub fn as_str(&self) -> &str {
@@ -124,6 +140,7 @@ impl Timestamp {
 pub struct Note {
     id: NoteId,
     body: NoteBody,
+    body_hash: BodyHash,
     tags: TagSet,
     created_at: Timestamp,
     updated_at: Timestamp,
@@ -131,12 +148,32 @@ pub struct Note {
 
 impl Note {
     pub fn create(body: NoteBody, tags: TagSet, now: Timestamp) -> Self {
+        let body_hash = BodyHash::from_body(&body);
         Self {
             id: NoteId::from_timestamp(now),
             body,
+            body_hash,
             tags,
             created_at: now,
             updated_at: now,
+        }
+    }
+
+    pub fn from_persisted(
+        body: NoteBody,
+        tags: TagSet,
+        created_at: Timestamp,
+        updated_at: Timestamp,
+    ) -> Self {
+        let body_hash = BodyHash::from_body(&body);
+        let id = NoteId::from_timestamp(created_at);
+        Self {
+            id,
+            body,
+            body_hash,
+            tags,
+            created_at,
+            updated_at,
         }
     }
 
@@ -145,6 +182,9 @@ impl Note {
     }
     pub fn body(&self) -> &NoteBody {
         &self.body
+    }
+    pub fn body_hash(&self) -> &BodyHash {
+        &self.body_hash
     }
     pub fn tags(&self) -> &TagSet {
         &self.tags
@@ -156,7 +196,12 @@ impl Note {
         self.updated_at
     }
 
+    pub fn is_stale(&self, disk_hash: &BodyHash) -> bool {
+        &self.body_hash != disk_hash
+    }
+
     pub fn edit_body(mut self, new_body: NoteBody, now: Timestamp) -> Self {
+        self.body_hash = BodyHash::from_body(&new_body);
         self.body = new_body;
         self.updated_at = now;
         self

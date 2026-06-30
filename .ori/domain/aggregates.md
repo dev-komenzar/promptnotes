@@ -32,6 +32,10 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
   - 任意の UTF-8 文字列（空文字も許容）
   - **不変条件 (I-N8)**: frontmatter 由来の delimiter 行（行全体が `---`、末尾空白許容）を含まない
   - **construction**: `NoteBody::new(raw: String) -> Result<NoteBody, NoteBodyError>` の smart constructor で I-N8 を enforce。`NoteBodyError::ContainsFrontmatterDelimiter` で表面化
+- **BodyHash** (VO)
+  - `body` の SHA-256 ハッシュ（hex 文字列）
+  - Note 構築時に `NoteBody` から計算され、以降は `body` 変更時に再計算される
+  - 外部変更との競合検出に使用（I-N9）
 - **Tag** (VO)
   - `name: String` — 正規化済み（lowercase + trim, CJK 許容）
   - 禁止文字（` `, `\t`, `\n`, `,`, `[`, `]`）を含まない
@@ -59,6 +63,12 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
 - **I-N8**: `body` の構築は `NoteBody::new` 経由でのみ可能であり、frontmatter
   delimiter 行 (`---`、末尾空白許容) を含まない。永続化フォーマット (`.md` ファイルの
   YAML frontmatter) との分離を construction-time に保証する不変条件
+- **I-N9**: `body_hash` は `body` から決定論的に導出され、`body` 変更時に必ず再計算される。
+  外部プログラム（vim, VSCode, Syncthing 等）が `.md` ファイルを変更した場合、
+  application service 層がディスクから読み込んだ `body` のハッシュと
+  メモリ上の `body_hash` を比較することで競合を検出できる。
+  Note Aggregate 自身は `is_stale(disk_hash)` クエリを提供するのみで、
+  競合解決の判断は application service 層（ユーザへの選択肢提示）に委ねる
 
 ### 公開操作 {#note-aggregate-operations}
 
@@ -95,6 +105,12 @@ Note Capture BC の core aggregate。Note Feed BC からも Shared Kernel とし
 - `Note::tags(&self) -> &TagSet`
 - `Note::created_at(&self) -> Timestamp`
 - `Note::updated_at(&self) -> Timestamp`
+- `Note::body_hash(&self) -> &BodyHash`
+  - 現在の `body` から計算された SHA-256 ハッシュ（外部変更検出用）
+- `Note::is_stale(&self, disk_hash: &BodyHash) -> bool`
+  - `self.body_hash() != disk_hash` のとき `true`（I-N9 の判定に使用）
+  - `disk_hash` は application service 層がディスクから読み込んだ `.md` ファイルの
+    body 部分から計算したハッシュ
 
 ## NoteFeed Aggregate {#note-feed-aggregate}
 
@@ -131,6 +147,10 @@ Note Feed BC の唯一の集約。read model。
   （Q7 決定: createdAt / updatedAt / filename は対象外）
 - **I-F6**: 起動時、`filter` は常に空状態で初期化（フィルター・検索は揮発、Q3 決定）
 - **I-F7**: 削除 (trash) された Note は次の visible_notes 取得から除外される
+- **I-F8**: NoteFeed は外部ファイル変更の検知を契機とした差分更新を受け付ける。
+  `upsert_note` 操作により、変更された `.md` ファイルに対応する Note のみを
+  部分更新できる。ファイル削除 / 新規作成も upsert または後続の remove で反映する。
+  検知機構そのもの（OS レベルのファイルウォッチャー）は infrastructure 層の責務
 
 ### 公開操作 {#note-feed-aggregate-operations}
 
@@ -144,8 +164,15 @@ Note Feed BC の唯一の集約。read model。
   - 副作用として Settings.sort_preference を更新（Customer-Supplier 経由）
 - `NoteFeed::clear_filters(self) -> NoteFeed`
 - `NoteFeed::hydrate(self, notes: Vec<Note>) -> NoteFeed`
-  - `source` を差し替える (workflow:list-feed の `hydrateFeedSource` ステップ)。
-    起動時 + 手動 Refresh で再呼出する pure 関数
+  - `source` を**全件差し替え**る (workflow:list-feed の `hydrateFeedSource` ステップ)。
+    起動時 + 手動 Refresh + `storage_dir` 変更時 に使用する pure 関数。
+    外部変更検知による差分更新には `upsert_note` / `remove_note` を使用する（I-F8）
+- `NoteFeed::upsert_note(self, note: Note) -> NoteFeed`
+  - `source` 内の `note.id` と一致する要素があれば置換、なければ末尾に追加（I-F8）
+  - 変更後も現在の filter / sort は維持される（`visible_notes` の結果が変わる可能性はある）
+- `NoteFeed::remove_note(self, note_id: &NoteId) -> NoteFeed`
+  - `source` から `note_id` に一致する要素を削除。外部削除の検知時に使用（I-F8）
+  - 該当する要素がない場合は no-op
 
 #### Queries {#note-feed-aggregate-queries}
 
@@ -284,9 +311,15 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 ## Open Questions {#open-questions}
 
-Phase 5 時点で未決事項はない。
+Phase 5 改訂（外部ファイル変更検知の Core Domain 追加に伴う）:
 
-- Phase 6 (domain-events) で「Note の状態変化を event として外部に通知するか」を決定
-  （現状は全 BC が単一プロセスなので event は不要の見込み）
-- Phase 7 (validation) で `NoteBody` の最大文字数や `Tag::name` の最大長を確定
-  （現時点では制限なし）
+- `BodyHash` は `body` から決定論的に導出される派生値であり、`from_persisted`
+  経由の復元時にも `body` から正しく計算される。読み込み時のレースコンディション
+  （読み込み直後にディスクが変更されるケース）は後続の `NoteFileModifiedExternally`
+  で検出されるため、`from_persisted` 内での追加検証は不要（I-N9）
+- `upsert_note` による新規 Note 挿入時、`createdAt` は frontmatter の `created_at` を
+  優先する。frontmatter 不在時のみファイル mtime を使用。矛盾時も frontmatter を信頼
+- ファイルウォッチャーの起動・停止ライフサイクルは `detect-external-changes` workflow に記述済み（Phase 9）
+
+未決事項なし。Phase 7 (validation) で競合検出シナリオの検証、Phase 10 (types) で
+`BodyHash` / `ConflictState` の型定義を行う。

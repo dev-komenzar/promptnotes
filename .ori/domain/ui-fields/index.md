@@ -9,7 +9,7 @@ ori:
 
 # UI Fields {#ui-fields}
 
-PromptNotes は **シングルペイン制約** により画面数が極小（3 画面）。
+PromptNotes は **シングルペイン制約** により画面数が極小（4 画面）。
 spec の禁止事項（サイドバー / アプリ名ヘッダー / レンダラ切替）を
 ui-fields 層でも遵守する。
 
@@ -20,6 +20,7 @@ ui-fields 層でも遵守する。
 | [screen-1](screen-1.md) | メインウィンドウ（Toolbar + Draft + Feed + Toast） | create-note / auto-save-note / flush-note / assign-tag / remove-tag / delete-note / restore-deleted-note / copy-note-body / update-feed-filter / change-sort-order |
 | [screen-2](screen-2.md) | 設定モーダル | update-settings |
 | [screen-3](screen-3.md) | 更新通知 | check-for-updates |
+| [screen-4](screen-4.md) | 外部変更競合ダイアログ | detect-external-changes |
 
 ## Cross-Cutting VO Mapping {#cross-vo-mapping}
 
@@ -35,6 +36,8 @@ ui-fields 層でも遵守する。
 | `StorageDir` | folder picker | `StorageDir::try_from_path` で絶対パス検証 |
 | `Theme` | radio / segmented | `System | Light | Dark` |
 | `Version` | read-only label | semver 表示 |
+| `BodyHash` | readonly label (SHA-256 hex) | `BodyHash::from_body` で決定論的導出、競合検出に使用 |
+| `ConflictResolution` | radio button group (2 択) | `ApplyExternal \| KeepEditing` |
 
 ## Naming Conventions {#naming}
 

@@ -262,12 +262,12 @@ pub trait CopyNoteBodyWorkflow {
     fn run(&self, cmd: CopyNoteBodyCommand) -> Result<(), CopyNoteBodyError>;
 }
 
-pub trait UpdateFeedFilterWorkflow<'a> {
+pub trait UpdateFeedFilterWorkflow {
     fn run(
         &self,
-        feed: NoteFeed<'a>,
+        feed: NoteFeed,
         cmd: UpdateFeedFilterCommand,
-    ) -> NoteFeed<'a>;
+    ) -> NoteFeed;
 }
 
 pub trait ChangeSortOrderWorkflow {
