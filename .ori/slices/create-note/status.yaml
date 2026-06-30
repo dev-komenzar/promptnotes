@@ -1,53 +1,25 @@
 slice_id: create-note
-derived_at: 2026-06-24T07:08:55.717Z
-beads:
-  epic: ori-slice-create-note
-  current_phase: finalize
-  completion:
-    - derive
-    - plan
-    - test-red
-    - impl-green
-    - refactor
-    - review
-phases:
-  derive:
-    status: closed
-    issue: ori-derive-create-note
-    completed_at: 2026-06-24
-  plan:
-    status: closed
-    issue: ori-plan-create-note
-    completed_at: 2026-06-24
-  test-red:
-    status: closed
-    issue: ori-test-red-create-note
-    completed_at: 2026-06-24
-    failing_tests: 18
-  impl-green:
-    status: closed
-    issue: ori-impl-green-create-note
-    completed_at: 2026-06-24
-    passing_tests: 18
-  refactor:
-    status: closed
-    issue: ori-refactor-create-note
-    completed_at: 2026-06-24
-  review:
-    status: closed
-    issue: ori-review-create-note
-    completed_at: 2026-06-24
-    passes: 2
-    verdict: PASS
-    passing_tests: 21
-dirty: []
-finalized_at: 2026-06-24
+derived_at: 2026-06-30
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-created
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
 followup:
   proposals_resolved:
     - target: domain/workflows/create-note.md#notes
       proposal: ori-bw7
       resolved_at: 2026-06-24
-      summary: "empty/whitespace raw_body is presentation/command no-op (Ok(None))"
+      summary: empty/whitespace raw_body is presentation/command no-op (Ok(None))
     - target: domain/workflows/create-note.md#errors
       proposal: ori-9mh
       resolved_at: 2026-06-24
@@ -55,4 +27,5 @@ followup:
   deferred_findings:
     - source: review.md (Pass 1 MED + LOW)
       tracking: ori-kli
-      summary: "cross-case dedupe / empty-string tag / FsNoteRepository frontmatter / TP-I3 widening / TP-H1 write_count / various LOW nits"
+      summary: cross-case dedupe / empty-string tag / FsNoteRepository frontmatter /
+        TP-I3 widening / TP-H1 write_count / various LOW nits
