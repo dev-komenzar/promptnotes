@@ -15,9 +15,6 @@ export type RemoveTagError =
  * Tag chip の × クリックで Note から tag を 1 件外す。`tag_name` が付与
  * されていなければ NoOp (C-RT3)。成功時は更新後の tag 列を返却。
  */
-export async function removeTag(
-	noteId: string,
-	tagName: string
-): Promise<RemoveTagOutcome> {
+export async function removeTag(noteId: string, tagName: string): Promise<RemoveTagOutcome> {
 	return invoke<RemoveTagOutcome>('remove_tag', { noteId, tagName });
 }

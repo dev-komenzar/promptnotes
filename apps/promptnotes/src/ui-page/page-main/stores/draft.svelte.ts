@@ -8,9 +8,7 @@ export type DraftSubmitOutcome =
 	| { outcome: 'created'; id: string; created_at: string }
 	| { outcome: 'no_op' };
 
-export type TagAddOutcome =
-	| { outcome: 'added' }
-	| { outcome: 'invalid'; reason: string };
+export type TagAddOutcome = { outcome: 'added' } | { outcome: 'invalid'; reason: string };
 
 export type DraftStore = ReturnType<typeof createDraftStore>;
 
@@ -36,7 +34,10 @@ export function createDraftStore(deps: DraftStoreDeps = {}) {
 	function addTag(raw: string): TagAddOutcome {
 		const validated = validateTag(raw);
 		if (validated === null) {
-			return { outcome: 'invalid', reason: 'タグに使えない文字（カンマ・ブラケット・空白）が含まれています' };
+			return {
+				outcome: 'invalid',
+				reason: 'タグに使えない文字（カンマ・ブラケット・空白）が含まれています'
+			};
 		}
 		if (!tags.includes(validated)) {
 			tags = [...tags, validated];

@@ -21,6 +21,7 @@
  * window.destroy() の流れを frontend が orchestrate する。
  */
 
+import { SvelteMap } from 'svelte/reactivity';
 import type { FlushTrigger } from '$lib/note-capture/slices/flush-note';
 
 export type PendingFlushFn = (trigger: FlushTrigger) => Promise<void>;
@@ -28,7 +29,7 @@ export type PendingFlushFn = (trigger: FlushTrigger) => Promise<void>;
 export type PendingFlushRegistry = ReturnType<typeof createPendingFlushRegistry>;
 
 export function createPendingFlushRegistry() {
-	const entries = new Map<string, PendingFlushFn>();
+	const entries = new SvelteMap<string, PendingFlushFn>();
 
 	function register(noteId: string, flush: PendingFlushFn): void {
 		entries.set(noteId, flush);

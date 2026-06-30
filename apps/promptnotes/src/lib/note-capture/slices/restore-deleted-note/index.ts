@@ -21,8 +21,6 @@ export type RestoreDeletedNoteError =
  * `note_id` の parse 失敗は `InvalidNoteId` を distinct に surface する
  * (review Pass 1 MED-4: silent UNIX_EPOCH fallback で no-undo に化けないため)。
  */
-export async function restoreDeletedNote(
-	noteId: string
-): Promise<RestoreDeletedNoteOutcome> {
+export async function restoreDeletedNote(noteId: string): Promise<RestoreDeletedNoteOutcome> {
 	return invoke<RestoreDeletedNoteOutcome>('restore_deleted_note', { noteId });
 }

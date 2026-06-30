@@ -17,9 +17,6 @@ export type CreateNoteError =
  * 検証する。空 body は NoOp (C-CN3)、検証失敗は `CreateNoteError` を surface。
  * 永続化は app_data_dir/notes/ 配下 (将来 Settings::storage_dir に置換)。
  */
-export async function createNote(
-	rawBody: string,
-	rawTags: string[]
-): Promise<CreateNoteOutcome> {
+export async function createNote(rawBody: string, rawTags: string[]): Promise<CreateNoteOutcome> {
 	return invoke<CreateNoteOutcome>('create_note', { rawBody, rawTags });
 }

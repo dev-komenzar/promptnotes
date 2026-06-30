@@ -56,8 +56,7 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 	}
 
 	async function save(): Promise<
-		| { kind: 'closed'; settings?: SettingsDto }
-		| { kind: 'error'; error: UpdateSettingsError }
+		{ kind: 'closed'; settings?: SettingsDto } | { kind: 'error'; error: UpdateSettingsError }
 	> {
 		// I-SM6: diff-less save short-circuits to close (skip Tauri round-trip).
 		if (!dirty) {

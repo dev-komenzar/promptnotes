@@ -20,17 +20,13 @@
 		openDialogFn?: typeof openDialog;
 	};
 
-	let {
-		initial,
-		onClose,
-		onSaved,
-		updateSettingsFn,
-		openDialogFn = openDialog
-	}: Props = $props();
+	let { initial, onClose, onSaved, updateSettingsFn, openDialogFn = openDialog }: Props = $props();
 
 	// Modal は parent の {#if settingsModalOpen} で mount/unmount 制御するため、
 	// initial / updateSettingsFn は mount 時の値で確定して良い（再開時は新 instance）。
-	const store = untrack(() => createSettingsModalStore(initial, { updateSettingsFn, onPreviewTheme: previewTheme }));
+	const store = untrack(() =>
+		createSettingsModalStore(initial, { updateSettingsFn, onPreviewTheme: previewTheme })
+	);
 
 	let dialogEl: HTMLDialogElement | null = $state(null);
 
