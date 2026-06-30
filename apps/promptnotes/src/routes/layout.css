@@ -1,3 +1,11 @@
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+.dark .cm-cursor {
+  border-left-color: var(--color-neutral-100);
+}
+
+.dark .cm-content {
+  caret-color: var(--color-neutral-100);
+}
