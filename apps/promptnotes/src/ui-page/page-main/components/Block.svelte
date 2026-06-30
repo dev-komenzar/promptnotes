@@ -57,6 +57,7 @@
 	let tagError = $state<string | null>(null);
 	let copied = $state(false);
 	let copyTimer: ReturnType<typeof setTimeout> | null = null;
+	let pendingClickPos: number | null = $state(null);
 
 	const blockState = $derived<BlockState>(focus.stateOf(note.id));
 
@@ -157,7 +158,17 @@
 				}
 			});
 			view.setState(next);
-			if (editing) view.focus();
+			if (editing) {
+				view.focus();
+				// I-PM10a: restore cursor to click position instead of position 0
+				if (pendingClickPos !== null) {
+					view.dispatch({
+						selection: { anchor: pendingClickPos },
+						scrollIntoView: false
+					});
+					pendingClickPos = null;
+				}
+			}
 		});
 	});
 
@@ -181,6 +192,14 @@
 		const target = event.target as HTMLElement;
 		// Don't promote to EDITING when clicking on hover-actions or tag controls.
 		if (target.closest('[data-block-no-edit]')) return;
+		// Capture click position in CM document coords before state transition.
+		// I-PM10a: cursor must land where the user clicked, not at position 0.
+		if (view && blockState !== 'EDITING') {
+			const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+			if (pos !== null) {
+				pendingClickPos = pos;
+			}
+		}
 		focus.edit(note.id);
 	}
 
