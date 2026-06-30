@@ -1,5 +1,5 @@
 slice_id: remove-tag
-derived_at: 2026-06-26T06:17:44.897Z
+derived_at: 2026-06-30
 beads:
   epic: ori-slice-remove-tag
   current_phase: null
@@ -19,5 +19,17 @@ beads:
     - phase: finalize
       issue: ori-finalize-remove-tag
 phases: {}
-dirty: []
-finalized_at: 2026-06-26
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-tags-changed
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
