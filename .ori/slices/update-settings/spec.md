@@ -1,20 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
-  upstream:
-    - domain/workflows/update-settings.md#update-settings
-    - domain/aggregates.md#settings-aggregate
-    - domain/bounded-contexts.md#user-preferences
-    - domain/domain-events.md#storage-dir-changed
-    - domain/domain-events.md#theme-changed
-    - domain/validation.md#s11-storage-dir-change
+  last_derived: 2026-06-30
   hash:
     domain/workflows/update-settings.md#.*: f420da94bd93
-    domain/aggregates.md#.*: 9f9048f5816b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
@@ -118,7 +111,7 @@ I-S3（デフォルト値）は本 slice の範囲外（read 経路は `load-set
 - **C-US4**: `persist` 失敗時は `PersistError` を返し、`Settings` と event publish のいずれも行わない（write-then-emit の順序、`workflows/update-settings.md#steps`）
 - **C-US5**: 両フィールド変更を含む command でも、差分のあるフィールドの event のみが発行される（0 / 1 / 2 件のいずれか）。順序は **`StorageDirChanged` → `ThemeChanged`**（複数 event の順次発行は workflow notes より）
 - **C-US6**: エラー時は `Settings` を一切変更しない + event を発行しない（atomic な commit semantics）
-- **C-US7**: 本 slice は **storage_dir 変更時に Note migration を行わない**（I-S4）。`StorageDirChanged` の購読者である UI 層が再起動モーダルを表示するため、Note Capture / Note Feed は再起動まで旧 `storage_dir` を見続ける（S11 の Then 節）
+- **C-US7**: 本 slice は **storage_dir 変更時に Note migration を行わない**（I-S4）。`StorageDirChanged` の購読者である UI 層が再起動モーダルを表示し、Infrastructure 層（ファイルウォッチャー）が監視対象ディレクトリを `new_dir` に切り替える（旧ディレクトリの監視は停止）。Note Capture / Note Feed は再起動まで旧 `storage_dir` を見続ける（S11 の Then 節、domain/domain-events.md#storage-dir-changed-subscribers より）
 - **C-US8**: 本 slice は **冪等ではない**（command 発行ごとに persist と event が走る可能性がある）。ただし C-US2 により「同じ command を 2 回送る」場合は 2 回目以降は no-op として扱われる
 
 ## テスト観点 {#test-perspectives}
