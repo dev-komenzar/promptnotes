@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-25
+  last_derived: 2026-06-30
   upstream:
     - domain/workflows/auto-save-note.md#auto-save-note
     - domain/aggregates.md#note-aggregate
@@ -11,10 +11,10 @@ coherence:
     - domain/validation.md#s9-idempotent-autosave
   hash:
     domain/workflows/auto-save-note.md#.*: 642c5094fd1a
-    domain/aggregates.md#.*: 9f9048f5816b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
@@ -118,6 +118,7 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
 - **I-N4**: `body` 変更時に `updatedAt = now`（秒精度）。`Note::edit_body` 内で保証される
   - 同一秒内の連続編集では `updatedAt` は同じ値に留まる（時計の解像度）
 - **I-N8**: `body` の構築は `NoteBody::new` 経由でのみ可能であり、frontmatter delimiter 行 (`---`) を含まない。本 slice は `new_body: String` を `NoteBody::new` で smart construct するため、違反時は `AutoSaveError::InvalidBody` で表面化させる
+- **I-N9**: `body_hash` は `body` から決定論的に導出され、`body` 変更時に必ず再計算される。外部プログラムによる `.md` ファイル変更の競合検出に使用される。本 slice は write 側（AutoSave）であり、競合検出（`is_stale` チェック）は application service 層の責務。AutoSave 発火時点ではユーザが編集中のため競合解決は不要（ユーザの編集が正）
 
 ### slice 固有制約 {#invariants-slice-specific}
 
