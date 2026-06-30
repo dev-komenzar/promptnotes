@@ -1,18 +1,12 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-24
-  upstream:
-    - domain/workflows/create-note.md#create-note
-    - domain/aggregates.md#note-aggregate
-    - domain/domain-events.md#note-created
-    - domain/bounded-contexts.md#note-capture
-    - domain/ui-fields/screen-1.md#fields
+  last_derived: 2026-06-30
   hash:
     domain/workflows/create-note.md#.*: 33a51fe91246
-    domain/aggregates.md#.*: 37fa7433eab4
+    domain/aggregates.md#.*: 82947dbfd3f6
     domain/domain-events.md#.*: 8abdfac78084
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/ui-fields/screen-1.md#.*: ddbf06d54f9a
 ori:
   schema:
@@ -105,6 +99,8 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
 - **I-N3**: `updatedAt >= createdAt`（create 直後は等号成立）
 - **I-N5**: `tags` 内に同一 `Tag::name` は 1 件のみ
 - **I-N6**: `Tag::name` は正規化規則（lowercase + trim、禁止文字 ` \t\n,[]` 排除）を必ず満たす
+- **I-N8**: `body` の構築は `NoteBody::new` 経由でのみ可能であり、frontmatter delimiter 行 (`---`) を含まない。本 slice は raw_body を `NoteBody::new` で smart construct するため、違反時は `CreateNoteError::InvalidBody` で表面化
+- **I-N9**: `body_hash` は `body` から決定論的に導出され、`body` 変更時に必ず再計算される（SHA-256）。外部プログラムによる競合検出に使用。本 slice は新規作成のため競合は発生しないが、`Note::create` 構築時に `BodyHash` が自動計算される
 
 I-N4（edit_body の updatedAt 更新）と I-N7（DeletedNote stack）は本 slice の範囲外。
 

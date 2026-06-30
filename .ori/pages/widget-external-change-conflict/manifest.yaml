@@ -1,0 +1,17 @@
+page_id: "widget-external-change-conflict"
+type: widget
+parent_page: page-main
+derives_from:
+  - domain/ui-fields/screen-4.md#screen-4
+  - domain/ui-fields/page-groups.md#widget-external-change-conflict
+  - domain/workflows/detect-external-changes.md#detect-external-changes
+relations:
+  - kind: subscribes
+    event: domain/domain-events.md#note-file-modified-externally
+  - kind: mounted-by
+    page: page-main
+implementation:
+  language: typescript
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src/ui-widget/external-change-conflict/

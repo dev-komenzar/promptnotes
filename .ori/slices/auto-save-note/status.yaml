@@ -1,6 +1,6 @@
 slice_id: auto-save-note
-derived_at: 2026-06-25T06:42:22.850Z
-re_derived_at: 2026-06-25
+derived_at: 2026-06-30
+re_derived_at: 2026-06-30
 beads:
   epic: ori-slice-auto-save-note
   current_phase: finalize
@@ -15,56 +15,80 @@ phases:
   derive:
     status: closed
     issue: ori-derive-auto-save-note
-    completed_at: 2026-06-25
-    notes: 1st derive + re-derive after 2 proposal accepts
+    completed_at: 2026-06-30
+    notes: re-derived 2026-06-30 — I-N9 (BodyHash/競合検出) 追記、hash 更新
   plan:
     status: closed
     issue: ori-plan-auto-save-note
-    completed_at: 2026-06-25
+    completed_at: 2026-06-30
   test-red:
     status: closed
     issue: ori-test-red-auto-save-note
-    completed_at: 2026-06-25
-    failing_tests: 16
-    post_proposal_added: [tp_ib1, tp_ib2]
+    completed_at: 2026-06-30
+    notes: 20/20 tests already GREEN — I-N9 doc only, no new test perspectives needed
   impl-green:
     status: closed
     issue: ori-impl-green-auto-save-note
-    completed_at: 2026-06-25
-    passing_tests: 76
+    completed_at: 2026-06-30
+    notes: no impl changes (I-N9 enforced at Note construction)
   refactor:
     status: closed
     issue: ori-refactor-auto-save-note
-    completed_at: 2026-06-25
+    completed_at: 2026-06-30
+    notes: no code changes
   review:
     status: closed
     issue: ori-review-auto-save-note
-    completed_at: 2026-06-25
-    passes: 3
-    verdict: PASS
-    passing_tests: 76
-    pass2_high_count: 2  # HIGH-3 (spec direct edit) + HIGH-4 (internal inconsistency)
-    pass3_resolution: upstream-first via 2 proposals accepted, spec re-derived, TP-IB tests added
-dirty: []
-finalized_at: 2026-06-25
+    completed_at: 2026-06-30
+    notes: 3 structural gates PASS; no semantic review (I-N9 doc only)
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-body-edited
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s2-autosave-debounce
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s9-idempotent-autosave
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
 followup:
   open_questions:
     - id: oq-invalid-note-id
-      summary: NoteId smart constructor 未整備、frontend からの raw String parse 失敗の variant 未確定
+      summary: NoteId smart constructor 未整備、frontend からの raw String parse 失敗の variant
+        未確定
       tracking: spec.md#oq-invalid-note-id
     - id: oq-newline-normalization
       summary: CRLF/LF 差で S9 ガード空振り懸念、現状バイト等価
       tracking: spec.md#oq-newline-normalization
   deferred_review_findings:
     - low_5_tp_le1_doc_comment: tests.rs tp_le1 の doc-comment が TP-LE1 番号と少しズレ、refactor 候補
-    - low_6_parse_note_md_location: create_note/infrastructure.rs の parse_note_md は将来 flush-note でも使う、shared/ 昇格候補
+    - low_6_parse_note_md_location: create_note/infrastructure.rs の parse_note_md は将来
+        flush-note でも使う、shared/ 昇格候補
   cross_slice_followups:
     - flush-note workflow に 4 variant errors を同形適用 (Proposal 2 followup として記録済)
 proposals:
   accepted:
     - file: .ori/proposals/accepted/2026-06-25-auto-save-note-aggregates-note-aggregate.md
       target: domain/aggregates.md#note-aggregate
-      summary: I-N8 invariant + NoteBody::new smart constructor + Note::from_persisted command
+      summary: I-N8 invariant + NoteBody::new smart constructor + Note::from_persisted
+        command
     - file: .ori/proposals/accepted/2026-06-25-auto-save-note-workflows-auto-save-note-errors.md
       target: domain/workflows/auto-save-note.md#errors
-      summary: AutoSaveError を 4 variant (NoteNotFound/InvalidBody/LoadError/PersistError) に拡張 + Notes 補足
+      summary: AutoSaveError を 4 variant
+        (NoteNotFound/InvalidBody/LoadError/PersistError) に拡張 + Notes 補足

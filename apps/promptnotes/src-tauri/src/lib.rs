@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 pub mod note_capture;
 pub mod note_feed;
 pub mod update_distribution;
@@ -14,6 +16,9 @@ pub fn run() {
         // Wire in once release infrastructure is ready.
         .manage(note_feed::shared::adapters::InMemoryNoteFeedState::new())
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
+        .manage(Mutex::new(
+            note_feed::slices::detect_external_changes::commands::WatcherState::new(),
+        ))
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -43,6 +48,8 @@ pub fn run() {
             note_feed::slices::update_feed_filter::commands::update_feed_filter,
             note_feed::slices::change_sort_order::commands::change_sort_order,
             note_feed::slices::list_feed::commands::list_notes,
+            note_feed::slices::detect_external_changes::commands::start_file_watcher,
+            note_feed::slices::detect_external_changes::commands::stop_file_watcher,
             user_preferences::slices::load_settings::commands::load_settings,
             user_preferences::slices::update_settings::commands::update_settings,
         ])

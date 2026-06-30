@@ -1,16 +1,11 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
-  upstream:
-    - domain/workflows/remove-tag.md#remove-tag
-    - domain/aggregates.md#note-aggregate
-    - domain/bounded-contexts.md#note-capture
-    - domain/domain-events.md#note-tags-changed
+  last_derived: 2026-06-30
   hash:
     domain/workflows/remove-tag.md#.*: 7a61f8005f29
-    domain/aggregates.md#.*: 9f9048f5816b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
 ori:
   schema:
@@ -71,6 +66,7 @@ domain/workflows/remove-tag.md#errors は `NoteNotFound` / `PersistError` の 2 
 - **I-N4**: body 変更時に updated_at 更新。本 slice は body を触らないが、tags 変更も「Note の意味的変更」として `updated_at` を更新する (assign-tag aggregate impl と整合)
 - **I-N5**: TagSet 内に同一 `Tag::name` は 1 件のみ。削除後も維持される（元々重複が無いため、1 件取り除いた結果も重複なし）
 - **I-N6**: `Tag::name` は正規化規則を満たす。削除は既存 Tag を抜くだけのため、残った Tag も全て I-N6 を満たす（追加経路がないため悪化しない）
+- **I-N8 / I-N9**: `NoteBody` smart constructor (I-N8) と `BodyHash` 競合検出 (I-N9) は本 slice の範囲外。タグ削除操作は body の構築・変更を行わないため、これらの不変条件に違反しない
 
 ### slice 固有制約 {#invariants-slice-specific}
 

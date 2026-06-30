@@ -1,5 +1,5 @@
 slice_id: change-sort-order
-derived_at: 2026-06-26T07:44:49.969Z
+derived_at: 2026-06-30
 beads:
   epic: ori-hpo
   current_phase: null
@@ -19,19 +19,29 @@ beads:
     - phase: finalize
       issue: ori-hpo.7
 phases: {}
-dirty: []
-finalized_at: 2026-06-26
-followup:
-  - id: ori-hpo.8
-    note: PersistError 抽出 (shared/types/persist_error.rs)
-  - id: ori-hpo.9
-    note: Tauri command surface + TS bindings
-  - id: ori-hpo.10
-    note: SortPreferenceChanged subscriber 冪等 reapply (UI 層)
-  - id: ori-hpo.11
-    note: list-feed slice 起票 (NoteFeed.visible_notes)
-related_decisions:
-  - "ori-64x.9 (SortOrder 型方針): 本 slice で 'shared user_preferences::SortOrder を直接 borrow' で確定 → close"
-milestone:
-  workflow_count: 13
-  slice_completion: "13/13 (final slice in design)"
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-feed-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: settings-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: notes-sort-side-effect
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: sort-preference-changed
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30

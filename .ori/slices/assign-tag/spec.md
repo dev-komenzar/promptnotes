@@ -1,20 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-28
-  upstream:
-    - domain/workflows/assign-tag.md#assign-tag
-    - domain/aggregates.md#note-aggregate
-    - domain/bounded-contexts.md#note-capture
-    - domain/domain-events.md#note-tags-changed
-    - domain/validation.md#s4-tag-assign-normalize
-    - domain/validation.md#s10-tag-invalid-char
+  last_derived: 2026-06-30
   hash:
     domain/workflows/assign-tag.md#.*: 4efe2dfe63c4
-    domain/aggregates.md#.*: 991ebe2e34f1
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
@@ -114,6 +107,7 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
 - **I-N3**: `updatedAt >= createdAt` を常に満たす。`Note::assign_tag` で `now` を渡すため、`now >= note.created_at` が `Clock` 契約として前提
 - **I-N5**: `tags` 内に同一 `Tag::name` は 1 件のみ。本 slice は `Tag::new` 正規化後の `name` で重複検出する
 - **I-N6**: `Tag::name` は正規化規則（lowercase + trim、禁止文字排除）を必ず満たす。`Tag::new` が construction-time に enforce、違反時は `AssignTagError::InvalidTag` で表面化
+- **I-N8 / I-N9**: `NoteBody` smart constructor (I-N8) と `BodyHash` 競合検出 (I-N9) は本 slice の範囲外。タグ操作は body の構築・変更を行わないため、これらの不変条件に違反しない
 
 ### slice 固有制約 {#invariants-slice-specific}
 

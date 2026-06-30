@@ -10,7 +10,7 @@ ori:
 
 # Workflows Index {#workflows-index}
 
-PromptNotes の 14 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
+PromptNotes の 15 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
 別ファイルに記述（review しやすさのため）。
 
 <!-- ori:auto-table:start -->
@@ -29,7 +29,8 @@ PromptNotes の 14 workflow を BC 別に列挙。各 workflow は DMMF pipeline
 | [copy-note-body](copy-note-body.md) | コピーボタン | (なし) | Note | Note Capture |
 | [update-feed-filter](update-feed-filter.md) | 検索/期間/タグ操作 | (なし) | NoteFeed | Note Feed |
 | [change-sort-order](change-sort-order.md) | ソートトグル | SortPreferenceChanged | NoteFeed + Settings | Note Feed |
-| [list-feed](list-feed.md) | アプリ起動時 / 手動 Refresh | (なし) | NoteFeed + Note | Note Feed |
+| [list-feed](list-feed.md) | アプリ起動時 / 手動 Refresh / 外部変更検知時 | (なし) | NoteFeed + Note | Note Feed |
+| [detect-external-changes](detect-external-changes.md) | アプリ起動時 / StorageDirChanged | NoteFileCreated/Modified/DeletedExternally | NoteFeed + Note | Note Feed |
 | [update-settings](update-settings.md) | 設定モーダル保存 | StorageDirChanged / ThemeChanged | Settings | User Preferences |
 | [load-settings](load-settings.md) | アプリ起動時 | (なし) | Settings | User Preferences |
 | [check-for-updates](check-for-updates.md) | アプリ起動時 | NewVersionDetected (条件付) | UpdateChannel | Update Distribution |
@@ -60,7 +61,10 @@ Phase 7 validation scenarios の workflow 対応：
 
 ## Open Questions {#open-questions}
 
-Phase 9 時点で未決事項はない。
+Phase 9 改訂（外部ファイル変更検知 workflow 追加に伴う）:
 
+- 実装方式は Rust `notify` crate に決定。debounce 間隔は 500ms に決定
+- `StorageDirChanged` 時の watcher 再起動失敗の UX（再起動促しモーダルか silent retry か）
+  → Phase 11a (UI fields) で決定
 - Phase 10 (types) で各 workflow の Input / Output / Error を Rust 型として確定する
 - Phase 11a (ui-fields) で各 workflow の trigger UI と error 表示位置を確定する

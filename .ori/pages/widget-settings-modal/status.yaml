@@ -28,7 +28,7 @@ phases:
     status: closed
     issue: ori-4g0
     completed_at: 2026-06-27
-    notes: PR #27 で Esc / save / cancel unmount + update-settings invoke による settings.json 永続化を実装
+    notes: PR
   refactor:
     status: closed
     issue: ori-4g0
@@ -37,7 +37,13 @@ phases:
     status: closed
     issue: ori-4g0
     completed_at: 2026-06-27
-dirty: []
+dirty:
+  - source:
+      path: .ori/domain/ui-fields/page-groups.md
+      sectionId: widget-settings-modal
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
 finalized_at: 2026-06-27
 followup: []
 proposals: {}

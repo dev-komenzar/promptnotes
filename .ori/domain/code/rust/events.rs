@@ -1,4 +1,4 @@
-use crate::note::{NoteId, TagSet, Timestamp};
+use crate::note::{BodyHash, Note, NoteId, TagSet, Timestamp};
 use crate::note_feed::SortOrder;
 use crate::settings::Theme;
 use crate::update_channel::{Release, Version};
@@ -59,6 +59,32 @@ pub struct NewVersionDetected {
     pub latest_release: Release,
 }
 
+// External file change events (Phase 6 — Core Domain 拡張)
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NoteFileCreatedExternally {
+    pub note_id: NoteId,
+    pub note: Note,
+    pub file_path: PathBuf,
+    pub detected_at: Timestamp,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NoteFileModifiedExternally {
+    pub note_id: NoteId,
+    pub disk_body_hash: BodyHash,
+    pub note: Note,
+    pub file_path: PathBuf,
+    pub detected_at: Timestamp,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NoteFileDeletedExternally {
+    pub note_id: NoteId,
+    pub file_path: PathBuf,
+    pub detected_at: Timestamp,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DomainEvent {
     NoteCreated(NoteCreated),
@@ -70,6 +96,9 @@ pub enum DomainEvent {
     ThemeChanged(ThemeChanged),
     SortPreferenceChanged(SortPreferenceChanged),
     NewVersionDetected(NewVersionDetected),
+    NoteFileCreatedExternally(NoteFileCreatedExternally),
+    NoteFileModifiedExternally(NoteFileModifiedExternally),
+    NoteFileDeletedExternally(NoteFileDeletedExternally),
 }
 
 pub trait EventBus {

@@ -15,7 +15,8 @@ phases:
     status: closed
     issue: ori-8os
     completed_at: 2026-06-27
-    notes: spec.md derived (screen-3 = Update Toast、page-main startup conditional widget)
+    notes: spec.md derived (screen-3 = Update Toast、page-main startup conditional
+      widget)
   plan:
     status: closed
     issue: ori-8os
@@ -28,7 +29,7 @@ phases:
     status: closed
     issue: ori-8os
     completed_at: 2026-06-27
-    notes: PR #28 で NewVersionDetected event 受信 → mount, dismiss / view-release で unmount を実装 (Tauri 実 updater は ori-6l4 unblock 後の ori-2lm.8 で wiring)
+    notes: PR
   refactor:
     status: closed
     issue: ori-8os
@@ -37,7 +38,13 @@ phases:
     status: closed
     issue: ori-8os
     completed_at: 2026-06-27
-dirty: []
+dirty:
+  - source:
+      path: .ori/domain/ui-fields/page-groups.md
+      sectionId: widget-update-toast
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
 finalized_at: 2026-06-27
 followup:
   - id: ori-2lm.8

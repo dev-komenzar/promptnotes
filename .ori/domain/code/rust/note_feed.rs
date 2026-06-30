@@ -1,4 +1,4 @@
-use crate::note::{Note, Tag};
+use crate::note::{Note, NoteId, Tag};
 use serde::{Deserialize, Serialize};
 use time::Date;
 use unicode_normalization::UnicodeNormalization;
@@ -8,7 +8,7 @@ pub struct NormalizedQuery(String);
 
 impl NormalizedQuery {
     pub fn from_raw(raw: &str) -> Option<Self> {
-        let normalized: String = raw.nfc().collect::<String>().to_lowercase();
+        let normalized: String = raw.nfkc().collect::<String>().to_lowercase();
         if normalized.is_empty() {
             None
         } else {
@@ -71,18 +71,18 @@ pub struct FeedFilter {
 }
 
 #[derive(Debug, Clone)]
-pub struct NoteFeed<'a> {
-    source: &'a [Note],
+pub struct NoteFeed {
+    source: Vec<Note>,
     filter: FeedFilter,
     sort: SortOrder,
 }
 
-impl<'a> NoteFeed<'a> {
-    pub fn new(source: &'a [Note], sort: SortOrder) -> Self {
+impl NoteFeed {
+    pub fn empty() -> Self {
         Self {
-            source,
+            source: Vec::new(),
             filter: FeedFilter::default(),
-            sort,
+            sort: SortOrder::default_value(),
         }
     }
 
@@ -91,6 +91,32 @@ impl<'a> NoteFeed<'a> {
     }
     pub fn sort(&self) -> SortOrder {
         self.sort
+    }
+    pub fn source(&self) -> &[Note] {
+        &self.source
+    }
+
+    pub fn hydrate(mut self, notes: Vec<Note>) -> Self {
+        self.source = notes;
+        self
+    }
+
+    pub fn upsert_note(mut self, note: Note) -> Self {
+        if let Some(existing) = self
+            .source
+            .iter_mut()
+            .find(|n| n.id() == note.id())
+        {
+            *existing = note;
+        } else {
+            self.source.push(note);
+        }
+        self
+    }
+
+    pub fn remove_note(mut self, note_id: &NoteId) -> Self {
+        self.source.retain(|n| n.id() != note_id);
+        self
     }
 
     pub fn set_query(mut self, raw: &str) -> Self {
@@ -145,7 +171,7 @@ impl<'a> NoteFeed<'a> {
             let body_norm: String = note
                 .body()
                 .as_str()
-                .nfc()
+                .nfkc()
                 .collect::<String>()
                 .to_lowercase();
             let tag_match = note

@@ -1,65 +1,51 @@
 slice_id: assign-tag
-derived_at: 2026-06-26T04:52:03.459Z
-re_derived_at: 2026-06-26
-beads:
-  epic: ori-slice-assign-tag
-  current_phase: finalize
-  completion:
-    - derive
-    - plan
-    - test-red
-    - impl-green
-    - refactor
-    - review
-phases:
-  derive:
-    status: closed
-    issue: ori-derive-assign-tag
-    completed_at: 2026-06-26
-    notes: spec.md generated from 6 upstream sections
-  plan:
-    status: closed
-    issue: ori-plan-assign-tag
-    completed_at: 2026-06-26
-  test-red:
-    status: closed
-    issue: ori-test-red-assign-tag
-    completed_at: 2026-06-26
-    failing_tests: 22
-  impl-green:
-    status: closed
-    issue: ori-impl-green-assign-tag
-    completed_at: 2026-06-26
-    passing_tests: 112
-  refactor:
-    status: closed
-    issue: ori-refactor-assign-tag
-    completed_at: 2026-06-26
-  review:
-    status: closed
-    issue: ori-review-assign-tag
-    completed_at: 2026-06-26
-    passes: 1
-    verdict: PASS
-    pass1_med_count: 3  # MED-1 (proposals not filed) + MED-2 (aggregate updated_at divergence) + MED-3 (CJK test gap)
-    pass1_resolution: 2 proposals filed for MED-1/MED-2; MED-3 recorded as cross_slice_followup
-dirty: []
-finalized_at: 2026-06-26
+derived_at: 2026-06-30
+re_derived_at: 2026-06-30
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-tags-changed
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s4-tag-assign-normalize
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s10-tag-invalid-char
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
 followup:
   open_questions:
     - id: oq-invalid-note-id-reuse
-      summary: NoteId smart constructor 未整備、frontend からの raw String parse 失敗の variant 未確定 (auto-save-note と同根)
+      summary: NoteId smart constructor 未整備、frontend からの raw String parse 失敗の variant
+        未確定 (auto-save-note と同根)
       tracking: spec.md#oq-invalid-note-id-reuse
   deferred_review_findings:
-    - med_3_cjk_multibyte_test_gap: CJK happy path および全角空白 (　) edge を tests.rs に追加する候補 (Tag::new の forbidden chars に全角空白を含めるかも併せて検討)
+    - med_3_cjk_multibyte_test_gap: CJK happy path および全角空白 (　) edge を tests.rs に追加する候補
+        (Tag::new の forbidden chars に全角空白を含めるかも併せて検討)
   cross_slice_followups:
-    - remove-tag slice に Note::remove_tag(self, tag_name: &str, now: Timestamp) signature を同形適用 (proposal #1 で同時カバー)
-    - Note Feed slice の TagFilter で Tag::new を再利用する際、proposal #2 の Empty/InvalidChar 命名を継承
+    - "remove-tag slice に Note::remove_tag(self, tag_name: &str, now: Timestamp)
+      signature を同形適用 (proposal #1 で同時カバー)"
+    - Note Feed slice の TagFilter で Tag::new を再利用する際、proposal
 proposals:
   pending:
     - file: .ori/proposals/accepted/2026-06-26-assign-tag-aggregates-note-assign-tag-signature.md
       target: domain/aggregates.md#note-aggregate-commands
-      summary: Note::assign_tag / Note::remove_tag に now: Timestamp 注入を追加 (edit_body と同形化)
+      summary: "Note::assign_tag / Note::remove_tag に now: Timestamp 注入を追加 (edit_body
+        と同形化)"
       status: accepted (2026-06-28)
     - file: .ori/proposals/accepted/2026-06-26-assign-tag-workflows-tag-error-naming.md
       target: domain/workflows/assign-tag.md#errors

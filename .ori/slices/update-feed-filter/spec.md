@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-29
+  last_derived: 2026-06-30
   upstream:
     - domain/workflows/update-feed-filter.md#update-feed-filter
     - domain/aggregates.md#note-feed-aggregate

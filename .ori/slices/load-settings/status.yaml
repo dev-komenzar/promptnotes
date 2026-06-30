@@ -1,5 +1,5 @@
 slice_id: load-settings
-derived_at: 2026-06-24T09:33:12.478Z
+derived_at: 2026-06-30
 beads:
   epic: ori-slice-load-settings
   current_phase: finalize
@@ -40,12 +40,17 @@ phases:
     passes: 2
     verdict: PASS
     passing_tests: 25
-dirty: []
-finalized_at: 2026-06-24
-followup:
-  deferred_findings:
-    - source: review.md (Pass 1 MED + LOW)
-      tracking: ori-9i0
-      summary: "OsDirs port contract / C-LS3 vs C-LS4 merge / OQ ratification / TP-I4 wording / SettingsRaw drift"
-      resolved_at: 2026-06-25
-      resolution: "ori-9i0 にて domain 直接編集 (workflows/load-settings.md#notes + aggregates.md#settings-aggregate-invariants) + spec.md 再整理 + ports.rs/application.rs に doc comment 追加で対応"
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: settings-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s12-startup-state
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use super::types::{NoteId, TagSet, Timestamp};
+use super::types::{Note, NoteId, TagSet, Timestamp};
+use super::types::BodyHash;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DomainEvent {
@@ -34,5 +35,24 @@ pub enum DomainEvent {
     NoteRestoredFromTrash {
         note_id: NoteId,
         restored_at: Timestamp,
+    },
+    /// slice: detect-external-changes (Rust notify crate, debounce 500ms)
+    NoteFileCreatedExternally {
+        note_id: NoteId,
+        note: Note,
+        file_path: PathBuf,
+        detected_at: Timestamp,
+    },
+    NoteFileModifiedExternally {
+        note_id: NoteId,
+        disk_body_hash: BodyHash,
+        note: Note,
+        file_path: PathBuf,
+        detected_at: Timestamp,
+    },
+    NoteFileDeletedExternally {
+        note_id: NoteId,
+        file_path: PathBuf,
+        detected_at: Timestamp,
     },
 }

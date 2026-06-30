@@ -5,13 +5,11 @@
 //! Pipeline (workflows/list-feed.md#steps):
 //!   1. NoteRepository::list_all → Vec<Note>
 //!   2. NoteFeed::hydrate(notes)
-//!   3. NoteFeed::visible_notes(now) → projection
+//!   3. NoteFeed::visible_notes() → projection
 //!
 //! TP-SE1: `Repository` のみ inject、`EventBus` は inject しない (C-LF6 を type-level に固定)。
 
 use std::io;
-
-use time::OffsetDateTime;
 
 use crate::note_capture::shared::ports::NoteRepository;
 use crate::note_feed::shared::types::NoteFeed;
@@ -36,11 +34,11 @@ impl<R: NoteRepository> ListFeedUseCase<R> {
     }
 }
 
-/// Pure read projection extracted from a hydrated `NoteFeed`. `now` is passed
-/// in for `DateRangeFilter::Last*Days` evaluation (oq-list-feed-now-injection).
+/// Pure read projection extracted from a hydrated `NoteFeed`.
+/// `visible_notes()` no longer takes `now` — uses `OffsetDateTime::now_utc()` internally
+/// (aggregates.md 改訂により `now` パラメータ削除)。
 pub fn visible_notes_snapshot(
     feed: &NoteFeed,
-    now: OffsetDateTime,
 ) -> Vec<crate::note_capture::shared::types::Note> {
-    feed.visible_notes(now).into_iter().cloned().collect()
+    feed.visible_notes().into_iter().cloned().collect()
 }

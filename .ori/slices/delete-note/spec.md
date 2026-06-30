@@ -1,20 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
-  upstream:
-    - domain/workflows/delete-note.md#delete-note
-    - domain/aggregates.md#note-aggregate
-    - domain/bounded-contexts.md#note-capture
-    - domain/domain-events.md#note-deleted-to-trash
-    - domain/validation.md#s5-delete-undo-in-window
-    - domain/validation.md#s6-delete-replace
+  last_derived: 2026-06-30
   hash:
     domain/workflows/delete-note.md#.*: b727f18ad614
-    domain/aggregates.md#.*: 9f9048f5816b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
     domain/validation.md#.*: 5294b0c32f1b
 ori:
   schema:
@@ -73,6 +66,7 @@ domain/workflows/delete-note.md#errors は `NoteNotFound` / `TrashError` の 2 v
 
 - **I-N7（domain/aggregates.md#note-aggregate-invariants）**: 削除された Note の identity は application service の `Vec<DeletedNote>` Undo スタックに push され、対応する Toast の有効期間中のみ復元可能。本 slice は **push** までを責務とし、有効期間管理（TTL / 消失時の pop）は別 slice（restore-deleted-note）+ UI 層が担う
 - **I-N1 / I-N2 / I-N3 / I-N4 の non-violation**: 本 slice は Note を `delete_to_trash` で consume するだけで `body` / `tags` / `updatedAt` を更新する経路は持たない。よって updatedAt monotonic（I-N3 / I-N4）に違反しない
+- **I-N8 / I-N9**: `NoteBody` の smart constructor (I-N8) と `BodyHash` の競合検出 (I-N9) は本 slice の範囲外。削除操作は `body` の構築・変更を行わないため、これらの不変条件に違反しない
 
 ### slice 固有制約 {#invariants-slice-specific}
 

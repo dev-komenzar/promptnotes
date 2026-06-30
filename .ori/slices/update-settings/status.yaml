@@ -1,26 +1,31 @@
 slice_id: update-settings
-derived_at: 2026-06-26T05:53:35.934Z
-beads:
-  epic: ori-7vz
-  current_phase: null
-  completion:
-    - phase: derive
-      issue: ori-7vz.1
-    - phase: plan
-      issue: ori-7vz.2
-    - phase: test-red
-      issue: ori-7vz.3
-    - phase: impl-green
-      issue: ori-7vz.4
-    - phase: refactor
-      issue: ori-7vz.5
-    - phase: review
-      issue: ori-7vz.6
-    - phase: finalize
-      issue: ori-7vz.7
-phases: {}
-dirty: []
-finalized_at: 2026-06-26
+derived_at: 2026-06-30
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: settings-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: storage-dir-changed
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: theme-changed
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s11-storage-dir-change
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
 followup:
   - id: ori-7vz.8
   - id: ori-7vz.9

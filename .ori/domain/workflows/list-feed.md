@@ -12,7 +12,14 @@ ori:
 
 `storage_dir` 配下の Note `.md` を全件読み込んで `NoteFeed.source`
 （`Vec<Note>`）を hydrate し、現在の `filter` / `sort` を適用した
-`visible_notes` を返す read pipeline。アプリ起動時と手動再読込で同じ pipeline を再利用する。
+`visible_notes` を返す read pipeline。
+
+トリガーは 3 種類:
+- **アプリ起動時**: 初回の全件 hydrate
+- **手動再読込**: Refresh UI ボタン（全件 hydrate）
+- **外部変更検知時**: `detect-external-changes` workflow が発行する domain event を
+  購読し、`upsert_note` / `remove_note` で差分更新（I-F8）。
+  全件 hydrate は行わない
 
 NoteFeed Aggregate の `visible_notes` query 操作の唯一の実装点であり、Note Feed BC の
 read side の **入口** になる。書き込みは伴わず domain event を発行しない（揮発 read model）。
@@ -28,14 +35,20 @@ struct ListFeedCommand {
 
 トリガー:
 
-- **アプリ起動時**: load-settings 完了後に 1 回呼ぶ (S12 と整合)
-- **手動再読込**: 将来の "Refresh" UI ボタン (現 MVP には未配線、binding は用意する)
+- **アプリ起動時**: load-settings 完了後に 1 回呼ぶ (S12 と整合)。全件 hydrate
+- **手動再読込**: 将来の "Refresh" UI ボタン (現 MVP には未配線、binding は用意する)。全件 hydrate
+- **外部変更検知時**: `NoteFileCreatedExternally` / `NoteFileModifiedExternally` /
+  `NoteFileDeletedExternally` event の購読により、変更された Note のみ差分更新。
+  全件 hydrate は行わず、`NoteFeed::upsert_note` / `NoteFeed::remove_note` を使用する（I-F8）
+  → 詳細は [detect-external-changes](detect-external-changes.md) 参照
 
 ## Output {#output}
 
 - `NoteFeed`（`source` を hydrate し、現在 filter/sort を適用した状態）
 - 派生 read DTO として `visible_notes: Vec<NoteView>` を計算
-- domain event: **なし**（read 側、揮発、I-F1〜I-F7 の write 側 invariant に変更なし）
+- domain event: **なし**（read 側、揮発、I-F1〜I-F8 の write 側 invariant に変更なし）
+  - 例外: 外部変更検知による差分更新時は `detect-external-changes` workflow 側が
+    domain event を発行し、本 workflow はその購読者として動作する
 
 ## Errors {#errors}
 

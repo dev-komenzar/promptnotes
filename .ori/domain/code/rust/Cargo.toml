@@ -12,6 +12,8 @@ time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"
 serde = { version = "1", features = ["derive"] }
 url = { version = "2", features = ["serde"] }
 semver = { version = "1", features = ["serde"] }
+sha2 = "0.10"
+hex = "0.4"
 
 [lib]
 path = "lib.rs"

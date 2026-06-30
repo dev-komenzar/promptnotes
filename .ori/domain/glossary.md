@@ -137,6 +137,15 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
   （Q5 改訂 2026-06-20 / Phase 11a: 各 DeletedNote は対応する Toast の有効期間中のみ保持。
   独立 aggregate 化はしない方針を維持）
 
+### BodyHash {#glossary-body-hash}
+
+- **定義**: `NoteBody` の SHA-256 ハッシュ（hex 文字列）。外部ファイル変更との競合検出に使用
+- **kind**: VO
+- **導出**: Note 構築時（`Note::new` / `Note::from_persisted`）および
+  `Note::edit_body` 時に body から決定論的に計算される
+- **用途**: `Note::is_stale(disk_hash)` でディスク上の body との差異を判定（I-N9）
+- **context**: Note Capture（競合検出） / Note Feed（変更検知時）
+
 ## Domain Events {#glossary-events}
 
 ### NoteCreated {#glossary-note-created}
@@ -184,6 +193,25 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 
 - **発行者**: UpdateChannel Aggregate
 - **トリガー**: `UpdateChannel::check_at_startup` 成功 かつ新バージョンあり
+
+### NoteFileCreatedExternally {#glossary-note-file-created-externally}
+
+- **発行者**: infrastructure 層（ファイルウォッチャー）
+- **トリガー**: `storage_dir` 配下に外部プログラムが新規 `.md` を作成したことを検知
+- **購読者**: NoteFeed（`upsert_note`）
+
+### NoteFileModifiedExternally {#glossary-note-file-modified-externally}
+
+- **発行者**: infrastructure 層（ファイルウォッチャー）
+- **トリガー**: `storage_dir` 配下の既存 `.md` が外部プログラムによって変更されたことを検知
+- **購読者**: NoteFeed（`upsert_note`）、Note Capture（競合検出: `is_stale()` + EDITING 判定）
+- **payload**: `disk_body_hash` を含み、競合検出に使用される
+
+### NoteFileDeletedExternally {#glossary-note-file-deleted-externally}
+
+- **発行者**: infrastructure 層（ファイルウォッチャー）
+- **トリガー**: `storage_dir` 配下の `.md` が外部プログラムによって削除されたことを検知
+- **購読者**: NoteFeed（`remove_note`）、Note Capture（EDITING 中の場合は通知）
 
 ## Domain Concepts {#glossary-concepts}
 
@@ -253,6 +281,67 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
   Tauri updater plugin が ACL を兼ねる
 - **context**: GitHub Releases → Update Distribution
 
+### 外部ファイル変更 (External File Change) {#glossary-external-file-change}
+
+- **定義**: PromptNotes 以外のプログラム（vim, VSCode, Syncthing 等）が
+  `storage_dir/*.md` を変更すること。ファイル作成・変更・削除の 3 種がある
+- **検出**: OS レベルのファイルウォッチャーが検知し、
+  [NoteFileCreatedExternally](#glossary-note-file-created-externally) /
+  [NoteFileModifiedExternally](#glossary-note-file-modified-externally) /
+  [NoteFileDeletedExternally](#glossary-note-file-deleted-externally)
+  のいずれかの domain event に変換される
+- **反映**: NoteFeed が `upsert_note` / `remove_note` で差分更新（I-F8）
+- **context**: Note Feed / Note Capture
+- **ユースケース**: Syncthing による複数デバイス間のノート同期
+
+### ファイルウォッチャー (File Watcher) {#glossary-file-watcher}
+
+- **定義**: OS ネイティブのファイルシステム監視機構（Linux: inotify, macOS: FSEvents）を
+  用いて `storage_dir/*.md` の変更を検知する infrastructure コンポーネント
+- **実装**: Rust `notify` crate
+- **ライフサイクル**: アプリ起動時に開始、quit 時に停止。
+  `StorageDirChanged` event 購読時に監視ディレクトリを切り替え
+- **debounce**: 500ms（同一ファイルへの連続変更を 1 イベントに集約）
+- **context**: infrastructure 層（domain 概念としては
+  [detect-external-changes](#glossary-detect-external-changes) workflow が表現）
+
+### 競合 (Conflict) {#glossary-conflict}
+
+- **定義**: ユーザが編集中（EDITING 状態）の Note の `.md` ファイルが
+  外部プログラムによって変更された状態
+- **判定**: Block が EDITING 状態 かつ `Note::is_stale(disk_body_hash)` = true（I-N9）
+- **解決**: 競合ダイアログを表示し、ユーザに「外部変更を適用」か「編集中を保持」を選択させる（S19）
+- **context**: Note Capture / UI 層
+
+### 差分更新 (Delta Update) {#glossary-delta-update}
+
+- **定義**: 外部ファイル変更検知時に、`NoteFeed.source` 全体を再読み込みするのではなく、
+  変更された Note のみを `upsert_note` / `remove_note` で部分更新すること（I-F8）
+- **対義語**: 全件ハイドレート（`hydrate` — 起動時・手動 Refresh で使用）
+- **context**: Note Feed
+
+### upsert_note {#glossary-upsert-note}
+
+- **定義**: `NoteFeed` の操作。`source` 内の指定 `note.id` と一致する要素があれば
+  置換、なければ末尾に追加する insert-or-update（I-F8）
+- **対になる操作**: `remove_note`（外部削除検知時に使用）
+- **context**: Note Feed
+
+### detect-external-changes {#glossary-detect-external-changes}
+
+- **定義**: ファイルウォッチャーが検知した raw OS イベントを
+  domain event（`NoteFileCreated/Modified/DeletedExternally`）に変換する workflow
+- **文書**: `workflows/detect-external-changes.md`
+- **context**: Note Feed（infrastructure 層との橋渡し）
+
+### Syncthing {#glossary-syncthing}
+
+- **定義**: P2P ファイル同期ツール。PromptNotes の `storage_dir` を複数デバイス間で
+  同期するためにユーザが外部で運用する
+- **PromptNotes の責務**: Syncthing の管理・設定は行わない。
+  `.md` ファイルの変更を検知して UI に反映するのみ
+- **context**: 外部ツール（domain 外だがユースケースの理解に必要）
+
 ## Cross-Context Differences {#cross-context-differences}
 
 同じ単語が文脈で異なる意味を持つもの。Shared Kernel 採用により多くは「型は同じ
@@ -302,8 +391,10 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 ### Open Questions の取り扱い {#notes-open-questions}
 
 Phase 1-7 で生じた未決事項はすべて解決済み（Q1〜Q7）。
-Phase 9 以降で新規に登場する用語は本 glossary に追記すること。
+Phase 5/6 改訂（外部ファイル変更検知）で追加された用語を本 glossary に追記済み。
 
 ## Open Questions {#open-questions}
 
-Phase 8 時点で未決事項はない。
+Phase 8 改訂（外部ファイル変更検知関連用語の追加に伴う）:
+
+- 未決事項なし。Phase 10 (types) で BodyHash, upsert_note 等の具体的な型定義を行う
