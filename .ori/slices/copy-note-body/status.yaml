@@ -1,5 +1,5 @@
 slice_id: copy-note-body
-derived_at: 2026-06-25T08:35:09.563Z
+derived_at: 2026-06-30
 beads:
   epic: ori-slice-copy-note-body
   current_phase: null
@@ -19,5 +19,11 @@ beads:
     - phase: finalize
       issue: ori-finalize-copy-note-body
 phases: {}
-dirty: []
-finalized_at: 2026-06-25
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
