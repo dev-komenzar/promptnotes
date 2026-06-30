@@ -1,51 +1,66 @@
-slice_id: flush-note
-derived_at: 2026-06-25T09:25:22.425Z
-finalized_at: 2026-06-25T18:00:00.000Z
+derived_at: 2026-06-30
+finalized_at: 2026-06-30
 beads:
   epic: ori-slice-flush-note
   current_phase: finalize
   completion:
-    - phase: derive
-      closed: ori-derive-flush-note
-    - phase: plan
-      closed: ori-plan-flush-note
-    - phase: test-red
-      closed: ori-test-red-flush-note
-    - phase: impl-green
-      closed: ori-impl-green-flush-note
-    - phase: refactor
-      closed: ori-refactor-flush-note
-    - phase: review
-      closed: ori-review-flush-note
-    - phase: finalize
-      closed: ori-finalize-flush-note
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+    - finalize
 phases:
   derive:
     status: closed
-    notes: spec.md generated from 6 upstream sections (workflow + S3/S13 + Note aggregate + Note Capture BC + NoteBodyEdited event)
+    notes: re-derived 2026-06-30 — I-N9 (BodyHash/競合検出) 追記、hash 更新
   plan:
     status: closed
-    notes: downstream issues populated (test-red / impl-green / refactor / review / finalize)
+    notes: "re-derive: I-N9 doc only, downstream issues unchanged"
   test-red:
     status: closed
-    notes: 24 behavioural tests + 2 signature pins authored; RED confirmed
+    notes: 26/26 tests GREEN — I-N9 doc only
   impl-green:
     status: closed
-    notes: 26 flush-note tests GREEN; 89 pre-existing tests pass; DebounceTimer port + NoOpDebounceTimer wired
+    notes: no impl changes
   refactor:
     status: closed
-    notes: cargo fmt applied; no further abstraction (BodyDiff intentionally re-declared per slice)
+    notes: no code changes
   review:
     status: closed
-    notes: Pass 1 NEEDS_FIX (C-FL1 wording vs NoOp wiring; test ordering pins) → Pass 2 PASS after patches (spec OQ-debounce-cancel-composition + timer.seq mirror + cancel pins on every error path)
+    notes: 3 gates PASS; no semantic review
   finalize:
     status: closed
-    notes: status.yaml updated; flush-note errors 4-variant proposal placed in .ori/proposals/pending/
-dirty: []
+    notes: dirty cleared
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-body-edited
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s3-flush-on-blur
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s13-quit-flush
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
 followup:
   - id: ori-73q
     title: "Note Capture: Tauri 側 quit orchestration を実装 (S13 連続 Flush)"
-    reason: cross-slice integration. lib.rs に on_window_event(CloseRequested) を install して全 EDITING Note の Flush を順次実行
-  - description: "frontend hook 側に 'flush_note invoke 前に必ず JS-side debounce clearTimeout を同期実行する' ルールを apps/promptnotes/src/lib/note-capture/ に明文化 (spec.md#oq-debounce-cancel-composition 由来、bd issue 未起票 — UI 着手時に起票)"
+  - description: frontend hook 側 flush_note 前に JS-side debounce clearTimeout を同期実行
 proposals_surfaced:
-  - .ori/proposals/accepted/2026-06-25-flush-note-workflows-flush-note-errors.md  # accepted 2026-06-28
+  - .ori/proposals/accepted/2026-06-25-flush-note-workflows-flush-note-errors.md
