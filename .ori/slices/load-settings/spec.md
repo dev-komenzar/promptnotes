@@ -1,17 +1,12 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-25
-  upstream:
-    - domain/workflows/load-settings.md#load-settings
-    - domain/aggregates.md#settings-aggregate
-    - domain/bounded-contexts.md#user-preferences
-    - domain/validation.md#s12-startup-state
+  last_derived: 2026-06-30
   hash:
     domain/workflows/load-settings.md#.*: 0c241b32210d
-    domain/aggregates.md#.*: 94b27e21aade
-    domain/bounded-contexts.md#.*: 4d579125a513
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
