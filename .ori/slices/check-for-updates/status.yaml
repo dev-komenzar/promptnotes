@@ -1,5 +1,5 @@
 slice_id: check-for-updates
-derived_at: 2026-06-26T07:02:53.873Z
+derived_at: 2026-06-30
 beads:
   epic: ori-2lm
   current_phase: null
@@ -19,18 +19,23 @@ beads:
     - phase: finalize
       issue: ori-2lm.7
 phases: {}
-dirty: []
-finalized_at: 2026-06-26
-followup:
-  - id: ori-2lm.8
-    note: TauriUpdaterPort production wiring (blocked on ori-6l4)
-  - id: ori-2lm.9
-    note: Version VO strict semver 対応
-  - id: ori-2lm.10
-    note: logging port 抽象化
-  - id: ori-2lm.11
-    note: aggregates check_at_startup signature proposal review
-blocked_on:
-  - ori-6l4
-proposals:
-  - accepted/2026-06-26-check-for-updates-aggregates-check-at-startup-no-result.md  # accepted 2026-06-28
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: update-channel-aggregate
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: new-version-detected
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s14-update-check-failure
+    detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30

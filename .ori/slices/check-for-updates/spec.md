@@ -1,19 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-28
-  upstream:
-    - domain/workflows/check-for-updates.md#check-for-updates
-    - domain/aggregates.md#update-channel-aggregate
-    - domain/bounded-contexts.md#update-distribution
-    - domain/domain-events.md#new-version-detected
-    - domain/validation.md#s14-update-check-failure
+  last_derived: 2026-06-30
   hash:
     domain/workflows/check-for-updates.md#.*: e2935ac617af
-    domain/aggregates.md#.*: 43aabb6b099b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
 ori:
   schema:
     propagation_level: file
