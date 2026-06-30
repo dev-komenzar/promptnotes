@@ -1,5 +1,5 @@
 slice_id: update-feed-filter
-derived_at: 2026-06-29T00:00:00.000Z
+derived_at: 2026-06-30
 beads:
   epic: ori-64x
   current_phase: null
@@ -19,14 +19,17 @@ beads:
     - phase: finalize
       issue: ori-64x.7
 phases: {}
-dirty: []
-finalized_at: 2026-06-26
-followup:
-  - id: ori-64x.8
-  - id: ori-64x.9
-  - id: ori-64x.10
-  - id: ori-64x.11
-  - id: ori-64x.12
-proposals:
-  - accepted/2026-06-26-update-feed-filter-aggregates-nfc-vs-nfkc.md  # accepted 2026-06-28
-  - accepted/2026-06-29-update-feed-filter-nfkc-spread.md  # accepted 2026-06-29
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-feed-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s8-query-normalize
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
