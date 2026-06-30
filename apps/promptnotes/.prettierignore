@@ -5,5 +5,10 @@ yarn.lock
 bun.lock
 bun.lockb
 
+# Auto-generated
+.omo/
+src-tauri/target/
+src-tauri/gen/
+
 # Miscellaneous
 /static/

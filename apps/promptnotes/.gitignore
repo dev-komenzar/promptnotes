@@ -18,6 +18,13 @@ Thumbs.db
 !.env.example
 !.env.test
 
+# Auto-generated
+.omo/
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

@@ -17,9 +17,6 @@ export type AssignTagError =
  * 追加する。既に同じ tag が付与済みなら NoOp (C-AT3)、検証失敗は
  * `InvalidTag` を surface。成功時は更新後の tag 列を返却。
  */
-export async function assignTag(
-	noteId: string,
-	rawTag: string
-): Promise<AssignTagOutcome> {
+export async function assignTag(noteId: string, rawTag: string): Promise<AssignTagOutcome> {
 	return invoke<AssignTagOutcome>('assign_tag', { noteId, rawTag });
 }

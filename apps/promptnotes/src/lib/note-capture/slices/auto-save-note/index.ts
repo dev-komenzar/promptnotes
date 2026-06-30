@@ -18,9 +18,6 @@ export type AutoSaveError =
  * `Saved` を返す。NoteId の parse 失敗は `NoteNotFound` に降格される
  * (spec.md#oq-invalid-note-id)。
  */
-export async function autoSaveNote(
-	noteId: string,
-	newBody: string
-): Promise<AutoSaveOutcome> {
+export async function autoSaveNote(noteId: string, newBody: string): Promise<AutoSaveOutcome> {
 	return invoke<AutoSaveOutcome>('auto_save_note', { noteId, newBody });
 }

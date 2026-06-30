@@ -66,7 +66,6 @@
 		store.removeTag(tag);
 	}
 
-
 	function submitFromKeymap(): boolean {
 		void runSubmit();
 		return true;
