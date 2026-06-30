@@ -1,5 +1,5 @@
 page_id: page-main
-derived_at: 2026-06-29
+derived_at: 2026-06-30
 beads:
   epic: ori-page-page-main
   current_phase: done
@@ -16,12 +16,14 @@ phases:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-06-29
-    notes: spec.md re-derived (added ThemeChanged subscriber: I-PM16/17/18, TP-T1〜T11)
+    notes: "spec.md re-derived (added ThemeChanged subscriber: I-PM16/17/18,
+      TP-T1〜T11)"
   plan:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-06-27
-    notes: 5 sub-task scaffold (shell / toolbar / draft / feed / toast) + theme beads issues
+    notes: 5 sub-task scaffold (shell / toolbar / draft / feed / toast) + theme
+      beads issues
   test-red:
     status: closed
     issue: ori-test-red-page-main-theme
@@ -47,9 +49,17 @@ phases:
     issue: ori-page-page-main
     completed_at: 2026-06-29
     notes: dirty cleared; 2 follow-up issues created
-dirty: []
-finalized_at: 2026-06-29
-followup:
-  - ori-followup-page-main-theme-divergence
-  - ori-followup-page-main-theme-wiring-test
-proposals: {}
+dirty:
+  - source:
+      path: .ori/domain/ui-fields/page-groups.md
+      sectionId: page-main
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: theme-changed
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30

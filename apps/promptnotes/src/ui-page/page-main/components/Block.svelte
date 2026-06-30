@@ -395,26 +395,29 @@
 	<div
 		class="pointer-events-none absolute right-2 top-1 flex gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
 	>
-			<button
-				type="button"
-				data-block-no-edit
-				data-testid="screen-1-block-copy"
-				class="rounded border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 grid place-items-center"
-				aria-label="Copy body"
-				onclick={(e) => {
-					e.stopPropagation();
-					void handleCopy();
-				}}
-			>
-				{#key copied}
-					{#if copied}
-						<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1">✅</span>
-					{:else}
-						<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1">📋</span>
-					{/if}
-				{/key}
-			</button
-			>
+		<button
+			type="button"
+			data-block-no-edit
+			data-testid="screen-1-block-copy"
+			class="rounded border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 grid place-items-center"
+			aria-label="Copy body"
+			onclick={(e) => {
+				e.stopPropagation();
+				void handleCopy();
+			}}
+		>
+			{#key copied}
+				{#if copied}
+					<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1"
+						>✅</span
+					>
+				{:else}
+					<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1"
+						>📋</span
+					>
+				{/if}
+			{/key}
+		</button>
 		<button
 			type="button"
 			data-block-no-edit

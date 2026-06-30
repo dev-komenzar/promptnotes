@@ -1,19 +1,22 @@
 <script lang="ts">
-	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { listNotes } from '$lib/note-feed/slices/list-feed';
-	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
-	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
-	import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
-	import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
-	import DraftRegion from './regions/DraftRegion.svelte';
-	import FeedRegion from './regions/FeedRegion.svelte';
-	import ToastRegion from './regions/ToastRegion.svelte';
-	import ToolbarRegion from './regions/ToolbarRegion.svelte';
-	import { feedStore } from './stores/feed.svelte';
-	import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
-	import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
-	import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
-	import { toastStore } from './stores/toasts.svelte';
+		import { getCurrentWindow } from '@tauri-apps/api/window';
+		import { listen } from '@tauri-apps/api/event';
+		import { listNotes } from '$lib/note-feed/slices/list-feed';
+		import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
+		import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
+		import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
+		import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
+		import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
+		import DraftRegion from './regions/DraftRegion.svelte';
+		import FeedRegion from './regions/FeedRegion.svelte';
+		import ToastRegion from './regions/ToastRegion.svelte';
+		import ToolbarRegion from './regions/ToolbarRegion.svelte';
+		import { editingNote, type EditingNoteState } from './stores/editing-note.svelte';
+		import { feedStore } from './stores/feed.svelte';
+		import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
+		import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
+		import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
+		import { toastStore } from './stores/toasts.svelte';
 
 	type CloseRequestedEvent = { preventDefault: () => void };
 	type QuitWindow = {
@@ -45,10 +48,10 @@
 		sort_preference: { field: 'created_at', direction: 'desc' }
 	};
 
-	let settingsModalOpen = $state(false);
-	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
+		let settingsModalOpen = $state(false);
+		let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 
-	const themeSubscriber = createThemeSubscriber({
+		const themeSubscriber = createThemeSubscriber({
 		onThemeChanged: (theme) => {
 			// theme_changed event で currentSettings.theme を更新 (SSoT)。
 			// 下の $effect が currentSettings.theme に reactive に反応して setTheme → DOM 反映する。
@@ -90,10 +93,25 @@
 		return () => subscriber.stop();
 	});
 
-	$effect(() => {
-		void themeSubscriber.start();
-		return () => themeSubscriber.stop();
-	});
+		$effect(() => {
+			void themeSubscriber.start();
+			return () => themeSubscriber.stop();
+		});
+
+		$effect(() => {
+			// Start file watcher for external change detection (Syncthing support).
+			let cancelled = false;
+			(async () => {
+				try {
+					const { invoke } = await import('@tauri-apps/api/core');
+					if (cancelled) return;
+					await invoke('start_file_watcher').catch(() => {});
+				} catch {
+					// silent — non-Tauri host (e.g. vitest jsdom)
+				}
+			})();
+			return () => { cancelled = true; };
+		});
 
 	$effect(() => {
 		// currentSettings.theme が変わったら DOM に反映 (I-PM16/17/18)。
@@ -219,3 +237,8 @@
 {/if}
 
 <WidgetUpdateToast />
+
+<WidgetExternalChangeConflict
+	localBody=""
+	onClose={() => {}}
+/>
