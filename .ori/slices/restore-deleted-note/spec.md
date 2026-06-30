@@ -1,20 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-26
-  upstream:
-    - domain/workflows/restore-deleted-note.md#restore-deleted-note
-    - domain/aggregates.md#note-aggregate
-    - domain/bounded-contexts.md#note-capture
-    - domain/domain-events.md#note-restored-from-trash
-    - domain/validation.md#s5-delete-undo-in-window
-    - domain/validation.md#s7-undo-after-toast
+  last_derived: 2026-06-30
   hash:
     domain/workflows/restore-deleted-note.md#.*: e32a07cd279b
-    domain/aggregates.md#.*: 9f9048f5816b
-    domain/bounded-contexts.md#.*: 4d579125a513
+    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/validation.md#.*: 31244b277867
     domain/validation.md#.*: 5294b0c32f1b
 ori:
   schema:
@@ -75,6 +68,7 @@ domain/workflows/restore-deleted-note.md#errors と一致する 3 variant 構成
 
 - **I-N1 / I-N2 / I-N3 / I-N4 の non-violation**: 本 slice は `Note::from_persisted` 経由でファイルから再構築するだけで、aggregate の field を書き換える経路を持たない。`id` / `created_at` / `updated_at` は永続化された frontmatter から復元される (domain/workflows/restore-deleted-note.md#notes「復元後の Note は元と同じ `NoteId` / `body` / `tags` / `createdAt`。`updatedAt` は OS ゴミ箱の API 仕様に依存」)
 - **I-N7 の継続**: 復元成功時に当該 `DeletedNote` だけが Undo スタックから除去される (`UndoStack::remove_by_id`)。他の Toast / DeletedNote は影響を受けない (S6 改訂の per-toast 独立性、本 slice 側で remove-by-id 経路により担保)
+- **I-N8 / I-N9**: `NoteBody` smart constructor (I-N8) と `BodyHash` 競合検出 (I-N9) は本 slice の範囲外。復元操作は `body` の構築・変更を行わず、`Note::from_persisted` 経由で既存の body を復元するため、これらの不変条件に違反しない
 
 ### slice 固有制約 {#invariants-slice-specific}
 

@@ -1,23 +1,28 @@
 slice_id: restore-deleted-note
-derived_at: 2026-06-26T07:22:16.566Z
-beads:
-  epic: ori-slice-restore-deleted-note
-  current_phase: null
-  completion:
-    - phase: derive
-      issue: ori-derive-restore-deleted-note
-    - phase: plan
-      issue: ori-plan-restore-deleted-note
-    - phase: test-red
-      issue: ori-test-red-restore-deleted-note
-    - phase: impl-green
-      issue: ori-impl-green-restore-deleted-note
-    - phase: refactor
-      issue: ori-refactor-restore-deleted-note
-    - phase: review
-      issue: ori-review-restore-deleted-note
-    - phase: finalize
-      issue: ori-finalize-restore-deleted-note
-phases: {}
-dirty: []
-finalized_at: 2026-06-26
+derived_at: 2026-06-30
+dirty:
+  - source:
+      path: .ori/domain/aggregates.md
+      sectionId: note-aggregate
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: note-restored-from-trash
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s5-delete-undo-in-window
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s7-undo-after-toast
+    detected_at: 2026-06-30T10:11:08.338Z
+    affected_phase: derive
+    reason: edit
+finalized_at: 2026-06-30
