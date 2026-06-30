@@ -162,13 +162,11 @@ fn three_notes() -> Vec<Note> {
     ]
 }
 
-const NOW: OffsetDateTime = datetime!(2026-06-27 12:00 UTC);
-
 /// TP-F1 — filter 空 → source 全件
 #[test]
 fn tp_f1_empty_filter_returns_all_source() {
     let feed = NoteFeed::empty().hydrate(three_notes());
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 3);
 }
 
@@ -177,7 +175,7 @@ fn tp_f1_empty_filter_returns_all_source() {
 fn tp_f2_query_matches_body_or_tags() {
     let filter = FeedFilter::initial().with_query(NormalizedQuery::from_raw("gpt"));
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 2);
 }
 
@@ -186,7 +184,7 @@ fn tp_f2_query_matches_body_or_tags() {
 fn tp_f3_fullwidth_query_matches_halfwidth() {
     let filter = FeedFilter::initial().with_query(NormalizedQuery::from_raw("Ｇｐｔ"));
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 2);
 }
 
@@ -196,7 +194,7 @@ fn tp_f4_tag_filter() {
     let tag = Tag::new("coding").unwrap();
     let filter = FeedFilter::initial().with_tag(Some(tag));
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 1);
     assert_eq!(visible[0].id().as_str(), "20260615100000");
 }
@@ -206,7 +204,7 @@ fn tp_f4_tag_filter() {
 fn tp_f5_last_7_days() {
     let filter = FeedFilter::initial().with_date_range(DateRangeFilter::Last7Days);
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -224,7 +222,7 @@ fn tp_f6_and_composition() {
         .with_tag(Some(tag.clone()))
         .with_date_range(DateRangeFilter::Last30Days);
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 1);
     assert_eq!(visible[0].id().as_str(), "20260615100000");
 }
@@ -234,7 +232,7 @@ fn tp_f6_and_composition() {
 fn tp_f7_no_query_axis() {
     let filter = FeedFilter::initial();
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 3);
 }
 
@@ -246,7 +244,7 @@ fn tp_s1_sort_created_at_desc() {
     let feed = NoteFeed::empty()
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::CreatedAt, SortDirection::Desc));
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -267,7 +265,7 @@ fn tp_s2_sort_created_at_asc() {
     let feed = NoteFeed::empty()
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::CreatedAt, SortDirection::Asc));
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -302,7 +300,7 @@ fn tp_s3_sort_updated_at_desc() {
     let feed = NoteFeed::empty()
         .hydrate(notes)
         .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Desc));
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible[0].id().as_str(), "20260601100000");
     assert_eq!(visible[1].id().as_str(), "20260615100000");
 }
@@ -327,7 +325,7 @@ fn tp_s4_tiebreak_by_id() {
     let feed = NoteFeed::empty()
         .hydrate(notes)
         .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Desc));
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -362,7 +360,7 @@ fn tp_v3_hydrate_is_idempotent() {
 #[test]
 fn tp_s12_1_startup_lists_all_notes() {
     let feed = NoteFeed::empty().hydrate(three_notes());
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     assert_eq!(visible.len(), 3);
 }
 
@@ -372,7 +370,7 @@ fn tp_s12_2_startup_respects_sort_preference() {
     let feed = NoteFeed::empty()
         .hydrate(three_notes())
         .change_sort(SortOrder::new(SortField::UpdatedAt, SortDirection::Asc));
-    let visible = feed.visible_notes(NOW);
+    let visible = feed.visible_notes();
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -431,7 +429,7 @@ fn integration_fs_to_visible_notes() {
     assert_eq!(hydrated.source().len(), 2);
 
     let filter = FeedFilter::initial().with_query(NormalizedQuery::from_raw("gpt"));
-    let visible = visible_notes_snapshot(&hydrated.with_filter(filter), NOW);
+    let visible = visible_notes_snapshot(&hydrated.with_filter(filter));
     assert_eq!(visible.len(), 1);
     assert_eq!(visible[0].id().as_str(), "20260620100000");
 }

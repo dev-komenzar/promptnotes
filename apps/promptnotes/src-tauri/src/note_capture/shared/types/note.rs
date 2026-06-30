@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use super::body_hash::BodyHash;
 use super::deleted_note::DeletedNote;
 use super::note_body::NoteBody;
 use super::note_id::NoteId;
@@ -141,6 +142,19 @@ impl Note {
     /// `self.body.as_str()` by construction.
     pub fn body_for_clipboard(&self) -> String {
         self.body.as_str().to_string()
+    }
+
+    /// SHA-256 hash of the body, deterministically derived; recomputed on
+    /// every body change. Used for external-change conflict detection (I-N9).
+    pub fn body_hash(&self) -> BodyHash {
+        BodyHash::from_body(self.body.as_str())
+    }
+
+    /// Returns `true` when the on-disk body hash differs from the in-memory
+    /// body hash — indicating an external program modified the `.md` file.
+    /// The caller (application service) is responsible for conflict resolution.
+    pub fn is_stale(&self, disk_hash: &BodyHash) -> bool {
+        self.body_hash() != *disk_hash
     }
 
     /// Consume the Note and produce an Undo handle (workflow: delete-note,
