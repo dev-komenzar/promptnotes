@@ -1,6 +1,7 @@
 # promptnotes
 
 AI プロンプトを書き溜め、すぐコピーして使うためのデスクトップノートアプリ。
+プロンプトを書き溜めておく場所。
 
 > Claude Code や Codex で Enter を押して意図せず送信してしまったことはありませんか？
 > Prompt Notes なら、安心して Enter を押せます。
@@ -12,61 +13,78 @@ Tauri v2 / SvelteKit / Rust 製。
 
 ---
 
-## 対応プラットフォーム
+## なぜ Prompt Notes なのか
 
-| platform | 対応状況 | ビルド環境 |
-|---|---|---|
-| Linux (deb/rpm/AppImage) | 対応 | NixOS メイン機 |
-| macOS (.app/.dmg) | 対応 | mac サブ機 |
-| Windows | **初期 MVP から除外** | — |
+Claude Code や Codex CLI では、プロンプト入力中に Enter を押すと即座に AI へ送信されてしまいます。
+書きかけのプロンプトをうっかり送信してしまった経験はありませんか？
 
-> **macOS について**: Apple Developer Program に登録していないため、公証 (notarization) を行わず自己署名で配布します。配布経路や Gatekeeper 回避手順は [docs/build.md](./docs/build.md) を参照。
+Prompt Notes は **AI に送る前のプロンプトを書くための専用エディタ** です。
+Enter は安心して改行に使えます。送信は `Cmd+Enter`（または `Ctrl+Enter`）。
 
-詳細な戦略は [docs/build.md](./docs/build.md) を参照。
+また、すべてのノートはローカルの `.md` ファイルとして保存されるため、
+他のツールと共存でき、データの持ち出しも自由です。
 
 ---
 
-## macOS での起動
+## 主な機能
+
+- **Markdown 編集**: CodeMirror 6 によるシンタックスハイライト、リスト補完、ブラケット補完
+- **全文検索**: 本文・タグをリアルタイム検索。`Cmd+F` / `Ctrl+F` で即フォーカス
+- **タグ管理**: frontmatter でタグを管理、クリックでフィルタリング
+- **ワンクリックコピー**: 本文のみをクリップボードにコピー（frontmatter・タグは除外）
+- **自動保存**: キー入力後 500ms のデバウンスで `.md` ファイルとして自動保存
+- **フィルター・ソート**: 期間フィルター（7日・30日・90日・すべて）、作成日／更新日ソート
+
+---
+
+## インストール
+
+[GitHub Releases](https://github.com/dev-komenzar/promptnotes/releases) からダウンロードしてください。
+
+| platform | 形式 | 備考 |
+|---|---|---|
+| macOS | `.app` / `.dmg` | Homebrew 対応も検討中 |
+| Linux | `.deb` / `.rpm` / AppImage | Nix packages, Flatpak など対応拡充中 |
+
+### macOS での起動
 
 promptnotes は Apple Developer Program に登録していないため、公証 (notarization) されていません。
-初回起動時に Gatekeeper の警告が出ます。以下のいずれかで回避してください:
+初回起動時に Gatekeeper の警告が出ます。以下のいずれかで回避してください。
 
-**方法 A: 右クリックで開く (1 回だけ)**
-1. Finder で `promptnotes.app` を右クリック (control + クリック)
+**方法 A: 右クリックで開く**
+1. Finder で `promptnotes.app` を右クリック（control + クリック）
 2. 「開く」を選択
 3. 再度警告が出るが、もう一度「開く」をクリック
 
 **方法 B: ターミナルから属性を解除**
-
 ```bash
 xattr -dr com.apple.quarantine /Applications/promptnotes.app
 ```
 
-以降は普通に起動できます。
+---
+
+## スクリーンショット
+
+> 準備中
 
 ---
 
-## クイックスタート (開発)
+## 開発
+
+### クイックスタート
 
 Nix flake でツールチェーンを固定。
 
 ```bash
-# 1. direnv を許可 (Nix 開発環境に入る)
 direnv allow
-
-# 2. 依存 install
 cd apps/promptnotes
 bun install
-
-# 3. 開発 server 起動
 bun run dev
 ```
 
 ビルド・テスト・リリース手順は [docs/build.md](./docs/build.md)。
 
----
-
-## 技術スタック
+### 技術スタック
 
 - **Desktop framework**: Tauri v2
 - **Frontend**: SvelteKit (static adapter) + Vite + CodeMirror 6
@@ -75,9 +93,7 @@ bun run dev
 - **パッケージマネージャ**: bun
 - **ツールチェーン固定**: Nix flake
 
----
-
-## プロジェクト構成
+### プロジェクト構成
 
 ```
 .
@@ -95,4 +111,4 @@ bun run dev
 
 ## License
 
-未設定 (個人開発)。
+未設定（個人開発）。
