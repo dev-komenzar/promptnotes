@@ -4,6 +4,10 @@ use super::timestamp::Timestamp;
 pub struct NoteId(String);
 
 impl NoteId {
+    pub fn new(value: String) -> Self {
+        Self(value)
+    }
+
     pub fn from_timestamp(ts: Timestamp) -> Self {
         Self(ts.format_yyyymmddhhmmss())
     }

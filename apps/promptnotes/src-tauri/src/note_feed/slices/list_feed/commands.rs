@@ -6,6 +6,7 @@
 
 use std::env;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, Runtime, State};
@@ -75,7 +76,7 @@ fn resolve_default_storage_dir<R: Runtime>(app: &AppHandle<R>) -> StorageDir {
 #[tauri::command]
 pub async fn list_notes<R: Runtime>(
     app: AppHandle<R>,
-    feed_state: State<'_, InMemoryNoteFeedState>,
+    feed_state: State<'_, Arc<InMemoryNoteFeedState>>,
 ) -> Result<NoteFeedDto, String> {
     let config_path = resolve_config_path(&app);
     let default_storage_dir = resolve_default_storage_dir(&app);
