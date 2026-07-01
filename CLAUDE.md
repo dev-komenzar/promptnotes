@@ -116,6 +116,14 @@ bd epic / parent issue        (= 1 PR、bundling 単位)
 | [ddd-test.md](.claude/rules/ddd-test.md) | `**/*.{spec,test}.{ts,tsx}` | vitest、`describe('feature:<id>')`、spec.md セクション参照、fast-check |
 | [ui-test.md](.claude/rules/ui-test.md) | `**/*.{spec,test}.tsx` 等 | UI selector 規約、getByRole/getByLabelText 第一推奨 |
 
+### 3. 自己改善ループ（bd memory 連携）
+
+- ユーザーから修正・承認を受けたり、非自明な project decision に気付いたら bd memory に記録する
+- 記録先は beads の memory system 。
+- 保存すべきは「将来セッションでも通用する持続的な知見」: feedback / project decision / reference / user profile
+- 保存すべきでないもの: 特定バグのデバッグ手順 (コード本体と commit message に残せば十分)、コードを読めば分かる構造情報
+- 同一セッション内の一時状態は組み込みツール（TaskCreate 等）または Plan で、セッション横断のまとまった作業は beads issue で、永続すべき知見だけ memory へ
+
 ## Build & Test
 
 ### Dev shell
