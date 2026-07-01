@@ -1,7 +1,7 @@
 use time::{Duration, OffsetDateTime};
 use unicode_normalization::UnicodeNormalization;
 
-use crate::note_capture::shared::types::Note;
+use crate::note_capture::shared::types::{Note, NoteId};
 use crate::user_preferences::shared::types::{SortDirection, SortField, SortOrder};
 
 use super::{DateRangeFilter, FeedFilter, NormalizedQuery};
@@ -58,6 +58,26 @@ impl NoteFeed {
     /// `source` を差し替える pure 関数 (C-LF9 冪等性)。
     pub fn hydrate(mut self, notes: Vec<Note>) -> Self {
         self.source = notes;
+        self
+    }
+
+    /// `aggregates.md#note-feed-aggregate-operations` の `upsert_note` (I-F8)。
+    /// `source` 内の `note.id` と一致する要素があれば置換、なければ末尾に追加。
+    /// 変更後も現在の filter / sort は維持される。
+    pub fn upsert_note(mut self, note: Note) -> Self {
+        let note_id = note.id();
+        if let Some(existing) = self.source.iter_mut().find(|n| n.id() == note_id) {
+            *existing = note;
+        } else {
+            self.source.push(note);
+        }
+        self
+    }
+
+    /// `aggregates.md#note-feed-aggregate-operations` の `remove_note` (I-F8)。
+    /// `source` から `note_id` に一致する要素を削除。該当なしの場合は no-op。
+    pub fn remove_note(mut self, note_id: &NoteId) -> Self {
+        self.source.retain(|n| n.id() != note_id);
         self
     }
 

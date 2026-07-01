@@ -12,7 +12,7 @@ const DEBOUNCE_WINDOW_MS: u64 = 500;
 
 pub struct FsWatcher {
     _watcher: RecommendedWatcher,
-    rx: mpsc::Receiver<RawFileEvent>,
+    rx: Option<mpsc::Receiver<RawFileEvent>>,
 }
 
 impl FsWatcher {
@@ -57,12 +57,12 @@ impl FsWatcher {
 
         Ok(Self {
             _watcher: watcher,
-            rx,
+            rx: Some(rx),
         })
     }
 
-    pub fn into_receiver(self) -> mpsc::Receiver<RawFileEvent> {
-        self.rx
+    pub fn take_receiver(&mut self) -> mpsc::Receiver<RawFileEvent> {
+        self.rx.take().expect("FsWatcher receiver already taken")
     }
 
     pub fn run_event_loop<F>(

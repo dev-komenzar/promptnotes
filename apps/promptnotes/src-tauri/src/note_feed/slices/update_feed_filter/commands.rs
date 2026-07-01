@@ -10,6 +10,8 @@
 //! Tag::new での I-N6 validation 失敗のみ surface (`TagErrorDto`)。
 
 use serde::Deserialize;
+use std::sync::Arc;
+
 use tauri::State;
 
 use super::application::UpdateFeedFilterUseCase;
@@ -102,7 +104,7 @@ fn lower(
 
 #[tauri::command]
 pub async fn update_feed_filter(
-    feed_state: State<'_, InMemoryNoteFeedState>,
+    feed_state: State<'_, Arc<InMemoryNoteFeedState>>,
     input: UpdateFeedFilterInput,
 ) -> Result<NoteFeedFilterDto, UpdateFeedFilterErrorDto> {
     let cmd = lower(input)?;

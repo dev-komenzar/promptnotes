@@ -1,12 +1,16 @@
 //! Tests for detect-external-changes slice.
 //! Phase 3 → Phase 4 transition: tests that exercises real implementation paths.
 
+use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 use time::OffsetDateTime;
 
-use crate::note_capture::shared::types::{BodyHash, Note, NoteBody, TagSet, Timestamp};
+use crate::note_capture::shared::ports::NoteRepository;
+use crate::note_capture::shared::types::{BodyHash, Note, NoteBody, NoteId, TagSet, Timestamp};
+use crate::note_capture::shared::events::DomainEvent;
 use crate::note_feed::slices::detect_external_changes::application::DetectExternalChangesUseCase;
 use crate::note_feed::slices::detect_external_changes::domain::{
     DetectExternalChangesCommand, DetectExternalChangesError, RawFileEvent, WatcherHandle,
@@ -159,7 +163,7 @@ fn raw_file_event_deleted_holds_path() {
 fn resolve_note_id_parses_valid_timestamp_filename() {
     let path = PathBuf::from("/tmp/notes/20250630120000.md");
     assert_eq!(
-        DetectExternalChangesUseCase::<FakeClock, FakeEventBus>::resolve_note_id(&path),
+        DetectExternalChangesUseCase::resolve_note_id(&path),
         Some("20250630120000".to_string())
     );
 }
@@ -168,7 +172,7 @@ fn resolve_note_id_parses_valid_timestamp_filename() {
 fn resolve_note_id_rejects_non_numeric_stem() {
     let path = PathBuf::from("/tmp/notes/README.md");
     assert_eq!(
-        DetectExternalChangesUseCase::<FakeClock, FakeEventBus>::resolve_note_id(&path),
+        DetectExternalChangesUseCase::resolve_note_id(&path),
         None
     );
 }
@@ -177,7 +181,7 @@ fn resolve_note_id_rejects_non_numeric_stem() {
 fn resolve_note_id_rejects_wrong_length() {
     let path = PathBuf::from("/tmp/notes/123.md");
     assert_eq!(
-        DetectExternalChangesUseCase::<FakeClock, FakeEventBus>::resolve_note_id(&path),
+        DetectExternalChangesUseCase::resolve_note_id(&path),
         None
     );
 }
@@ -195,26 +199,184 @@ impl crate::note_capture::shared::ports::Clock for FakeClock {
 
 struct FakeEventBus;
 impl crate::note_capture::shared::ports::EventBus for FakeEventBus {
-    fn publish(&self, _event: crate::note_capture::shared::events::DomainEvent) {}
+    fn publish(&self, _event: DomainEvent) {}
+}
+
+struct FakeNoteRepo;
+impl NoteRepository for FakeNoteRepo {
+    fn write(&self, _note: &Note) -> io::Result<()> { Ok(()) }
+    fn storage_dir(&self) -> &Path { Path::new("/fake") }
+    fn load_by_id(&self, _id: &NoteId) -> io::Result<Option<Note>> { Ok(None) }
+    fn list_all(&self) -> io::Result<Vec<Note>> { Ok(Vec::new()) }
 }
 
 #[test]
 fn start_watcher_succeeds_with_temp_dir() {
     let tmp = tempfile::tempdir().expect("tempdir");
-    let uc = DetectExternalChangesUseCase::new(FakeClock, FakeEventBus);
+    let uc = DetectExternalChangesUseCase::new(
+        Arc::new(FakeClock),
+        Arc::new(FakeEventBus),
+    );
+    let note_repo: Arc<dyn NoteRepository + Send + Sync> = Arc::new(FakeNoteRepo);
     let cmd = DetectExternalChangesCommand {
         storage_dir: StorageDir::try_from(tmp.path().to_path_buf()).unwrap(),
     };
-    let result = uc.start_watcher(cmd);
+    let result = uc.start_watcher(cmd, note_repo);
     assert!(result.is_ok(), "watcher should start on a valid directory");
 }
 
 #[test]
 fn start_watcher_fails_on_nonexistent_dir() {
-    let uc = DetectExternalChangesUseCase::new(FakeClock, FakeEventBus);
+    let uc = DetectExternalChangesUseCase::new(
+        Arc::new(FakeClock),
+        Arc::new(FakeEventBus),
+    );
+    let note_repo: Arc<dyn NoteRepository + Send + Sync> = Arc::new(FakeNoteRepo);
     let cmd = DetectExternalChangesCommand {
         storage_dir: StorageDir::try_from(PathBuf::from("/nonexistent/dir/path")).unwrap(),
     };
-    let result = uc.start_watcher(cmd);
+    let result = uc.start_watcher(cmd, note_repo);
     assert!(result.is_err());
+}
+
+// ---------------------------------------------------------------------------
+// Application: domain event publishing from watcher callback
+// ---------------------------------------------------------------------------
+
+use std::sync::Mutex;
+
+struct SpyingEventBus {
+    events: Mutex<Vec<DomainEvent>>,
+}
+
+impl SpyingEventBus {
+    fn new() -> Self {
+        Self { events: Mutex::new(Vec::new()) }
+    }
+
+    fn published_events(&self) -> Vec<DomainEvent> {
+        self.events.lock().unwrap().clone()
+    }
+}
+
+impl crate::note_capture::shared::ports::EventBus for SpyingEventBus {
+    fn publish(&self, event: DomainEvent) {
+        self.events.lock().unwrap().push(event);
+    }
+}
+
+struct FileSystemNoteRepo {
+    dir: PathBuf,
+}
+
+impl FileSystemNoteRepo {
+    fn new(dir: PathBuf) -> Self {
+        Self { dir }
+    }
+}
+
+impl NoteRepository for FileSystemNoteRepo {
+    fn write(&self, note: &Note) -> io::Result<()> {
+        let path = self.dir.join(format!("{}.md", note.id().as_str()));
+        let content = format!(
+            "---\ncreatedAt: {}\nupdatedAt: {}\ntags: []\n---\n{}",
+            note.created_at().format_yyyymmddhhmmss(),
+            note.updated_at().format_yyyymmddhhmmss(),
+            note.body().as_str(),
+        );
+        std::fs::create_dir_all(&self.dir)?;
+        std::fs::write(&path, content)
+    }
+
+    fn storage_dir(&self) -> &Path {
+        &self.dir
+    }
+
+    fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
+        let path = self.dir.join(format!("{}.md", id.as_str()));
+        match std::fs::read_to_string(&path) {
+            Ok(raw) => Ok(Some(parse_via_fs_repo(&raw)?)),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn list_all(&self) -> io::Result<Vec<Note>> {
+        // Not needed for these tests
+        Ok(Vec::new())
+    }
+}
+
+// Reuse the parse logic from FsNoteRepository
+fn parse_via_fs_repo(raw: &str) -> io::Result<Note> {
+    // Simplified parse for testing — mirrors FsNoteRepository logic
+    let rest = raw.strip_prefix("---\n").ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidData, "missing opening delimiter")
+    })?;
+    let (frontmatter, body) = rest.split_once("\n---\n").ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidData, "missing closing delimiter")
+    })?;
+
+    let mut created_at: Option<Timestamp> = None;
+    let mut updated_at: Option<Timestamp> = None;
+    for line in frontmatter.lines() {
+        if let Some(v) = line.strip_prefix("createdAt: ") {
+            created_at = Some(Timestamp::parse_yyyymmddhhmmss(v).map_err(|e| {
+                io::Error::new(io::ErrorKind::InvalidData, format!("createdAt: {e}"))
+            })?);
+        } else if let Some(v) = line.strip_prefix("updatedAt: ") {
+            updated_at = Some(Timestamp::parse_yyyymmddhhmmss(v).map_err(|e| {
+                io::Error::new(io::ErrorKind::InvalidData, format!("updatedAt: {e}"))
+            })?);
+        }
+    }
+
+    let created_at = created_at.ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidData, "missing createdAt")
+    })?;
+    let updated_at = updated_at.unwrap_or(created_at);
+    let note_body = NoteBody::new(body.to_string()).map_err(|e| {
+        io::Error::new(io::ErrorKind::InvalidData, format!("body: {e}"))
+    })?;
+
+    Ok(Note::from_persisted(note_body, TagSet::empty(), created_at, updated_at))
+}
+
+#[test]
+fn watcher_emits_note_file_created_externally() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+
+    // Pre-create a valid .md file in the watched directory
+    let note_path = tmp.path().join("20250630120000.md");
+    std::fs::write(&note_path, "---\ncreatedAt: 20250630120000\nupdatedAt: 20250630120000\ntags: []\n---\nhello world").unwrap();
+
+    let event_bus = Arc::new(SpyingEventBus::new());
+    let uc = DetectExternalChangesUseCase::new(
+        Arc::new(FakeClock),
+        event_bus.clone(),
+    );
+    let note_repo: Arc<dyn NoteRepository + Send + Sync> =
+        Arc::new(FileSystemNoteRepo::new(tmp.path().to_path_buf()));
+
+    let cmd = DetectExternalChangesCommand {
+        storage_dir: StorageDir::try_from(tmp.path().to_path_buf()).unwrap(),
+    };
+    let result = uc.start_watcher(cmd, note_repo);
+    assert!(result.is_ok());
+
+    // Create a new .md file to trigger the watcher
+    let new_path = tmp.path().join("20250630130000.md");
+    std::fs::write(&new_path, "---\ncreatedAt: 20250630130000\nupdatedAt: 20250630130000\ntags: []\n---\nnew note").unwrap();
+
+    // Wait for the watcher to detect and debounce
+    std::thread::sleep(Duration::from_millis(800));
+
+    let events = event_bus.published_events();
+    let created = events.iter().find(|e| matches!(e, DomainEvent::NoteFileCreatedExternally { .. }));
+    assert!(created.is_some(), "expected NoteFileCreatedExternally event, got: {events:?}");
+
+    if let Some(DomainEvent::NoteFileCreatedExternally { note_id, note, .. }) = created {
+        assert_eq!(note_id.as_str(), "20250630130000");
+        assert_eq!(note.body().as_str(), "new note");
+    }
 }

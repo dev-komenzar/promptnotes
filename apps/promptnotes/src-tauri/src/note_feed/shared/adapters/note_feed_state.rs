@@ -6,6 +6,7 @@
 
 use std::sync::Mutex;
 
+use crate::note_capture::shared::types::{Note, NoteId};
 use crate::note_feed::shared::types::NoteFeed;
 
 #[derive(Default)]
@@ -25,6 +26,18 @@ impl InMemoryNoteFeedState {
     pub fn replace(&self, feed: NoteFeed) {
         let mut guard = self.inner.lock().expect("note feed mutex poisoned");
         *guard = feed;
+    }
+
+    pub fn upsert_one(&self, note: Note) {
+        let mut guard = self.inner.lock().expect("note feed mutex poisoned");
+        let current = std::mem::take(&mut *guard);
+        *guard = current.upsert_note(note);
+    }
+
+    pub fn remove_one(&self, note_id: &NoteId) {
+        let mut guard = self.inner.lock().expect("note feed mutex poisoned");
+        let current = std::mem::take(&mut *guard);
+        *guard = current.remove_note(note_id);
     }
 }
 

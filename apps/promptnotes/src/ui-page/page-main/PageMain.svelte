@@ -113,6 +113,31 @@
 			return () => { cancelled = true; };
 		});
 
+		$effect(() => {
+			// Subscribe to external file change events emitted by the watcher.
+			// When Syncthing (or any external program) creates/modifies/deletes .md files,
+			// the Rust watcher publishes domain events → subscriber updates NoteFeed
+			// and emits 'notes-changed' → frontend re-fetches the feed.
+			let unlisten: (() => void) | undefined;
+			(async () => {
+				try {
+					unlisten = await listen('notes-changed', async () => {
+						try {
+							const feed = await listNotesFn();
+							feedStore.hydrateNotes(feed.notes);
+						} catch {
+							// silent — re-hydration failure preserves current feed
+						}
+					});
+				} catch {
+					// silent — non-Tauri host
+				}
+			})();
+			return () => {
+				unlisten?.();
+			};
+		});
+
 	$effect(() => {
 		// currentSettings.theme が変わったら DOM に反映 (I-PM16/17/18)。
 		// load-settings 後 / theme_changed event 後 / settings save 後 の全 case を cover。

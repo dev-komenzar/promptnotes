@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 pub mod note_capture;
 pub mod note_feed;
@@ -14,7 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         // tauri_plugin_updater requires plugins.updater.{endpoints, pubkey} + a signing key.
         // Wire in once release infrastructure is ready.
-        .manage(note_feed::shared::adapters::InMemoryNoteFeedState::new())
+        .manage(Arc::new(note_feed::shared::adapters::InMemoryNoteFeedState::new()))
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),
