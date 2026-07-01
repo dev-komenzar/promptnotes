@@ -13,6 +13,15 @@ Tauri v2 / SvelteKit / Rust 製。
 
 ---
 
+## スクリーンショット
+
+<p align="center">
+  <img src="docs/screenshots/feed-light.png" alt="Light mode" width="48%">
+  <img src="docs/screenshots/feed-dark.png" alt="Dark mode" width="48%">
+</p>
+
+---
+
 ## なぜ Prompt Notes なのか
 
 Claude Code や Codex CLI では、プロンプト入力中に Enter を押すと即座に AI へ送信されてしまいます。
@@ -60,12 +69,6 @@ promptnotes は Apple Developer Program に登録していないため、公証 
 ```bash
 xattr -dr com.apple.quarantine /Applications/promptnotes.app
 ```
-
----
-
-## スクリーンショット
-
-> 準備中
 
 ---
 
