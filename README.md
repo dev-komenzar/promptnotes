@@ -2,6 +2,9 @@
 
 AI プロンプトを書き溜め、すぐコピーして使うためのデスクトップノートアプリ。
 
+> Claude Code や Codex で Enter を押して意図せず送信してしまったことはありませんか？
+> Prompt Notes なら、安心して Enter を押せます。
+
 シングルペイン・CodeMirror 常時表示・markdown を `.md` ファイルとしてローカル保存。
 Tauri v2 / SvelteKit / Rust 製。
 
