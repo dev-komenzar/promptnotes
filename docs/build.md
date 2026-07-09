@@ -1,6 +1,6 @@
 # Build & Release Strategy
 
-このドキュメントは promptnotes の **ビルド戦略 / signing key 管理 / リリース手順** をまとめたものです。
+このドキュメントは promptnotes の **ビルド戦略 / updater key 管理 / リリース手順** をまとめたものです。
 背景の議論ログは残していないので、判断に齟齬が出た場合はコンテキストとして読み直してください。
 
 ---
@@ -11,7 +11,7 @@
 |---|---|
 | 開発 | Linux (NixOS) メイン機で完結。日常の編集・テスト・build はここで行う |
 | Linux release build | Linux メイン機 (NixOS) で native build |
-| macOS release build | mac サブ機で build + 自己署名 (codesign のみ) |
+| macOS release build | mac サブ機で build |
 | Windows | **初期 MVP から除外**。マシンを保有していないため |
 | CI | **補助的にしか使わない**。基本はローカルビルド。GitHub Actions の有料 runner は極力避ける |
 | Apple Developer Program | **参加しない**。Developer ID / notarization なし。配布時に Gatekeeper warning が出る前提で運用 |
@@ -20,7 +20,7 @@
 
 - ローカルビルドの再現性は Nix flake で担保する (NixOS 上で `nix develop`)
 - Tauri の cross-platform binary 化は無理にやらない。各 platform の native 環境を使う
-- signing key は platform ごとに物理マシンに紐づけるため、nix-sops に集約するうまみは薄い。**Tauri updater keypair のみ nix-sops で共有**
+- コード署名は行わないため、platform 別の署名鍵運用は不要。**Tauri updater keypair のみ nix-sops で共有**
 - 年額コスト (Apple Developer Program $99/年) と初回起動時の user friction を天秤にかけて、Developer Program 不参加を選択する
 
 ---
@@ -65,7 +65,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # bun
 curl -fsSL https://bun.sh/install | bash
 
-# Xcode Command Line Tools (codesign に必要)
+# Xcode Command Line Tools (Tauri build に必要)
 xcode-select --install
 ```
 
@@ -78,28 +78,24 @@ bun run tauri build --bundles app,dmg
 
 ---
 
-## 3. Signing key 管理
+## 3. Tauri updater keypair 管理
 
-> **用語の整理**: 「Signing key」と一括りにされがちですが、このプロジェクトでは **3 種類の独立した鍵** を使います。
+> **用語の整理**: 「Signing key」と一括りにされがちですが、このプロジェクトで使うのは **Tauri updater keypair のみ** です。
 >
 > | 鍵 | 用途 | 技術 |
 > |---|---|---|
 > | Tauri updater keypair | **更新バイナリの検証** (in-app updater) | ed25519 |
-> | macOS コード署名証明書 | **app binary 自体**の信頼 (Gatekeeper) | X.509 |
-> | Linux GPG key | **deb / rpm パッケージ**の信頼 | OpenPGP |
 >
-> それぞれ目的・技術・保管場所が違います。以下、混同しないよう鍵の種類を明示して記述します。
+> macOS のコード署名証明書 (X.509) や Linux の GPG 鍵 (OpenPGP) による **バイナリ / パッケージ署名は行いません**。バイナリは無署名で配布し、Gatekeeper / パッケージマネージャの警告はユーザ側の手順で回避します (5.3 参照)。以下は updater keypair の運用のみを記述します。
 
 ### 3.1 全体方針
 
 | key の種類 | 保管場所 | 共有範囲 |
 |---|---|---|
-| macOS コード署名証明書 | **mac サブ機の Keychain に自己署名で作成** (Developer ID ではない) | mac のみ |
-| Linux GPG (deb/rpm 署名) | **NixOS の既存 GPG home に追加** | Linux のみ |
 | Tauri updater public key | **repo に平文で commit** (`tauri.conf.json` の `updater.pubkey` 等) | 配布物なので公開 |
 | Tauri updater private key | **nix-sops で暗号化して commit** | Linux / mac で共有 |
 
-> **Developer ID / notarization は使わない** ため、証明書は自己署名 (Self-Signed Root) で十分。`pass` 等で同期する secret も減る。
+> **Developer ID / notarization は使わない**。さらに **macOS のコード署名 / Linux の GPG パッケージ署名も行わない**。バイナリは無署名で配布し、Gatekeeper / パッケージマネージャの警告はユーザ側の手順で回避します (5.3 参照)。
 
 ### 3.2 nix-sops を使う理由 (Tauri updater keypair のみ)
 
@@ -107,7 +103,7 @@ bun run tauri build --bundles app,dmg
 - **Linux で生成 → git commit → mac で復号** がコードで残せる
 - **release 時しか使わない secret** なので nix-sops の daily ergonomics 不要
 
-platform 別マシンで build する以上、Apple Keychain / GPG はそれぞれのマシンでローカル管理が自然。
+platform 別マシンで build するが、署名は行わないため Apple Keychain / GPG の運用は不要。
 唯一 updater keypair だけが「両方のマシンで必要」なので、nix-sops で共有する価値がある。
 
 ### 3.3 Tauri updater keypair の運用
@@ -166,7 +162,7 @@ bun run tauri build \
 
 ### 3.4 やってはいけないこと
 
-- **Developer ID を取得しようとしない** (Apple Developer Program に参加しないため)。コード署名は自己署名で運用する
+- **Developer ID を取得しない** (Apple Developer Program に参加しないため)。コード署名も行わない
 - **updater keypair を platform ごとに生成しない**: Linux release と mac release で署名鍵が変わると検証が壊れる
 - **CI runner に personal secret を持ち込まない前提で設計する**: 仮に後述の CI 併用フェーズに移行しても、private secret は GitHub Secrets 等に移し、nix-sops の repository は個人のまま分離する
 
@@ -187,20 +183,7 @@ bun run tauri build --bundles deb,appimage,rpm
 
 成果物: `apps/promptnotes/src-tauri/target/release/bundle/{deb,rpm,appimage}/`
 
-deb/rpm には GPG 署名が必要:
-
-```bash
-# GPG key の準備 (初回のみ)
-gpg --quick-gen-key "promptnotes release <release@promptnotes.local>"
-gpg --export-secret-keys <key-id> > ~/.local/share/promptnotes/release-gpg.asc  # バックアップ
-chmod 600 ~/.local/share/promptnotes/release-gpg.asc
-
-# build 時に sign
-dpkg-sig --sign builder -k <key-id> *.deb
-rpm --addsign *.rpm
-```
-
-### 4.2 macOS build + 自己署名 (mac サブ機)
+### 4.2 macOS build (mac サブ機)
 
 ```bash
 cd apps/promptnotes
@@ -213,52 +196,12 @@ bun run tauri build \
 
 成果物: `apps/promptnotes/src-tauri/target/release/bundle/macos/*.app` と `*.dmg`
 
-#### 自己署名証明書の作成 (初回のみ)
-
-`Keychain Access.app` で:
-
-1. **Keychain Access → Certificate Assistant → Create a Certificate**
-2. Identity Type: **Self Signed Root**
-3. Certificate Type: **Code Signing**
-4. Name: `promptnotes-local` (任意)
-5. 「Let me override defaults」をチェック → 続きは既定のままで OK
-
-CLI でやる場合は:
-
-```bash
-security create-certificate \
-  -c "promptnotes-local" \
-  -t ctsm \
-  -k "$(security default-keychain | xargs)" \
-  /tmp/promptnotes-local.cert
-```
-
-#### codesign
-
-```bash
-codesign --force --deep --options runtime \
-  --sign "promptnotes-local" \
-  target/release/bundle/macos/promptnotes.app
-
-# 確認
-codesign --verify --deep --strict --verbose=2 \
-  target/release/bundle/macos/promptnotes.app
-```
-
-> `Developer ID Application: ...` ではなく、自己署名証明書 (例: `promptnotes-local`) で署名する。`--timestamp` は付けない (TSA サーバへの問い合わせに Developer ID が要求されるため)。
-
-#### notarization は行わない
-
-notarization には Apple Developer Program の team ID が必須なので、**行わない**。
-代わりに配布先で初回起動時に Gatekeeper warning が出ることを許容する。
-ユーザ向け回避手順は [README.md](../README.md) の「macOS での起動」セクションに記載する (後述の配布戦略を参照)。
-
 ### 4.3 release の一連の流れ
 
 1. version bump (`apps/promptnotes/package.json` と `apps/promptnotes/src-tauri/Cargo.toml`)
 2. `git tag vX.Y.Z` & push
 3. Linux build → 成果物を release draft に upload
-4. mac build + 自己署名 → 成果物を release draft に upload
+4. mac build → 成果物を release draft に upload
 5. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
 6. publish
 
