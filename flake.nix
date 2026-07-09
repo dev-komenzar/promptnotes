@@ -51,13 +51,21 @@
           libiconv
         ];
 
+        # エディタ LSP 用言語サーバー（プロジェクト単位で導入）。
+        # home-manager のグローバル導入ではなく、devShell 経由で提供する。
+        languageServers = with pkgs; [
+          typescript
+          typescript-language-server
+          svelte-language-server
+        ];
+
         commonTools = with pkgs; [
           rustToolchain
           bun
           nodejs_22
           cargo-tauri
           pkg-config
-        ];
+        ] ++ languageServers;
 
         # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
         # Python 標準モジュールが libffi / libsqlite3 / zlib 等の共有ライブラリを
