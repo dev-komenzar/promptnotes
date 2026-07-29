@@ -49,17 +49,5 @@ phases:
     issue: ori-page-page-main
     completed_at: 2026-06-29
     notes: dirty cleared; 2 follow-up issues created
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/page-groups.md
-      sectionId: page-main
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: theme-changed
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

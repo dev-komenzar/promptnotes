@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
-	import { fade } from 'svelte/transition';
 	import { EditorView } from '@codemirror/view';
 	import { assignTag } from '$lib/note-capture/slices/assign-tag';
 	import { autoSaveNote } from '$lib/note-capture/slices/auto-save-note';
@@ -55,8 +54,6 @@
 	let pendingBody: string | null = null;
 	let tagInputDraft = $state('');
 	let tagError = $state<string | null>(null);
-	let copied = $state(false);
-	let copyTimer: ReturnType<typeof setTimeout> | null = null;
 	let pendingClickPos: number | null = $state(null);
 
 	const blockState = $derived<BlockState>(focus.stateOf(note.id));
@@ -289,18 +286,11 @@
 	async function handleCopy(): Promise<void> {
 		try {
 			await copyFn(note.id);
+			toasts.pushCopied();
 		} catch {
-			// optimistic feedback: show ✅ regardless
 			console.error('copy_note_body failed', note.id);
+			toasts.pushCopyFailed();
 		}
-		if (copyTimer !== null) {
-			clearTimeout(copyTimer);
-		}
-		copied = true;
-		copyTimer = setTimeout(() => {
-			copied = false;
-			copyTimer = null;
-		}, 1500);
 	}
 
 	$effect(() => {
@@ -406,17 +396,7 @@
 				void handleCopy();
 			}}
 		>
-			{#key copied}
-				{#if copied}
-					<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1"
-						>✅</span
-					>
-				{:else}
-					<span in:fade={{ duration: 150 }} out:fade={{ duration: 150 }} style="grid-area: 1/1"
-						>📋</span
-					>
-				{/if}
-			{/key}
+			<span>📋</span>
 		</button>
 		<button
 			type="button"

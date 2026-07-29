@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-07-28
   derives_from:
     - domain/ui-fields/screen-1.md#screen-1
     - domain/ui-fields/page-groups.md#page-main
@@ -42,14 +42,14 @@ PromptNotes アプリの **root page**（唯一の ui-page）。`.ori/domain/ui-
 
 | region | slice | trigger | 副作用 |
 |--|--|--|--|
-| Draft Input | [create-note](../../slices/create-note/spec.md) | `Cmd+Enter` / `screen-1-draft-submit` | 新 Note 作成 → Feed 先頭に挿入 |
+| Draft Input | [create-note](../../slices/create-note/spec.md) | `Cmd+Enter` / `screen-1-draft-submit` | 新 Note 作成 → Feed 先頭に挿入 → **clipboard copy (fire-and-forget)** → toast（Copied / Copy failed） |
 | Block (EDITING) | [auto-save-note](../../slices/auto-save-note/spec.md) | EDITING debounce trailing edge | `updated_at` 更新 |
 | Block / window | [flush-note](../../slices/flush-note/spec.md) | block blur / window blur / app quit | debounce を bypass して即時 flush |
 | Block (tag input) | [assign-tag](../../slices/assign-tag/spec.md) | `screen-1-block-tag-input` Enter | Tag 追加 |
 | Block (tag chip) | [remove-tag](../../slices/remove-tag/spec.md) | `screen-1-block-tag-remove` × | Tag 削除 |
 | Block (hover) | [delete-note](../../slices/delete-note/spec.md) | `screen-1-block-delete` icon | trash 移動 + Toast push |
 | Toast | [restore-deleted-note](../../slices/restore-deleted-note/spec.md) | `screen-1-toast-undo` / `Cmd+Z` | trash 復元 |
-| Block (hover) | [copy-note-body](../../slices/copy-note-body/spec.md) | `screen-1-block-copy` icon | clipboard 書き込み |
+| Block (hover) / Draft submit後 | [copy-note-body](../../slices/copy-note-body/spec.md) | `screen-1-block-copy` icon / `create-note` 成功時 | clipboard 書き込み → toast（Copied / Copy failed） |
 | Toolbar | [update-feed-filter](../../slices/update-feed-filter/spec.md) | query / 期間 / tag-chip クリック | filter 即時反映 |
 | Toolbar | [change-sort-order](../../slices/change-sort-order/spec.md) | sort field / direction 変更 | Block 再配置 + Settings 永続化 |
 
@@ -79,9 +79,11 @@ PromptNotes アプリの **root page**（唯一の ui-page）。`.ori/domain/ui-
 │  │ ...                                           │            │
 │  └───────────────────────────────────────────────┘            │
 ├──────────────────────────────────────────────────────────────┤
-│ Toast region (bottom-center, 縦パイル / 新しい順に上積み)       │
-│  ┌── Toast (delete-note) ─ "削除しました" [元に戻す][×] ──┐  │
-│  └─────────────────────────────────────────────────────────┘  │
+│ Toast region (bottom-center, 縦パイル / multi-kind: deleted | copied | copy-failed)  │
+│  ┌── Toast (deleted)  ── 🗑️ "Deleted: ..." [Undo][×] ──────────────────────────┐  │
+│  ┌── Toast (copied)   ── ✅ "Copied" [×] ─────────────────────────────────────┐  │
+│  ┌── Toast (copy-failed) ── ⚠️ "Copy failed (note saved)" [×] ──────────────┐  │
+│  └───────────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
        ┌── widget-update-toast (右下, conditional) ──┐
        └─────────────────────────────────────────────┘
@@ -115,7 +117,7 @@ UI 実装はこの 3 点を曖昧化してはならない。
 - **I-PM4（シングルペイン）**: 同時に表示される pane は 1 つのみ。Draft / Feed は同一 viewport 内のスクロール領域として連続する。Toolbar / Toast は overlay 的だが viewport 分割ではない
 - **I-PM5（Draft 唯一）**: Draft Input region は viewport 内に 1 つだけ存在し、Feed 最上部に **常時固定**。複数 Draft は禁止（screen-1.md `{#fields-draft}` 準拠）
 - **I-PM6（Block 縦並び単一カラム）**: Feed は 1 列縦並びのみ。複数カラム / グリッド表示禁止
-- **I-PM7（Toast 独立）**: Toast スタックは互いに独立。1 つの Undo 失効が他 Toast の Undo を失効させない（screen-1.md#cross-toast-display）
+- **I-PM7（Toast 独立 + multi-kind）**: Toast スタックは互いに独立。1 つの Undo 失効が他 Toast の Undo を失効させない（screen-1.md#cross-toast-display）。Toast は discriminated union（`kind: 'deleted' | 'copied' | 'copy-failed'`）で管理され、kind ごとにアイコン（🗑️/✅/⚠️）を表示する。全 kind 共通で auto-dismiss（5s）+ ✕ボタンを持つ。`deleted` のみ Undo ボタンを持つ
 - **I-PM8（widget 排他なし）**: `widget-settings-modal` open 中でも page-main の Toolbar / Feed は維持される（Modal は modal だが、page の state は dispose しない）
 
 ### Cross-region 不変条件 {#invariants-cross-region}
@@ -157,6 +159,22 @@ UI 実装はこの 3 点を曖昧化してはならない。
 4. `Esc` で IDLE へ遷移
 
 I-PM9 + create-note slice の I-CN3（空 body は NoOp）の page 側 propagation を検証。
+
+### tp-copy-on-create: Add 後にクリップボードコピー + Copied toast {#tp-copy-on-create}
+
+> domain/workflows/create-note.md#post-conditions より：
+
+1. Draft Input に `"hello"` を入力
+2. `Cmd+Enter` 押下
+3. Draft 即時クリア + Feed 最上部に新 Block 挿入
+4. Toast region に ✅ `"Copied"` toast が表示される（auto-dismiss 5s + ✕ボタン）
+5. クリップボードに `"hello"` が書き込まれている（`navigator.clipboard.readText()` または OS clipboard 確認）
+6. Block hover の 📋 コピー時も同様に `"Copied"` toast が表示される（従来の ✅ inline state は消滅）
+
+### tp-copy-failed-toast: コピー失敗時にエラー toast {#tp-copy-failed-toast}
+
+- clipboard write が失敗する状況（mock で `copyNoteBody` を reject）で Add → ⚠️ `"Copy failed (note saved)"` toast が表示される
+- ノート作成は成功している（Feed に Block が存在する）
 
 ### tp-empty-body-noop: 空 body は NoOp {#tp-empty-body-noop}
 
@@ -277,7 +295,7 @@ page-main は実装範囲が大きいため、以下 5 sub-task に分割して�
 2. **page-main-toolbar** — Toolbar region（検索 / 期間 / sort / 設定アイコン）+ `update-feed-filter` / `change-sort-order` 連携 + `widget-settings-modal` open trigger
 3. **page-main-draft** — Draft Input region（CodeMirror 6）+ `create-note` 連携 + `Cmd+Enter` shortcut。`tp-golden-create` / `tp-empty-body-noop` を pass
 4. **page-main-feed** — Feed region + Block コンポーネント（CodeMirror 6 + state machine）+ `auto-save-note` / `flush-note` / `assign-tag` / `remove-tag` / `copy-note-body` 連携。`tp-block-state-machine` / `tp-flush-on-blur` を pass
-5. **page-main-toast** — Toast region（縦パイル）+ `delete-note` / `restore-deleted-note` 連携 + `Cmd+Z` shortcut + `widget-update-toast` mount。`tp-toast-stack` を pass
+5. **page-main-toast** — Toast region（縦パイル、multi-kind: deleted | copied | copy-failed）+ `delete-note` / `restore-deleted-note` 連携 + `copy-note-body`（Block 📋 / Draft submit 後）連携 + `Cmd+Z` shortcut + `widget-update-toast` mount。`tp-toast-stack` / `tp-copy-on-create` / `tp-copy-failed-toast` を pass
 
 `tp-sort-immediate` / `tp-no-raw-invoke` / `tp-a11y-basic` は段階的に追加し、page-main-toast 完了時点で全 test 観点を網羅する。
 

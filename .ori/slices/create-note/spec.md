@@ -1,13 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-07-28
   hash:
-    domain/workflows/create-note.md#.*: 33a51fe91246
-    domain/aggregates.md#.*: 82947dbfd3f6
-    domain/domain-events.md#.*: 8abdfac78084
+    domain/workflows/create-note.md#.*: 6d0fdc24ceb7
+    domain/aggregates.md#.*: 56f7a54a8ab2
+    domain/domain-events.md#.*: 71db66eafe03
     domain/bounded-contexts.md#.*: 7ebfcda8743b
-    domain/ui-fields/screen-1.md#.*: ddbf06d54f9a
+    domain/ui-fields/screen-1.md#.*: 4bc0f83f71f3
 ori:
   schema:
     propagation_level: file
@@ -75,6 +75,16 @@ struct NoteCreated {
 ```
 
 > domain/domain-events.md#note-created-timing より：同期発行。ordering 要件なし。
+
+### Post-conditions（UI 層） {#io-post-conditions}
+
+> domain/workflows/create-note.md#post-conditions より：
+
+- 作成成功後、UI 層が `copy-note-body` ワークフローを fire-and-forget で呼び出し、クリップボードに本文を書き込む
+- クリップボード書き込みの成否はノート作成の成否に影響しない（I-CNB4: ドメインイベント非発行）
+- 書き込み成功時は「Copied」トースト、失敗時は「Copy failed (note saved)」トーストを表示する
+
+本 slice（Rust backend）の責務範囲外。実装は `page-main`（UI 層）の責務。
 
 ### Errors {#io-errors}
 
@@ -247,6 +257,7 @@ TS 側は tauri-specta-generated bindings (`apps/promptnotes/src/lib/note-captur
 - 新規 Block の挿入とフォーカス遷移（screen-1 widget / page の responsibilities、cross-draft-submit ルール）
 - Note Feed 側の表示更新（Note Feed BC が Shared Kernel 経由で再描画）
 - `.md` フォーマットの厳密化（infrastructure テスト or 別 decision）
+- 作成成功後のクリップボードコピーとトースト表示（UI 層 `page-main` の責務。domain/workflows/create-note.md#post-conditions 参照）
 
 ## Open Questions {#open-questions}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
 	import { toastStore } from '../stores/toasts.svelte';
 
 	type Props = {
@@ -16,7 +17,7 @@
 -->
 <aside
 	data-testid="region-toast"
-	aria-label="Deletion toast stack"
+	aria-label="Notification toast stack"
 	aria-live="polite"
 	class="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2"
 >
@@ -27,24 +28,45 @@
 				data-toast-id={entry.id}
 				role="status"
 				class="pointer-events-auto flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900"
+				in:fly={{ x: 20, duration: 300 }}
+				out:fly={{ x: 20, duration: 300 }}
 			>
-				<span
-					data-testid="screen-1-toast-message"
-					class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
-					title={entry.preview}
-				>
-					Deleted: {entry.preview}
-				</span>
-				<button
-					type="button"
-					data-testid="screen-1-toast-undo"
-					data-toast-id={entry.id}
-					class="shrink-0 rounded border border-blue-200 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
-					aria-label="Undo"
-					onclick={() => {
-						void store.undo(entry.id);
-					}}>Undo</button
-				>
+				{#if entry.kind === 'deleted'}
+					<span class="shrink-0" aria-hidden="true">🗑️</span>
+					<span
+						data-testid="screen-1-toast-message"
+						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
+						title={entry.preview}
+					>
+						Deleted: {entry.preview}
+					</span>
+					<button
+						type="button"
+						data-testid="screen-1-toast-undo"
+						data-toast-id={entry.id}
+						class="shrink-0 rounded border border-blue-200 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
+						aria-label="Undo"
+						onclick={() => {
+							void store.undo(entry.id);
+						}}>Undo</button
+					>
+				{:else if entry.kind === 'copied'}
+					<span class="shrink-0" aria-hidden="true">✅</span>
+					<span
+						data-testid="screen-1-toast-message"
+						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
+					>
+						Copied
+					</span>
+				{:else if entry.kind === 'copy-failed'}
+					<span class="shrink-0" aria-hidden="true">⚠️</span>
+					<span
+						data-testid="screen-1-toast-message"
+						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
+					>
+						Copy failed (note saved)
+					</span>
+				{/if}
 				<button
 					type="button"
 					data-testid="screen-1-toast-close"

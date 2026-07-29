@@ -3,19 +3,17 @@ import { restoreDeletedNote } from '$lib/note-capture/slices/restore-deleted-not
 import type { NoteSummary } from './feed.svelte';
 
 /**
- * Toast region store — 削除 Undo Toast の縦パイル管理。
+ * Toast region store — 通知 Toast（削除 Undo / コピー / コピー失敗）の縦パイル管理。
  *
- * - I-PM7 / screen-1.md#cross-toast-display: 各 Toast は独立した DeletedNote を保持
- * - tp-toast-stack: 連続削除で複数 Toast が縦に積まれる（新しい順 = 配列先頭）
+ * - I-PM7 / screen-1.md#cross-toast-display: 各 Toast は独立したエントリを保持
+ * - tp-toast-stack: 連続操作で複数 Toast が縦に積まれる（新しい順 = 配列先頭）
  * - S7: timeout / close で消えた Toast の Undo は no-op
  */
 
-export type ToastEntry = {
-	id: string;
-	preview: string;
-	createdAt: number;
-	originalNote: NoteSummary;
-};
+export type ToastEntry =
+	| { kind: 'deleted'; id: string; preview: string; createdAt: number; originalNote: NoteSummary }
+	| { kind: 'copied'; id: string; createdAt: number }
+	| { kind: 'copy-failed'; id: string; createdAt: number };
 
 export type ToastStoreDeps = {
 	restoreFn?: typeof restoreDeletedNote;
@@ -60,6 +58,7 @@ export function createToastStore(deps: ToastStoreDeps = {}) {
 		// 同一 id が既に積まれている場合は最新側に置き換え（連続削除 → 復元 → 再削除 の防御）
 		clearTimer(note.id);
 		const entry: ToastEntry = {
+			kind: 'deleted' as const,
 			id: note.id,
 			preview: previewBody(note.body),
 			createdAt: Date.now(),
@@ -72,10 +71,40 @@ export function createToastStore(deps: ToastStoreDeps = {}) {
 		);
 	}
 
+	function pushCopied(): void {
+		const id = crypto.randomUUID();
+		const entry: ToastEntry = {
+			kind: 'copied' as const,
+			id,
+			createdAt: Date.now()
+		};
+		entries = [entry, ...entries];
+		timers.set(
+			id,
+			setTimeout(() => dismiss(id), timeoutMs)
+		);
+	}
+
+	function pushCopyFailed(): void {
+		const id = crypto.randomUUID();
+		const entry: ToastEntry = {
+			kind: 'copy-failed' as const,
+			id,
+			createdAt: Date.now()
+		};
+		entries = [entry, ...entries];
+		timers.set(
+			id,
+			setTimeout(() => dismiss(id), timeoutMs)
+		);
+	}
+
 	async function undo(id: string): Promise<boolean> {
 		// S7: 既に dismiss されている Toast の Undo は no-op
 		const entry = entries.find((e) => e.id === id);
 		if (entry === undefined) return false;
+		// undo は deleted エントリにのみ有効
+		if (entry.kind !== 'deleted') return false;
 		dismiss(id);
 		try {
 			const outcome = await restoreFn(id);
@@ -113,6 +142,8 @@ export function createToastStore(deps: ToastStoreDeps = {}) {
 			return entries;
 		},
 		push,
+		pushCopied,
+		pushCopyFailed,
 		dismiss,
 		undo,
 		undoLatest,
