@@ -52,6 +52,12 @@ struct CreateNoteCommand {
 - `Clock` — `now()` 取得（テスト時は injectable）
 - `EventBus` — domain event の同期発行（in-process）
 
+## Post-conditions {#post-conditions}
+
+- 作成成功後、UI 層が `copy-note-body` ワークフローを fire-and-forget で呼び出し、クリップボードに本文を書き込む
+- クリップボード書き込みの成否はノート作成の成否に影響しない（I-CNB4: ドメインイベント非発行）
+- 書き込み成功時は「Copied」トースト、失敗時は「Copy failed (note saved)」トーストを表示する
+
 ## Notes {#notes}
 
 - Draft → Note の確定経路は **これが唯一**。AutoSave 経路では新規作成しない

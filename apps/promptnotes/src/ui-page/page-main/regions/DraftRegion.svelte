@@ -2,8 +2,10 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { EditorView } from '@codemirror/view';
 	import { createEditorState } from '../codemirror/setup';
+	import { copyNoteBody } from '$lib/note-capture/slices/copy-note-body';
 	import { draftStore } from '../stores/draft.svelte';
 	import { feedStore } from '../stores/feed.svelte';
+	import { toastStore } from '../stores/toasts.svelte';
 
 	type Props = {
 		store?: typeof draftStore;
@@ -40,6 +42,10 @@
 				created_at: outcome.created_at,
 				updated_at: outcome.created_at
 			});
+			// Fire-and-forget clipboard copy (post-condition from create-note workflow)
+			copyNoteBody(outcome.id)
+				.then(() => toastStore.pushCopied())
+				.catch(() => toastStore.pushCopyFailed());
 		}
 		// 成否にかかわらずタグ入力欄をリセット
 		tagInputDraft = '';

@@ -1,6 +1,6 @@
 slice_id: create-note
 derived_at: 2026-06-30
-dirty:
+dirty: []
   - source:
       path: .ori/domain/aggregates.md
       sectionId: note-aggregate
@@ -11,6 +11,12 @@ dirty:
       path: .ori/domain/domain-events.md
       sectionId: note-created
     detected_at: 2026-06-30T10:10:53.129Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/workflows/create-note.md
+      sectionId: create-note
+    detected_at: 2026-07-28T09:56:10.948Z
     affected_phase: derive
     reason: edit
 finalized_at: 2026-06-30
