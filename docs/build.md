@@ -13,6 +13,7 @@
 | Linux release build | Linux メイン機 (NixOS) で native build |
 | macOS release build | mac サブ機で build |
 | Windows | **初期 MVP から除外**。マシンを保有していないため |
+| Linux 配布形式 | **AppImage, .deb, .rpm, Nix flake** の 4 形式 (決定: `ori-wuxk`)。Flatpak/Snap はコミュニティ要望があれば追加検討 |
 | CI | **補助的にしか使わない**。基本はローカルビルド。GitHub Actions の有料 runner は極力避ける |
 | Apple Developer Program | **参加しない**。Developer ID / notarization なし。配布時に Gatekeeper warning が出る前提で運用 |
 
@@ -21,6 +22,8 @@
 - ローカルビルドの再現性は Nix flake で担保する (NixOS 上で `nix develop`)
 - Tauri の cross-platform binary 化は無理にやらない。各 platform の native 環境を使う
 - コード署名は行わないため、platform 別の署名鍵運用は不要。**Tauri updater keypair のみ nix-sops で共有**
+- Tauri updater は Linux 全形式 (AppImage, .deb, .rpm) に対応 (v2.10.0+)。.deb/.rpm は root 権限が必要な点に注意
+- Nix flake は開発環境に加えて配布形式としても機能する (`.deb/.rpm` に依存しない独立経路)
 - 年額コスト (Apple Developer Program $99/年) と初回起動時の user friction を天秤にかけて、Developer Program 不参加を選択する
 
 ---
@@ -48,8 +51,8 @@ bun run dev
 # Linux release build (Tauri)
 bun run tauri build --bundles deb,appimage,rpm
 
-# 統合 build (Nix flake)
-nix build                                # 全 platform の binary を build
+# 統合 build (Nix flake — dev shell + 配布パッケージ)
+nix build                                # Nix パッケージとして build
 nix run                                  # build 済み binary を起動
 ```
 
@@ -73,7 +76,7 @@ xcode-select --install
 # mac release build
 cd apps/promptnotes
 bun install
-bun run tauri build --bundles app,dmg
+bun run tauri build --bundles dmg
 ```
 
 ---
@@ -92,18 +95,21 @@ bun run tauri build --bundles app,dmg
 
 | key の種類 | 保管場所 | 共有範囲 |
 |---|---|---|
-| Tauri updater public key | **repo に平文で commit** (`tauri.conf.json` の `updater.pubkey` 等) | 配布物なので公開 |
-| Tauri updater private key | **nix-sops で暗号化して commit** | Linux / mac で共有 |
+| Tauri updater public key | **repo に平文で commit** (`tauri.conf.json` の `updater.pubkey`) | 配布物なので公開 |
+| Tauri updater private key | **nix-sops で暗号化して commit** (`secrets/tauri/updater.key.sops.yaml`) | NixOS / macOS で共有 |
+
+鍵の生成には Tauri 組み込みの `cargo tauri signer generate` を使う（minisign 形式で出力されるため、Tauri の updater が期待する形式と完全互換）。
 
 > **Developer ID / notarization は使わない**。さらに **macOS のコード署名 / Linux の GPG パッケージ署名も行わない**。バイナリは無署名で配布し、Gatekeeper / パッケージマネージャの警告はユーザ側の手順で回避します (5.3 参照)。
 
-### 3.2 nix-sops を使う理由 (Tauri updater keypair のみ)
+### 3.2 nix-sops を使う理由
 
 - **個人用 secret の既存運用に乗っかれる** (ssh / age key と同じ flow)
-- **Linux で生成 → git commit → mac で復号** がコードで残せる
+- **NixOS で生成 → git commit → macOS で復号** がコードで残せる
 - **release 時しか使わない secret** なので nix-sops の daily ergonomics 不要
+- **鍵のバックアップを兼ねる**: nix-sops で暗号化して git 管理すれば、秘密鍵の紛失リスクを回避できる（updater 秘密鍵を失うと、以後のアップデート発行が永久に不可能になる）
 
-platform 別マシンで build するが、署名は行わないため Apple Keychain / GPG の運用は不要。
+platform 別マシンで build するが、コード署名は行わないため Apple Keychain / GPG の運用は不要。
 唯一 updater keypair だけが「両方のマシンで必要」なので、nix-sops で共有する価値がある。
 
 ### 3.3 Tauri updater keypair の運用
@@ -111,60 +117,71 @@ platform 別マシンで build するが、署名は行わないため Apple Key
 #### 生成 (NixOS 上で 1 回だけ)
 
 ```bash
-# 1. ed25519 keypair を生成
-openssl genpkey -algorithm ed25519 -out /tmp/updater.key
-openssl pkey -in /tmp/updater.key -pubout -out updater.pub
+# 1. minisign keypair を生成（パスワードをつけることを推奨）
+cargo tauri signer generate -w ~/.tauri/promptnotes.key
 
-# 2. private を nix-sops で暗号化 (既存の age key を使う)
-mkdir -p secrets/tauri
-sops --encrypt --input-type binary --output-type yaml \
-  /tmp/updater.key > secrets/tauri/updater.key.sops.yaml
+# 公開鍵は ~/.tauri/promptnotes.key.pub に生成される。
+# 秘密鍵は ~/.tauri/promptnotes.key に生成される（minisign 形式）。
 
-# 3. 平文は完全に削除
-shred -u /tmp/updater.key
-
-# 4. public は平文で commit (配布物)
-mv updater.pub secrets/tauri/updater.pub
+# 2. 公開鍵を tauri.conf.json に埋め込む
+# ~/.tauri/promptnotes.key.pub の中身をそのままコピー
 ```
 
-`tauri.conf.json` の updater 設定に public key を埋め込む:
+`tauri.conf.json` の updater 設定:
 
 ```json
 {
   "plugins": {
     "updater": {
-      "pubkey": "<secrets/tauri/updater.pub の中身>"
+      "pubkey": "<~/.tauri/promptnotes.key.pub の中身（改行含む）>"
     }
   }
 }
 ```
 
-#### mac へ Tauri updater private key を配置
+```bash
+# 3. 秘密鍵を nix-sops で暗号化して git 管理（既存の age key を使う）
+mkdir -p secrets/tauri
+sops --encrypt --input-type binary --output-type yaml \
+  ~/.tauri/promptnotes.key > secrets/tauri/updater.key.sops.yaml
 
-NixOS の `secrets/tauri/updater.key.sops.yaml` を mac の Nix flake 経由で復号し、`~/.config/tauri/updater.key` に配置する。Nix + nix-sops の運用は既存のものを使う (手順は nix-sops の慣習に従う)。
+# 4. 平文の秘密鍵は削除（nix-sops から復元可能）
+shred -u ~/.tauri/promptnotes.key
+rm ~/.tauri/promptnotes.key.pub  # 公開鍵は tauri.conf.json に埋め込み済み
+
+# 5. secrets/tauri/updater.key.sops.yaml を git commit
+git add secrets/tauri/updater.key.sops.yaml
+```
+
+#### macOS へ秘密鍵を配置
+
+NixOS の `secrets/tauri/updater.key.sops.yaml` を macOS の Nix flake 経由で復号し、`~/.tauri/promptnotes.key` に配置する。Nix + nix-sops の運用は既存のものを使う（手順は nix-sops の慣習に従う）。
 
 #### build 時に使う
 
-```bash
-# Linux release
-bun run tauri build \
-  --signing-key ~/.config/tauri/updater.key \
-  --signing-key-password "$(pass show tauri/updater)"
+Tauri の updater 署名は環境変数で渡す。`TAURI_SIGNING_PRIVATE_KEY` には鍵ファイルのパスまたは鍵の内容を直接指定できる。
 
-# mac release (mac サブ機)
-bun run tauri build \
-  --signing-key ~/.config/tauri/updater.key \
-  --signing-key-password "$(pass show tauri/updater)" \
-  --bundles app,dmg
+```bash
+# NixOS
+export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+bun run tauri build --bundles deb,appimage,rpm
+
+# macOS (サブ機)
+export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+bun run tauri build --bundles dmg
 ```
 
-> `pass` (GPG-based password manager) は mac / Linux 両方で同期可能。updater key の password を別途保管する必要がある。
+> **パスワード管理**: updater key のパスワードは `pass`（GPG-based password manager、macOS / Linux 両方で同期可能）などで安全に保管すること。パスワードを失った場合も秘密鍵を再生成すれば復旧可能（公開鍵も差し替えが必要）。秘密鍵自体を失った場合はアップデート発行が永久に不可能になるため、nix-sops による git 管理が安全網になる。
 
 ### 3.4 やってはいけないこと
 
+- **`openssl genpkey` で鍵生成しない**: Tauri の updater は minisign 形式を期待する。必ず `cargo tauri signer generate` を使うこと
 - **Developer ID を取得しない** (Apple Developer Program に参加しないため)。コード署名も行わない
-- **updater keypair を platform ごとに生成しない**: Linux release と mac release で署名鍵が変わると検証が壊れる
-- **CI runner に personal secret を持ち込まない前提で設計する**: 仮に後述の CI 併用フェーズに移行しても、private secret は GitHub Secrets 等に移し、nix-sops の repository は個人のまま分離する
+- **updater keypair を platform ごとに生成しない**: NixOS と macOS で署名鍵が変わると検証が壊れる
+- **秘密鍵を nix-sops に暗号化せずに平文で git commit しない**
+- **秘密鍵のバックアップを怠らない**: nix-sops で暗号化して git 管理することでバックアップを兼ねるが、念のため 1Password 等のパスワードマネージャーにも平文を保管しておくこと。秘密鍵を失うと以後のアップデート発行が永久に不可能になる
 
 ---
 
@@ -178,35 +195,74 @@ nix develop
 
 cd apps/promptnotes
 bun install
+
+# updater 署名用の秘密鍵を復号
+sops --decrypt secrets/tauri/updater.key.sops.yaml > ~/.tauri/promptnotes.key
+
+# 環境変数を設定
+export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+
 bun run tauri build --bundles deb,appimage,rpm
 ```
 
 成果物: `apps/promptnotes/src-tauri/target/release/bundle/{deb,rpm,appimage}/`
+
+#### 4.1.1 Nix flake 配布ビルド
+
+Nix flake は、**Nix エコシステム内での配布形式**として機能する。
+`nix build` の成果物は `/nix/store/` に依存したラップ済みバイナリであり、一般 Linux 環境へのポータブル配布には使えない（AppImage/.deb/.rpm が必要）。
+
+Nix ユーザは flake を直接参照することで、ソースからのビルド・実行が可能:
+
+```bash
+# flake を直接実行 (fetch → build → run)
+nix run github:dev-komenzar/promptnotes
+
+# プロファイルにインストール
+nix profile install github:dev-komenzar/promptnotes
+```
+
+`wrapProgram` により `LD_LIBRARY_PATH` / `GSETTINGS_SCHEMA_DIR` / `XDG_DATA_DIRS` が
+Nix store のパスに解決され、NixOS / nix-darwin 環境で動作する。
+
+将来的には nixpkgs への提出や [crane-tauri](https://github.com/JPHutchins/crane-tauri) 導入による差分ビルド効率化を検討する。
 
 ### 4.2 macOS build (mac サブ機)
 
 ```bash
 cd apps/promptnotes
 bun install
-bun run tauri build \
-  --signing-key ~/.config/tauri/updater.key \
-  --signing-key-password "$(pass show tauri/updater)" \
-  --bundles app,dmg
+
+# updater 署名用の秘密鍵を nix-sops で復号
+sops --decrypt secrets/tauri/updater.key.sops.yaml > ~/.tauri/promptnotes.key
+
+# 環境変数を設定
+export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+
+bun run tauri build --bundles dmg
 ```
 
-成果物: `apps/promptnotes/src-tauri/target/release/bundle/macos/*.app` と `*.dmg`
+成果物: `apps/promptnotes/src-tauri/target/release/bundle/macos/*.dmg`
 
 ### 4.3 release の一連の流れ
 
 1. version bump (`apps/promptnotes/package.json` と `apps/promptnotes/src-tauri/Cargo.toml`)
 2. `git tag vX.Y.Z` & push
-3. Linux build → 成果物を release draft に upload
-4. mac build → 成果物を release draft に upload
+3. Linux build → 成果物 (AppImage, .deb, .rpm) を release draft に upload
+4. mac build → 成果物 (.dmg) を release draft に upload
 5. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
 6. publish
 
+> **Nix flake について**: flake は GitHub リポジトリ自体が配布経路のため、成果物のアップロードは不要。
+> `git tag` を打てばユーザは `nix run github:dev-komenzar/promptnotes/<tag>` で特定バージョンを参照できる。
+
 Tauri の updater は GitHub Releases を配信元にする想定。
 updater の署名検証は Developer ID / notarization と独立なので、Apple Developer Program 不参加でも Tauri updater は問題なく機能する。
+
+Linux の updater はバンドル形式 (AppImage / .deb / .rpm) を自動検出し、`latest.json` の対応キー (`linux-x86_64` / `linux-x86_64-deb` / `linux-x86_64-rpm`) から適切なアセットをダウンロードする。
+AppImage は root 不要でファイル置換。.deb/.rpm は `dpkg -i` / `rpm -U` を実行するためユーザに sudo パスワードを要求する。
 
 #### macOS 配布先の Gatekeeper 回避手順 (README に貼るテンプレ)
 
@@ -252,7 +308,28 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 - private secret は GitHub Actions Secrets に移し、nix-sops repo は個人用として分離維持
 - Linux build は自前 runner (NixOS) または GitHub-hosted ubuntu で
 
-### 5.3 配布戦略 (notarization なし)
+### 5.3 配布戦略
+
+#### Linux 配布形式 (決定: `ori-wuxk`)
+
+| 形式 | 配布経路 | 構築コスト | updater 対応 | 備考 |
+|---|---|---|---|---|
+| **AppImage** | GitHub Releases | ゼロ (Tauri bundler ビルトイン) | ✅ ファイル置換・root 不要 | 全ディストロ対応。ポータブル用途に最適 |
+| **.deb** | GitHub Releases | ゼロ | ✅ `dpkg -i`・root 必須 | Debian/Ubuntu/Pop!_OS 向け |
+| **.rpm** | GitHub Releases | ゼロ | ✅ `rpm -U`・root 必須 | Fedora/RHEL/openSUSE 向け |
+| **Nix flake** | flake.nix 経由 | 既存 flake を流用 | ❌ (flake update で更新) | NixOS / nix-darwin 向け。`nix profile install` |
+
+**採用しなかった形式:**
+
+| 形式 | 不採用理由 |
+|---|---|
+| **Flatpak** | flatpak-builder マニフェスト手動作成・オフラインビルド対応に 2〜5 人日の初期コスト。コミュニティ要望があれば再検討 |
+| **Snap** | 起動が遅く、Canonical 管理ストア、Tauri コミュニティでの採用率が低い。コミュニティ要望があれば再検討 |
+| **AUR** | Arch Linux 向け。コミュニティ主導の PKGBUILD で十分。自前管理しない |
+
+> **ビルド環境に関する重要な制約**: Tauri 公式ドキュメントが推奨するように、AppImage/.deb/.rpm は**サポートする最古のシステム**でビルドする必要がある。新しすぎる glibc でビルドすると古いディストロで起動できなくなる。現状は NixOS (最新) でビルドしているため、広範囲のディストロ対応には Ubuntu 22.04 ベースの CI 環境が将来的に必要になる可能性がある。
+
+#### macOS 配布 (notarization なし)
 
 notarization しないことを前提に、配布経路ごとの得失:
 

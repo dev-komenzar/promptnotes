@@ -52,8 +52,8 @@ Enter は安心して改行に使えます。送信は `Cmd+Enter`（または `
 
 | platform | 形式 | 備考 |
 |---|---|---|
-| macOS | `.app` / `.dmg` | Homebrew 対応も検討中 |
-| Linux | `.deb` / `.rpm` / AppImage | Nix packages, Flatpak など対応拡充中 |
+| macOS | `.dmg` | Homebrew 対応も検討中 |
+| Linux | AppImage / `.deb` / `.rpm` / Nix flake | Flatpak, Snap はコミュニティ要望があれば追加検討 |
 
 ### macOS での起動
 
