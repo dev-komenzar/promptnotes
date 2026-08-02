@@ -264,6 +264,112 @@ updater の署名検証は Developer ID / notarization と独立なので、Appl
 Linux の updater はバンドル形式 (AppImage / .deb / .rpm) を自動検出し、`latest.json` の対応キー (`linux-x86_64` / `linux-x86_64-deb` / `linux-x86_64-rpm`) から適切なアセットをダウンロードする。
 AppImage は root 不要でファイル置換。.deb/.rpm は `dpkg -i` / `rpm -U` を実行するためユーザに sudo パスワードを要求する。
 
+#### GitHub Releases へのアップロード手順
+
+##### Linux 成果物のアップロード
+
+```bash
+VERSION="0.2.0"  # package.json / Cargo.toml と一致させる
+
+# draft release を作成 (まだ公開しない)
+gh release create "v${VERSION}" \
+  --title "PromptNotes v${VERSION}" \
+  --notes "リリースノートをここに記述" \
+  --draft
+
+# AppImage
+gh release upload "v${VERSION}" \
+  apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage \
+  apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage.sig
+
+# .deb
+gh release upload "v${VERSION}" \
+  apps/promptnotes/src-tauri/target/release/bundle/deb/*.deb
+
+# .rpm
+gh release upload "v${VERSION}" \
+  apps/promptnotes/src-tauri/target/release/bundle/rpm/*.rpm
+```
+
+> `.sig` ファイルは updater の署名検証に必須。`.deb` / `.rpm` はパッケージマネージャ経由の更新に使われる（個別の `.sig` は不要）。
+
+##### macOS 成果物のアップロード
+
+```bash
+VERSION="0.2.0"
+
+# .dmg をアップロード
+gh release upload "v${VERSION}" \
+  apps/promptnotes/src-tauri/target/release/bundle/dmg/*.dmg
+```
+
+> **`.app.tar.gz` と `.sig` について**:
+>
+> macOS 向けには 2 種類の成果物が必要:
+>
+> | 成果物 | 用途 | 生成条件 |
+> |---|---|---|
+> | `.dmg` | ユーザが GitHub Releases から手動ダウンロードしてインストール | 常に生成 |
+> | `.app.tar.gz` + `.sig` | Tauri in-app updater が自動更新に使う | `createUpdaterArtifacts: true` 時のみ |
+>
+> `.app.tar.gz` は `.app` バンドルを tar+gzip でアーカイブしたもの。Tauri の updater プラグインは起動時に `latest.json` を取得し、新バージョンがあれば `.app.tar.gz` をダウンロード → `.sig` で署名検証 → アプリを差し替える。`.sig` は minisign 形式の電子署名で、ダウンロードしたバイナリが改ざんされていないことを保証する。
+>
+> `.dmg` だけアップロードしても in-app updater は動作しない。必ず `.app.tar.gz` と `.sig` もアップロードすること。生成先は `apps/promptnotes/src-tauri/target/release/bundle/macos/`。
+>
+> ```bash
+> gh release upload "v${VERSION}" \
+>   apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz \
+>   apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
+> ```
+
+##### latest.json のアップロード
+
+`createUpdaterArtifacts: true` を設定している場合、Tauri build が `latest.json` を生成する。これをリリースにアップロードすることで in-app updater が更新を検出できる。
+
+```bash
+# latest.json の生成場所を確認
+ls apps/promptnotes/src-tauri/target/release/bundle/latest.json
+
+# アップロード
+gh release upload "v${VERSION}" \
+  apps/promptnotes/src-tauri/target/release/bundle/latest.json
+```
+
+> **重要**: `latest.json` には全 platform の署名が含まれる。Linux と macOS で別々にビルドする場合、後からビルドした方の `latest.json` で**上書きしない**こと。両方のビルドが完了した後に、各 `.sig` を確認してから手動でアップロードする。
+
+##### リリースの公開
+
+全 platform の成果物と `latest.json` が揃ったら、draft を公開する:
+
+```bash
+gh release edit "v${VERSION}" --draft=false
+```
+
+##### リリースノートのテンプレート
+
+```markdown
+## 変更内容
+
+- 変更点を箇条書きで記述
+
+## インストール
+
+各 platform 向けのインストール手順は [README](https://github.com/dev-komenzar/promptnotes#インストール) を参照。
+
+### macOS での起動
+
+promptnotes は Apple Developer Program に登録していないため、公証 (notarization) されていません。
+初回起動時に Gatekeeper の警告が出ます。以下のいずれかで回避してください:
+
+**方法 A: 右クリックで開く**
+1. Finder で `promptnotes.app` を右クリック (control + クリック)
+2. 「開く」を選択
+3. 再度警告が出るが、もう一度「開く」をクリック
+
+**方法 B: ターミナルから属性を解除**
+`xattr -dr com.apple.quarantine /Applications/promptnotes.app`
+```
+
 #### macOS 配布先の Gatekeeper 回避手順 (README に貼るテンプレ)
 
 ```markdown
