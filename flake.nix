@@ -65,6 +65,7 @@
           nodejs_22
           cargo-tauri
           pkg-config
+          patchelf
         ] ++ languageServers;
 
         # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
