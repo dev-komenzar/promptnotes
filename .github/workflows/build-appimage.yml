@@ -26,6 +26,10 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Tauri CLI
+        run: |
+          curl -fsSL https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.11.3/cargo-tauri-x86_64-unknown-linux-gnu.tgz | tar xzf - -C ~/.cargo/bin
+
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
