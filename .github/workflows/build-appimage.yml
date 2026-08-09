@@ -14,6 +14,11 @@ env:
   APP_NAME: PromptNotes
   TAURI_DIR: apps/promptnotes/src-tauri
 
+# Linux release build. Must have TAURI_SIGNING_PRIVATE_KEY and
+# _PASSWORD repository secrets configured (see ori-l2rv.1). Without them
+# the build will succeed but .AppImage.sig will NOT be generated and the
+# in-app updater will refuse to update (signature verification fail).
+
 jobs:
   build-appimage:
     runs-on: ubuntu-22.04
@@ -68,6 +73,13 @@ jobs:
         run: bun run tauri build --bundles deb,appimage,rpm
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Verify updater artifacts
+        run: |
+          ls -la apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage.sig
+          ls -la apps/promptnotes/src-tauri/target/release/bundle/latest.json
 
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v5
@@ -100,7 +112,9 @@ jobs:
           name: PromptNotes v${{ steps.version.outputs.version }}
           files: |
             apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage
+            apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage.sig
             apps/promptnotes/src-tauri/target/release/bundle/deb/*.deb
             apps/promptnotes/src-tauri/target/release/bundle/rpm/*.rpm
+            apps/promptnotes/src-tauri/target/release/bundle/latest.json
           draft: true
           generate_release_notes: true
