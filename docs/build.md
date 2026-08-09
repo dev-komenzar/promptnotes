@@ -14,7 +14,7 @@
 | macOS release build | mac サブ機で build |
 | Windows | **初期 MVP から除外**。マシンを保有していないため |
 | Linux 配布形式 | **AppImage, .deb, .rpm, Nix flake** の 4 形式 (決定: `ori-wuxk`)。Flatpak/Snap はコミュニティ要望があれば追加検討 |
-| CI | **補助的にしか使わない**。基本はローカルビルド。GitHub Actions の有料 runner は極力避ける |
+| CI | Linux は GitHub Actions (ubuntu-22.04) がプライマリ。macOS はローカルビルド。有料 runner は極力避ける |
 | Apple Developer Program | **参加しない**。Developer ID / notarization なし。配布時に Gatekeeper warning が出る前提で運用 |
 
 **判断軸**:
@@ -242,18 +242,30 @@ export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
 
 bun run tauri build --bundles dmg
+# OR if you want explicit app bundle without dmg:
+# bun run tauri build --bundles app
 ```
 
-成果物: `apps/promptnotes/src-tauri/target/release/bundle/macos/*.dmg`
+`createUpdaterArtifacts: true` により、Tauri は `.dmg` に加えて updater 用アーティファクトも自動生成する。
+
+成果物:
+
+```
+apps/promptnotes/src-tauri/target/release/bundle/macos/*.dmg
+apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz
+apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
+apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json  (macOS 用; Linux CI のと統合必須)
+```
 
 ### 4.3 release の一連の流れ
 
 1. version bump (`apps/promptnotes/package.json` と `apps/promptnotes/src-tauri/Cargo.toml`)
 2. `git tag vX.Y.Z` & push
-3. Linux build → 成果物 (AppImage, .deb, .rpm) を release draft に upload
-4. mac build → 成果物 (.dmg) を release draft に upload
-5. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
-6. publish
+3. Linux CI をトリガー: tag を push すると `.github/workflows/build-appimage.yml` が起動し、AppImage / .deb / .rpm / .AppImage.sig / latest.json (Linux 分) を draft Release に自動アップロード
+4. macOS ローカルビルド: mac サブ機で `bun run tauri build --bundles dmg` を実行し、.dmg / .app.tar.gz / .app.tar.gz.sig / latest.json (macOS 分) を同一の draft Release にアップロード
+5. latest.json を統合: [4.4](#44-latestjson-merge-protocol) の手順に従い、Linux CI と macOS の `latest.json` をマージして --clobber でアップロード
+6. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
+7. publish
 
 > **Nix flake について**: flake は GitHub リポジトリ自体が配布経路のため、成果物のアップロードは不要。
 > `git tag` を打てばユーザは `nix run github:dev-komenzar/promptnotes/<tag>` で特定バージョンを参照できる。
@@ -322,20 +334,18 @@ gh release upload "v${VERSION}" \
 >   apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
 > ```
 
-##### latest.json のアップロード
+##### latest.json のアップロードと統合
 
 `createUpdaterArtifacts: true` を設定している場合、Tauri build が `latest.json` を生成する。これをリリースにアップロードすることで in-app updater が更新を検出できる。
 
-```bash
-# latest.json の生成場所を確認
-ls apps/promptnotes/src-tauri/target/release/bundle/latest.json
+Linux CI と macOS ローカルビルドは**それぞれ独立して `latest.json` を生成**し、自動統合されない。両方のビルドが完了した後、[4.4](#44-latestjson-merge-protocol) の手順に従ってマージしてからアップロードする。
 
-# アップロード
-gh release upload "v${VERSION}" \
-  apps/promptnotes/src-tauri/target/release/bundle/latest.json
+```bash
+# latest.json の生成場所を確認 (macOS)
+ls apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json
 ```
 
-> **重要**: `latest.json` には全 platform の署名が含まれる。Linux と macOS で別々にビルドする場合、後からビルドした方の `latest.json` で**上書きしない**こと。両方のビルドが完了した後に、各 `.sig` を確認してから手動でアップロードする。
+> **重要**: 後からビルドした方の `latest.json` をそのままアップロードすると、先にアップロードした platform の署名が失われる。必ずマージしてからアップロードすること。
 
 ##### リリースの公開
 
@@ -392,6 +402,55 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 ---
 
+### 4.4 latest.json merge protocol
+
+Linux CI (`.github/workflows/build-appimage.yml`) と macOS ローカルビルドは**それぞれ独立して動作し、各 platform 用の `latest.json` を別々に生成する**。Tauri の updater ツールチェーンは platform 間で `latest.json` を自動統合しない。そのため、両方のビルドが完了した後、人手で 2 つの `latest.json` をマージする必要がある。
+
+**上書きの危険**: 後からビルドした方の `latest.json` をそのままアップロードすると、先にアップロードした platform の署名が失われる。in-app updater がその platform で動作しなくなる。
+
+#### マージ手順
+
+1. Linux CI の draft Release から `latest.json` をダウンロード:
+   ```bash
+   VERSION="0.2.0"
+   gh release download "v${VERSION}" --pattern latest.json --dir /tmp/merge-latest
+   cp /tmp/merge-latest/latest.json /tmp/merge-latest/linux.json
+   ```
+
+2. Linux のキーのみ抽出:
+   ```bash
+   jq '{platforms: { "linux-x86_64": .platforms."linux-x86_64", "linux-x86_64-deb": .platforms."linux-x86_64-deb", "linux-x86_64-rpm": .platforms."linux-x86_64-rpm" }}' \
+     /tmp/merge-latest/linux.json > /tmp/merge-latest/linux-only.json
+   ```
+
+3. macOS ローカルビルドで生成された `latest.json` を確認:
+   ```bash
+   ls apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json
+   # Darwin のキーのみ抽出
+   jq '{platforms: { "darwin-aarch64": .platforms."darwin-aarch64" }}' \
+     apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json \
+     > /tmp/merge-latest/mac-only.json
+   ```
+
+4. 両方を統合:
+   ```bash
+   jq -s '.[0].platforms * .[1].platforms | {version: ("v'"${VERSION}"'"), notes: "", platforms: .}' \
+     /tmp/merge-latest/linux-only.json \
+     /tmp/merge-latest/mac-only.json \
+     > /tmp/merge-latest/merged-latest.json
+   ```
+
+   > **スキーマの確認**: Tauri が生成する実際の `latest.json` の構造は `cat apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json` で確認できる。スキーマが異なる場合は上記 `jq` コマンドを実際の構造に合わせて調整すること。
+
+5. 統合した `latest.json` を draft Release に上書きアップロード:
+   ```bash
+   gh release upload "v${VERSION}" --clobber /tmp/merge-latest/merged-latest.json#latest.json
+   ```
+
+このマージ手順は **draft Release を公開する前に必ず実行すること**。公開後に `latest.json` を差し替えても、既にチェックしたクライアントは古い `latest.json` をキャッシュしている可能性がある。
+
+---
+
 ## 5. 補足
 
 ### 5.1 Windows を MVP から除外する理由
@@ -402,7 +461,9 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 ### 5.2 CI 移行の判断基準
 
-以下のいずれかに該当したら CI の併用を検討する:
+現状: Linux のリリースビルドは GitHub Actions (ubuntu-22.04) をプライマリパスとして使用している。macOS はローカルビルドを継続。
+
+以下のいずれかに該当したら macOS も CI へ移行する:
 
 - mac サブ機の電源を入れる頻度が月に数回以下になり、release のたびに起動が面倒
 - 共同開発者が増え、複数マシンで同時 release 検証が必要になった
@@ -412,7 +473,6 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 - macOS build は GitHub Actions の **有料 mac runner** ($0.08/min) をスポット利用
 - private secret は GitHub Actions Secrets に移し、nix-sops repo は個人用として分離維持
-- Linux build は自前 runner (NixOS) または GitHub-hosted ubuntu で
 
 ### 5.3 配布戦略
 
@@ -420,7 +480,7 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 | 形式 | 配布経路 | 構築コスト | updater 対応 | 備考 |
 |---|---|---|---|---|
-| **AppImage** | GitHub Releases | ゼロ (Tauri bundler ビルトイン) | ✅ ファイル置換・root 不要 | 全ディストロ対応。ポータブル用途に最適 |
+| **AppImage** | GitHub Releases | ゼロ (Tauri bundler ビルトイン) | ✅ ファイル置換・root 不要 | 全ディストロ対応。ポータブル用途に最適。`.AppImage.sig` は CI で自動生成・アップロード |
 | **.deb** | GitHub Releases | ゼロ | ✅ `dpkg -i`・root 必須 | Debian/Ubuntu/Pop!_OS 向け |
 | **.rpm** | GitHub Releases | ゼロ | ✅ `rpm -U`・root 必須 | Fedora/RHEL/openSUSE 向け |
 | **Nix flake** | flake.nix 経由 | 既存 flake を流用 | ❌ (flake update で更新) | NixOS / nix-darwin 向け。`nix profile install` |
