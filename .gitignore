@@ -18,3 +18,8 @@ icon-source.png
 # Oh My OpenAgents
 .omo/run-continuation
 apps/promptnotes/.omo/run-continuation/
+
+# Tauri updater secrets — sops-encrypted files are safe to commit,
+# but plaintext private keys must NEVER be committed
+secrets/**/*.key
+secrets/**/*.pub
