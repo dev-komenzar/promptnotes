@@ -159,21 +159,69 @@ NixOS の `secrets/tauri/updater.key.sops.yaml` を macOS の Nix flake 経由�
 
 #### build 時に使う
 
-Tauri の updater 署名は環境変数で渡す。`TAURI_SIGNING_PRIVATE_KEY` には鍵ファイルのパスまたは鍵の内容を直接指定できる。
+Tauri の updater 署名は環境変数で渡す。`TAURI_SIGNING_PRIVATE_KEY` には鍵ファイルのパスまたは鍵の内容を直接指定できる。`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` にはパスフレーズを直接指定する。
+
+環境変数は **ターミナルを閉じる / OS を再起動すると消える** ため、ビルドするたびに同じターミナル内で再設定が必要。
+
+##### NixOS (メイン機)
+
+パスフレーズは `pass` (GPG-based password manager) で管理する。
 
 ```bash
-# NixOS
-export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
-bun run tauri build --bundles deb,appimage,rpm
+# updater 署名用の秘密鍵を復号
+mkdir -p ~/.tauri
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+chmod 600 ~/.tauri/promptnotes.key
 
-# macOS (サブ機)
-export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+# 環境変数を設定 (パスフレーズは pass から取得)
+export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(pass <pass entry name>)"
+
+bun run tauri build --bundles deb,appimage,rpm
+```
+
+##### macOS (サブ機)
+
+パスフレーズは [Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`) で管理する。Secure Note として「Tauri Auto Updater Pass phrase」という名前で保存済みの前提。
+
+```bash
+# 1. Bitwarden CLI をインストール (初回のみ)
+brew install bw
+
+# 2. ログイン (初回のみ). 以降はセッションが有効な間再利用可能
+bw login
+
+# 3. セッションを取得 (ターミナルを開くたびに必要)
+export BW_SESSION="$(bw unlock --raw)"
+
+# 4. updater 署名用の秘密鍵を sops で復号
+mkdir -p ~/.tauri
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+chmod 600 ~/.tauri/promptnotes.key
+
+# 5. Bitwarden からパスフレーズを取得
+ITEM_ID=$(bw list items --search "Tauri Auto Updater Pass phrase" --session "$BW_SESSION" | jq -r '.[0].id')
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(bw get item "$ITEM_ID" --session "$BW_SESSION" | jq -r '.notes')"
+
+# 6. 秘密鍵のパスを指定
+export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/promptnotes.key"
+
+# 確認 (任意)
+echo "key: $TAURI_SIGNING_PRIVATE_KEY"
+echo "pass: ${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:0:4}..."
+
+# 7. ビルド実行
+cd apps/promptnotes
+nix develop
+bun install
 bun run tauri build --bundles dmg
 ```
 
-> **パスワード管理**: updater key のパスワードは `pass`（GPG-based password manager、macOS / Linux 両方で同期可能）などで安全に保管すること。パスワードを失った場合も秘密鍵を再生成すれば復旧可能（公開鍵も差し替えが必要）。秘密鍵自体を失った場合はアップデート発行が永久に不可能になるため、nix-sops による git 管理が安全網になる。
+> **環境変数のスコープ**: `export` は現在のシェルセッションのみ有効。`nix develop` の内側と外側で環境変数が分離される場合があるため、`nix develop` に入ってから `export` する方が確実。ターミナルを閉じると消えるので、ビルド終了後はターミナルを閉じることで誤った残存を防げる。
+
+> **BW_SESSION**: `bw unlock --raw` で取得したセッションキーは一定時間 (デフォルト1時間) 有効。連続作業中は `bw unlock` を繰り返さず、同じ `BW_SESSION` を使い回せる。
+
+> **パスワード管理**: updater key のパスフレーズは `pass` (NixOS、GPG-based) または Bitwarden (macOS) で安全に保管すること。パスフレーズを失った場合も秘密鍵を再生成すれば復旧可能 (公開鍵も差し替えが必要)。秘密鍵自体を失った場合はアップデート発行が永久に不可能になるため、nix-sops による git 管理が安全網になる。
 
 ### 3.4 やってはいけないこと
 
@@ -192,19 +240,19 @@ bun run tauri build --bundles dmg
 > Linux build entrypoint: [.github/workflows/build-appimage.yml](../.github/workflows/build-appimage.yml)
 
 ```bash
-# dev shell に入る
-nix develop
-
-cd apps/promptnotes
-bun install
-
 # updater 署名用の秘密鍵を復号
-sops --decrypt secrets/tauri/updater.key.sops.yaml > ~/.tauri/promptnotes.key
+mkdir -p ~/.tauri
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+chmod 600 ~/.tauri/promptnotes.key
 
-# 環境変数を設定
-export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
+# 環境変数を設定 (パスフレーズは pass から取得)
+export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/promptnotes.key"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(pass <pass entry name>)"
 
+# dev shell に入ってからビルド
+cd apps/promptnotes
+nix develop
+bun install
 bun run tauri build --bundles deb,appimage,rpm
 ```
 
@@ -232,17 +280,27 @@ Nix store のパスに解決され、NixOS / nix-darwin 環境で動作する。
 
 ### 4.2 macOS build (mac サブ機)
 
+> 環境変数の取得手順の詳細は [3.3 build 時に使う](#build-時に使う) の「macOS (サブ機)」節を参照。以下は要点のみ。
+
 ```bash
 cd apps/promptnotes
+
+# Bitwarden からパスフレーズを取得 (ターミナルを開くたびに必要)
+export BW_SESSION="$(bw unlock --raw)"
+ITEM_ID=$(bw list items --search "Tauri Auto Updater Pass phrase" --session "$BW_SESSION" | jq -r '.[0].id')
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(bw get item "$ITEM_ID" --session "$BW_SESSION" | jq -r '.notes')"
+
+# updater 署名用の秘密鍵を sops で復号
+mkdir -p ~/.tauri
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+chmod 600 ~/.tauri/promptnotes.key
+
+# 秘密鍵のパスを指定
+export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/promptnotes.key"
+
+# nix develop の内側に入ってからビルド
+nix develop
 bun install
-
-# updater 署名用の秘密鍵を nix-sops で復号
-sops --decrypt secrets/tauri/updater.key.sops.yaml > ~/.tauri/promptnotes.key
-
-# 環境変数を設定
-export TAURI_SIGNING_PRIVATE_KEY="~/.tauri/promptnotes.key"
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<生成時に設定したパスワード>"
-
 bun run tauri build --bundles dmg
 # OR if you want explicit app bundle without dmg:
 # bun run tauri build --bundles app
