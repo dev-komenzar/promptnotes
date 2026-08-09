@@ -1,0 +1,12 @@
+keys:
+  - &hima age1xsvpve439lt4awnprtkdnft2v30vdwz4lr6n4r8zn9j72tsfad3sn6w2jd
+  - &macbook-air age1kpw3x08j94shdnjlga9vk8zawhlhfeghjfz7rwg2v8sypp85dfqshe58hm
+
+creation_rules:
+  # Tauri updater 秘密鍵（両OSのビルドで参照）
+  # hima と macbook-air の両方が復号可能
+  - path_regex: secrets/tauri/.*
+    key_groups:
+      - age:
+          - *hima
+          - *macbook-air

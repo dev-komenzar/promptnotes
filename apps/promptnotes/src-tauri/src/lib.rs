@@ -12,8 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        // tauri_plugin_updater requires plugins.updater.{endpoints, pubkey} + a signing key.
-        // Wire in once release infrastructure is ready.
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Arc::new(note_feed::shared::adapters::InMemoryNoteFeedState::new()))
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .manage(Mutex::new(
@@ -52,6 +51,7 @@ pub fn run() {
             note_feed::slices::detect_external_changes::commands::stop_file_watcher,
             user_preferences::slices::load_settings::commands::load_settings,
             user_preferences::slices::update_settings::commands::update_settings,
+            update_distribution::slices::check_for_updates::commands::check_for_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
