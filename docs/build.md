@@ -189,6 +189,8 @@ bun run tauri build --bundles dmg
 
 ### 4.1 Linux build (NixOS メイン機)
 
+> Linux build entrypoint: [.github/workflows/build-appimage.yml](../.github/workflows/build-appimage.yml)
+
 ```bash
 # dev shell に入る
 nix develop
