@@ -160,12 +160,12 @@
             nodejs_22
             pkg-config
             makeWrapper
-          ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+          ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
             pkgs.wrapGAppsHook3
           ];
 
-          buildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux linuxDeps
-            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin darwinDeps;
+          buildInputs = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux linuxDeps
+            ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin darwinDeps;
 
           dontWrapGApps = true;
 
@@ -219,7 +219,7 @@
             runHook preInstall
             mkdir -p $out/bin
             install -Dm755 src-tauri/target/release/app $out/bin/promptnotes
-          '' + pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+          '' + pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
             # XDG hicolor icon theme: 実 PNG サイズと path サイズを一致させる
             # (cargo tauri icon が生成した 32/64/128/256/512 を全て展開)
             install -Dm644 src-tauri/icons/32x32.png \
@@ -238,7 +238,7 @@
             runHook postInstall
           '';
 
-          postFixup = pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+          postFixup = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
             wrapProgram $out/bin/promptnotes \
               --set GSETTINGS_SCHEMA_DIR "${gsettingsSchemaDir}" \
               --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share" \
@@ -257,10 +257,10 @@
       {
         devShells.default = pkgs.mkShell {
           packages = commonTools
-            ++ pkgs.lib.optionals pkgs.stdenv.isLinux linuxDeps
-            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin darwinDeps;
+            ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux linuxDeps
+            ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin darwinDeps;
 
-          shellHook = pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+          shellHook = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
             # FileChooser ($_GLib-GIO-WARNING: ... gtk schemas) workaround on NixOS
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share:$XDG_DATA_DIRS"
             export GSETTINGS_SCHEMA_DIR="${gsettingsSchemaDir}"
