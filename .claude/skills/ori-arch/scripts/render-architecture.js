@@ -17003,6 +17003,17 @@ Available patterns: ${available2.length ? available2.join(", ") : "(none found)"
     process.exit(2);
   }
   const stacksDir = join(patternDir, "stacks");
+  const stackDir = join(stacksDir, stack);
+  if (await exists(stackDir)) {
+    process.stderr.write(
+      `Pattern "${pattern}" / stack "${stack}" \u306B architecture.md.tpl \u304C\u3042\u308A\u307E\u305B\u3093.
+DDD + vsa-hex \u306E architecture.md \u306F ori-architect \u30B9\u30AD\u30EB\u304C\u8981\u4EF6\u5BFE\u8A71\u304B\u3089\u751F\u6210\u3057\u307E\u3059
+(.apm/skills/ori-architect/SKILL.md \u306E questions / generation_procedure \u3092\u53C2\u7167).
+\u53C2\u7167\u7528\u306B tpl \u3092\u4FDD\u6301\u3057\u3066\u3044\u308B bundle \u3092\u4F7F\u3046\u5834\u5408\u306F --patterns-dir <path> \u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044.
+`
+    );
+    process.exit(2);
+  }
   const available = await listDirs(stacksDir);
   process.stderr.write(
     `Pattern "${pattern}" has no stack "${stack}".

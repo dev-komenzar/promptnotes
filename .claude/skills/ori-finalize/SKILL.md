@@ -11,8 +11,8 @@ description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮
 
 ## 役割
 
-- **clean-up 担当**：当該 slice の `status.yaml.dirty[]` をクリア
-- **proposal 浮上係**：phase 中に `--force` で生成された proposal を一覧化しユーザに通知
+- **clean-up 担当**：当該 slice の `status.yaml.dirty[]` をクリア（**review PASS が前提** — `clear-dirty.sh` が強制ゲート）
+- **proposal 浮上係**：phase 中に生成された proposal を一覧化しユーザに通知
 - **beads クローザー**：当該 slice の phase issue を全て close。epic の進捗を更新
 - **次手案内**：次の slice 候補 or proposal review を提示
 
@@ -44,6 +44,7 @@ description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮
 
 1. **前提確認**：
    - phase 6（review）が close されているか（`bd show ori-review-<id>`）
+   - `review.md` が存在し verdict=PASS であることを確認（`clear-dirty.sh` が自動検証）
    - `pnpm -F <slice-pkg> test` GREEN を最終確認
 2. **slice の締め処理**：
    ```bash
@@ -81,6 +82,7 @@ description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮
 ## 注意
 
 - **scope は 1 slice**：他の slice の dirty には触らない
+- **review PASS 必須**：`clear-dirty.sh` は `review.md` の verdict=PASS がないと dirty 解除を拒否する。バイパスするには `--skip-review-check` が必要（人間判断）
 - **proposal を勝手に accept しない**：人間判断のため `/ori-review-proposals` を案内
 - **review 指摘の未対応で finalize しない**：sloppy finalize はバグの温床
 - **スキルが決定的処理を担当**：このスキルはオーケストレーションと通知

@@ -133,31 +133,44 @@ copy_file \
 # table, resolves versions, and is idempotent on existing entries). If
 # cargo is missing or `tauri/specta` feature wiring is non-trivial,
 # emit a hand-merge fallback so the operator can finish manually.
+#
+# IMPORTANT — exact pins (`=x.y.z`) are deliberate (ori-87k):
+#   unpinned `cargo add specta` / `tauri-specta` resolve to the latest
+#   *stable* (1.x), which (a) drops the `derive` feature on specta and
+#   (b) pulls `tauri ^1` → webkit2gtk-4.0 / soup2-sys (libsoup-2.4).
+#   The 2.0.0-rc line is the tauri 2-compatible release (webkit2gtk-4.1 /
+#   libsoup-3.0). Pin exactly so a future rc bump can't silently shift
+#   the dep graph under the smoke gate.
+TAURI_PIN="=2.11.5"
+SPECTA_PIN="=2.0.0-rc.25"
+TAURI_SPECTA_PIN="=2.0.0-rc.25"
+SPECTA_TYPESCRIPT_PIN="=0.0.12"
+
 add_cargo_deps() {
   if ! command -v cargo >/dev/null 2>&1; then
     cat >&2 <<EOF
 NOTE: cargo not on PATH — append the following to $ST_DIR/Cargo.toml manually:
 
   [dependencies]
-  tauri        = { version = "2", features = ["specta"] }
-  specta       = { version = "2.0.0-rc", features = ["derive"] }
-  tauri-specta = { version = "2.0.0-rc", features = ["javascript", "typescript"] }
-  specta-typescript = "0.0.7"
+  tauri        = { version = "$TAURI_PIN", features = ["specta"] }
+  specta       = { version = "$SPECTA_PIN", features = ["derive"] }
+  tauri-specta = { version = "$TAURI_SPECTA_PIN", features = ["javascript", "typescript"] }
+  specta-typescript = "$SPECTA_TYPESCRIPT_PIN"
 EOF
     return 0
   fi
-  echo "Running: cargo add tauri-specta specta specta-typescript  (in $ST_DIR)"
+  echo "Running: cargo add tauri-specta specta specta-typescript tauri (exact-pinned, in $ST_DIR)"
   ( cd "$ST_DIR" && \
-    cargo add tauri-specta --features javascript,typescript >/dev/null && \
-    cargo add specta --features derive >/dev/null && \
-    cargo add specta-typescript >/dev/null \
+    cargo add "tauri-specta@$TAURI_SPECTA_PIN" --features javascript,typescript >/dev/null && \
+    cargo add "specta@$SPECTA_PIN" --features derive >/dev/null && \
+    cargo add "specta-typescript@$SPECTA_TYPESCRIPT_PIN" >/dev/null \
   ) || {
     echo "WARN: cargo add failed; merge the deps block above into $ST_DIR/Cargo.toml manually." >&2
     return 0
   }
   # tauri 自体は pnpm tauri init で既に entry がある想定。`specta` feature を
   # 付け足したいので、cargo add 越しに features を明示。
-  ( cd "$ST_DIR" && cargo add tauri --features specta >/dev/null ) || true
+  ( cd "$ST_DIR" && cargo add "tauri@$TAURI_PIN" --features specta >/dev/null ) || true
 }
 add_cargo_deps
 

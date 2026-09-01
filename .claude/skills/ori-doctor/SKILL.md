@@ -30,12 +30,17 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 - `.ori/slices/*/status.yaml` の `upstream_hash` と現在の domain section ハッシュを比較
 - 不一致なら **dirty 残存** として報告
 
-### 3. status.yaml ⇔ beads の同期
+### 3. Dirty integrity (unauthorized clear detection)
+
+- `.ori/slices/*/status.yaml` で `dirty: []` なのに `review.md` が存在しない / verdict が PASS でない slice を検出
+- `clear-dirty.sh` をバイパスして `sed` 直打ち等で dirty が消された可能性を示唆
+
+### 4. status.yaml ⇔ beads の同期
 
 - 各 slice について `status.yaml.phase_status` と `bd show ori-<phase>-<id>` の `status` を突き合わせる
 - ズレを報告（例：beads では closed だが status.yaml では in_progress）
 
-### 4. Cross-reference の整合
+### 5. Cross-reference の整合
 
 - spec.md / workflows/<id>.md / screen-N.md の `upstream:` 列挙先がすべて実在するか
 - 存在しない section へのリンクを broken-link として報告
@@ -59,6 +64,25 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 
 各 slice について Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done") 4 rule を sweep する。
 
+### 9. architecture.md guardrails 検証 (ori-c79.3)
+
+`.ori/architecture.md` が存在する場合、`ori-architect` SKILL.md の構造セクション
+(`invariants` / `guardrails`) を YAML fenced block から machine parse し、guardrails
+g-1..g-8 を適用して適合判定する (lint.js 内で自動実行)。
+
+- `g-1` — frontmatter が `parseArchitectureSpec()` を pass する (version=1、root/roots 必須)
+- `g-2` — 使用 layer_set が `invariants.layer_graph` と一致 (layers / cross_layer / same_layer / public_entry_required)
+- `g-3` — 使用 slice_internal が `invariants.slice_internal` と一致 (sub_layers / rules)
+- `g-4` — `cross_slice`: prohibited_direct=true、via に shared/contracts + shared/events を含む
+- `g-5` — `cross_bc`: BC 間は app-level shared/ 経由、same_event_bus=true
+- `g-6` — 全 root で public_entry_required=true、public_entry が 1 ファイル
+- `g-7` — cross_root は generator 明示 + auto_generated=true (生成物は手書き禁止)
+- `g-8` — decision_points (platforms / os_integration / ui_native) の回答が `## Decisions` 節
+  か frontmatter `decisions:` に記録されている
+
+ori-architect SKILL.md (`.apm/skills/ori-architect/SKILL.md`) が見つからない場合は検証をスキップ
+(旧 doctor 挙動を維持)。報告のみで自動修正はしない。
+
 - `rule:dod-1` — `manifest.yaml` の `expected_deliverables.sub_layers` で宣言した layer が `<source_root>/<bc>/slices/<slice-id>/<layer>/` (TS) or `apps/<app>/src-tauri/src/<bc_rs>/slices/<slice_rs>/<layer>.rs` (Rust) に実体を持つか
 - `rule:dod-2` — Tauri stack の slice について tests が `<bc>/shared/ipc/bindings` 経由で invoke しているか、かつ `application/` を直 import していないか
 - `rule:dod-3` — tests が `setupProductionBuilder` を経由しているか (heuristic、参照無し → 違反疑い)。`--run-tests` 指定時は production fixture 経由で test を実 invoke し fail を rule:dod-3 違反として記録
@@ -78,14 +102,17 @@ read-only mode (default) は report のみ。`--dod-sweep` (= 内部 script `--e
    個別検査は以下で構成：
    - `check-domain-schema.sh` — ドメイン文書の frontmatter + anchor 検証
    - `check-slice-schema.sh` — slice の manifest/status ファイル存在確認
+   - `check-dirty-integrity.sh` — dirty=[] なのに review.md 不在/verdict≠PASS を検出（status.yaml の手動改竄チェック）
    - `check-hash-consistency.sh` — 派生ファイルの upstream 参照実在確認
    - `check-cross-ref.sh` — derives_from / upstream の cross-reference 検証
    - `check-proposals.sh` — pending proposal カウント
    - `check-dod-sweep.sh` — Slice DoD 4 rule の sweep (read-only mode、report のみ)
-   - `lint.js` — `.ori/` の Markdown anchor / id 規約検証（JS）：
+   - `lint.js` — `.ori/` の Markdown anchor / id 規約検証 + architecture.md guardrails 検証（JS）：
      ```bash
      node ./scripts/lint.js [<path>] [--strict]
      ```
+     `<path>/architecture.md` が存在する場合は `ori-architect` SKILL.md の guardrails
+     g-1..g-8 適合判定も同時に実行する
 3. **`/ori-doctor --dod-sweep` 指定時**: 上記に加えて DoD sweep を **issue auto-emit mode** で再実行：
    ```bash
    bash ./scripts/check-dod-sweep.sh --emit-issues
@@ -111,6 +138,10 @@ read-only mode (default) は report のみ。`--dod-sweep` (= 内部 script `--e
 ⚠ slices/capture-auto-save: 1 upstream out of sync
   upstream: domain/aggregates.md#note-aggregate
   fix: /ori-flow capture-auto-save (re-derive)
+
+═══ Dirty Integrity ═══
+✗ slices/delete-note: dirty=[] but review.md not found
+  fix: /ori-flow delete-note (run full workflow including review)
 
 ═══ Status Sync ═══
 ✓ all slices / pages in sync with beads
@@ -140,6 +171,11 @@ read-only mode (default) は report のみ。`--dod-sweep` (= 内部 script `--e
 
 === DoD sweep summary: 2 violation(s) across 3 slice(s) ===
 
+═══ Architecture Guardrails ═══
+✗ [g-3] slice_internal "slice-internal-ts" (layer_set "ddd-vsa-hex-ts" の domain) が architecture.md に未宣言
+✗ [g-8] decision_points の回答記録がない (## Decisions 節 か frontmatter decisions: が必要)
+  fix: /ori-architect で再生成させる (要件対話から)
+
 ═══ Summary ═══
 ✗ 4 errors  ⚠ 2 warnings  ℹ 2 info
 recommended action: fix broken cross-ref first (blocks /ori-flow on edit-past-note-start)
@@ -157,9 +193,11 @@ recommended action: fix broken cross-ref first (blocks /ori-flow on edit-past-no
 
 - **schema 違反パス**：`vim .ori/domain/<file>.md` で手動修正（自動修正しない）→ 再度 `/ori-doctor`
 - **hash 不一致パス**：`/ori-flow <id>` で該当 slice / page を再 derive
+- **dirty integrity 違反パス**：`/ori-flow <id>` で該当 slice の全 phase（特に review）を再実行。status.yaml を手動編集せず、`/ori-finalize` の `clear-dirty.sh` を経由すること
 - **broken cross-ref パス**：該当 slice / page の `manifest.yaml` を更新 or 旧 anchor を domain 側で復活
 - **proposal 残存パス**：`/ori-review-proposals` で人間判断
 - **orphan domain パス**：意図的なら無視、不要なら削除を検討
 - **beads 不整合パス**：`bd dolt push` / `bd dolt pull` で再同期、`bd orphans` で個別対処
 - **DoD 違反パス**: 該当 slice の missing artifact を `/ori-impl-red` (b3 stub) / `/ori-impl-green` (real impl + production wiring + specta post) で生成。`rule:dod-4` は `bash apm-scripts/specta-build.sh --app-dir apps/<app>` で再同期
+- **architecture.md guardrails 違反パス**: `/ori-architect` で要件対話から再生成させる (ori-arch 手順 6 経由)。`g-8` だけの場合は `## Decisions` 節か frontmatter `decisions:` への回答記録を追加 (自動修正しない)
 - **全部 green パス**：`/ori-feature-status` で次の作業候補を選ぶ
