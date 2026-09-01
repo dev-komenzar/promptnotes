@@ -66,6 +66,7 @@
           cargo-tauri
           pkg-config
           patchelf
+          apm-cli
         ] ++ languageServers;
 
         # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
