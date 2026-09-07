@@ -67,6 +67,7 @@
           pkg-config
           patchelf
           apm-cli
+          beads
         ] ++ languageServers;
 
         # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
