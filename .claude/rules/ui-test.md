@@ -1,6 +1,9 @@
 ---
 paths:
-  - "**/*.{spec,test}.tsx, **/e2e/**/*.{spec,test}.{ts,tsx}, **/playwright/**/*.{spec,test}.{ts,tsx}, **/__tests__/**/*.{spec,test}.{ts,tsx}"
+  - "**/*.{spec,test}.tsx"
+  - "**/e2e/**/*.{spec,test}.{ts,tsx}"
+  - "**/playwright/**/*.{spec,test}.{ts,tsx}"
+  - "**/__tests__/**/*.{spec,test}.{ts,tsx}"
 ---
 
 UI 要素の selector 規約。`ddd-test.instructions.md` (domain 層: fast-check + spec.md トレース) と責務を分離し、本ファイルは **プレゼンテーション層から UI 要素を引く際のルール** に限定する。ori-adopting プロジェクトが UI framework を採用した場合に適用される。
@@ -96,7 +99,7 @@ fixture として注入する。fake / mock adapter で組んだ slice は DoD �
 ## 責務分離
 
 - 本ファイル = UI selector / testid namespace の規約
-- [`ddd-test.instructions.md`](ddd-test.instructions.md) = domain test (vitest + fast-check + spec.md トレース) の規約
-- [`ddd-typescript.instructions.md`](ddd-typescript.instructions.md) = 実装側 (Smart Constructor / Result 型 / VSA 配置) の規約
+- [`ddd-test.instructions.md`](../../apm_modules/dev-komenzar/ori/.apm/instructions/ddd-test.instructions.md) = domain test (vitest + fast-check + spec.md トレース) の規約
+- [`ddd-typescript.instructions.md`](../../apm_modules/dev-komenzar/ori/.apm/instructions/ddd-typescript.instructions.md) = 実装側 (Smart Constructor / Result 型 / VSA 配置) の規約
 
 UI コンポーネントの単体テスト (`*.test.tsx`) は両方 (ddd-test + ui-test) が applyTo にマッチし得る。両者は補完的で、ddd-test は「Result の比較や VO の property test を書け」、ui-test は「DOM を query する時は getByRole / data-testid を VSA 命名で使え」と直交する。

@@ -8,13 +8,12 @@ description: ドメイン文書 / slice 文書の変更を検知し、dirty マ�
 ## スクリプト
 
 ```bash
-node ./scripts/sync.js [--file=<path>] [--since=<ref>] [--check] [--force]
+node ./scripts/sync.js [--file=<path>] [--since=<ref>] [--check]
 ```
 
 - `--file=<path>` — 単一ファイルに限定して変更検知
 - `--since=<ref>` — HEAD の代わりに指定 git ref と比較
 - `--check` — dirty マーク残存時に非ゼロ終了（CI モード）
-- `--force` — 派生文書の直接編集を許可、proposal を自動生成
 
 ## 手順
 
@@ -27,20 +26,13 @@ node ./scripts/sync.js [--file=<path>] [--since=<ref>] [--check] [--force]
 3. dirty な slice ごとに：
    - 該当 phase の beads issue を reopen（手動 or `bd update --status=open`）
    - ユーザに「これらの slice の再 derive が必要です」と通知
-4. proposal が生成されていれば（`--force` 経由）`/ori-review-proposals` の起動を案内
-
-## --force 編集時
-
-- 派生文書を直接編集する場合は `/ori-sync --force <path>` を使う
-- proposal が `.ori/proposals/<date>-<slice>-<target>.md` として生成される
-- proposal 自体の編集は人間に委ねる
+4. 派生文書（spec.md）の直接編集は SSoT 違反のため不可。spec に不備がある場合は domain 文書を修正し `/ori-sync` を再実行するか、`/ori-propose` で upstream 修正提案を作成してください
 
 ## 次のアクション
 
 `/ori-sync` 実行後、状況に応じて以下を提示：
 
-- **dirty slice がある場合**：影響を受けた slice ごとに `/ori-flow <slice-id>` を提案（最も影響が大きい順に）
-- **proposal が生成された場合**：`/ori-review-proposals` で人間判断を促す
-- **dirty なし / proposal なし**：通常終了。次の作業（新 slice `/ori-flow` or DDD `/ori-distill`）へ
+- **dirty slice がある場合**：影響を受けた slice ごとに `/ori-flow <slice-id>` を**必須**で提案（最も影響が大きい順に）。dirty の手動解除は禁止されており、`/ori-finalize` の `clear-dirty.sh` は review PASS なしで解除を拒否する
+- **dirty なし**：通常終了。次の作業（新 slice `/ori-flow` or DDD `/ori-distill`）へ
 - **整合性エラー検出時**：`/ori-doctor` で詳細診断 → 修復方針をユーザと相談
 - **scope 1 slice を締めたい場合**：`/ori-finalize <slice-id>` を呼ぶ（/ori-sync は全体伝播、/ori-finalize は単一 slice 終了）

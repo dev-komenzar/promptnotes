@@ -1,6 +1,6 @@
 ---
 name: ori-bug
-description: 人間が見つけたバグを README の 4 ケース（domain / impl / spec / cross-slice）に triage し、対応する動線を案内する。実行はしない、ルーティングのみ
+description: 既存 slice のバグ報告を 4 ケース（domain / impl / spec / cross-slice）に triage し、対応する recovery flow を案内する。自動で fix は実行しない。トリガー: バグ / bug / fix / 直らない / エラー / 壊れている / 不具合 / 動かない
 ---
 
 ユーザが `/ori-bug` を呼んだ際、**バグの所在を ori graph 上のどのノードに帰属させるか**を 4 つの triage 質問で診断し、対応する recovery flow を提案します。**自動で fix は実行しない**——README のケース分類に基づいてユーザを正しい動線へ送るだけ。

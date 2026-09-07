@@ -45,7 +45,8 @@ description: ori workspace を初期化し distill-ddd phase 1 にユーザを�
 5. **状態確認**：`.ori/` 配下の構造を `ls -la .ori/` で確認し、ユーザに表示
 6. **次ステップ提示**：
    - distill-ddd phase 1 を始めるなら `/ori-distill phase=discovery` を呼ぶ
-   - pattern 決定 / framework scaffold は `/ori-arch` に委譲
+   - **アーキテクチャ・スタック決定 (architect-expert agent が要件対話から
+     `.ori/architecture.md` を生成)** は `/ori-arch` に委譲
    - 既存 docs があれば手動配置 + 検証
 7. **config 確認**：`.apm/agents/` の config を読み、現在の agent / phase 別モデル割当を表示
 
