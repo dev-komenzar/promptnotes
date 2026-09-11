@@ -1,0 +1,15 @@
+scenario_id: s3-flush-on-blur
+derived_at: 2026-09-11T13:12:09.325Z
+beads:
+  epic: ori-scenario-s3-flush-on-blur
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+dirty: []
