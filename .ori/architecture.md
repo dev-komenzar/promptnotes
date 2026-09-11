@@ -8,7 +8,7 @@ workspace:
       path: apps/promptnotes
       runtime:
         mode: local
-        build: bun run tauri build --debug --no-bundle
+        build: bun run build:test
         binary: apps/promptnotes/src-tauri/target/debug/app
         target: host
         runner: wdio

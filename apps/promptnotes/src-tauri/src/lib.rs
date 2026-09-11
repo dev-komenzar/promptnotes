@@ -7,27 +7,26 @@ pub mod user_preferences;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build());
+    #[cfg(debug_assertions)]
+    let builder = builder
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .level(log::LevelFilter::Info)
+                .build(),
+        )
+        .plugin(tauri_plugin_wdio::init());
+    builder
         .manage(Arc::new(note_feed::shared::adapters::InMemoryNoteFeedState::new()))
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),
         ))
-        .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
-            Ok(())
-        })
         // S13 (.ori/domain/validation.md#s13-quit-flush) の連続 Flush は
         // frontend (PageMain.svelte) が CloseRequested を JS で intercept し、
         // pendingFlushRegistry を順次 await → window.destroy() する案 1 で実装。

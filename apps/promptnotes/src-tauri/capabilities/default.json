@@ -3,5 +3,12 @@
 	"identifier": "default",
 	"description": "enables the default permissions",
 	"windows": ["main"],
-	"permissions": ["core:default", "core:window:allow-destroy", "fs:default", "dialog:default", "updater:default"]
+	"permissions": [
+		"core:default",
+		"core:window:allow-destroy",
+		"fs:default",
+		"dialog:default",
+		"updater:default",
+		"wdio:default"
+	]
 }
