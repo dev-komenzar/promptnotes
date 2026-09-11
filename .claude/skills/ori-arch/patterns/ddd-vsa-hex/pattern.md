@@ -219,3 +219,73 @@ cross-cutting を slice 内部に閉じ込めると、slice 間の対称性が�
 app-level に重複が出る。逆に最初から app-level に寄せると BC ごとの方言が
 作りにくくなる。`shared/` の 2 段構成 (BC-internal + app-level)はそのバランスを
 取るためのもの。
+
+## Test conventions (stack-agnostic)
+
+`Slice Definition of Done` (rule 2/3) が要求する「boundary 経由 test」と
+「production wiring fixture」を、**言語・テストライブラリ中立**なメタルールの
+形で具体化する。実際のランナー / assertion 記法 / property test ライブラリは
+**stack-specific** (各 `stacks/<stack>/test.md`) に置き、本節は関心事としての
+メタルールだけを担う。
+
+### トレーサビリティ
+
+- **テストは spec.md のセクションを引用する**: `describe` / `it` 名に
+  `spec.md#<section-id>` (例: `spec.md#invariants`) を必ず含め、domain 文書と
+  テストの相互 grep を可能にする。
+- **feature/scenario ID を最外殻に**: `describe('slice:<slice-id>', ...)` /
+  `describe('scenario:<scenario-id>', ...)` のように、該当 ID を最外殻の
+  `describe` に置く (grep 容易性)。
+
+### Mock 境界
+
+- **Mock / fake は adapter 境界のみ**: domain 純粋コードは実物を使う。
+  mock 注入は `infrastructure/` 配下に限定し、slice DoD test では行わない
+  (rule 3 違反)。
+- **adapter 以外の境界 (clock / fs 等の副作用) は引数注入 / trait 抽象で**:
+  `Date.now()` やファイル I/O を domain/application に直書きしない。
+
+### GIVEN / WHEN / THEN
+
+- Gherkin 風の `GIVEN / WHEN / THEN` コメントで `validation.md` シナリオを
+  残してよい (テストを自然言語 scenario に対応づける)。
+
+### DoD boundary fixture (rule 2/3) {#dod-boundary-fixture}
+
+- boundary test は **外部境界 (生成済み binding / public_entry) 経由のみ**。
+  `application/` / `infrastructure/` への直 import は DoD 違反
+  (`/ori-doctor` が AST 検査で `dod-violation` 起票)。
+- fixture は **production wiring** で組む (rule 3)。fake/mock adapter で組んだ
+  test は DoD カウントに含めない。
+
+### UI selector / testid 規約 (stack-agnostic)
+
+UI framework を採用するプロジェクトに適用する selector 優先順位と testid 命名。
+
+- **層別デフォルト**:
+  - Component test 層 — `getByRole` / `getByLabelText` を第一推奨。
+    `data-testid` は role 不能時の fallback のみ (a11y 回帰を同時検出)。
+  - E2E 層 — `data-testid` を第一推奨 (実 DOM/CSS で role 安定性が落ちるため)。
+- **testid 命名は VSA namespace を直接反映** (separator は `.`、BC prefix は
+  collision 時のみ escalation):
+
+  | 配置 | testid pattern | 例 |
+  | --- | --- | --- |
+  | slice presentation 集約要素 | `<slice-id>` | `data-testid="complete-task"` |
+  | slice presentation 子要素 | `<slice-id>.<elem>` | `data-testid="complete-task.submit"` |
+  | ui-widget | `widget.<id>.<elem>` | `data-testid="widget.task-list.row"` |
+  | ui-page | `page.<id>.<elem>` | `data-testid="page.tasks.header"` |
+  | shared (BC 共有 UI) | `shared.<area>.<elem>` | `data-testid="shared.toast.message"` |
+
+- `<elem>` は機能名 (`submit` / `cancel` / `row`) 。実装詳細名 (`button1`) 禁止。
+  動的要素は固定 testid + `data-key={id}` で絞る。
+- prod ビルドでの testid strip はデフォルト残す (stack-specific / downstream で
+  bundler plugin 導入は任意)。
+
+### 責務分離 (正典と stack-specific)
+
+- 本節は **stack-agnostic なメタルールと UI selector 規約**。
+  ランナー名・property test ライブラリ・assertion 記法などの concretion は
+  `stacks/<stack>/test.md` を正典とする。instructions
+  (`ddd-test.instructions.md` 等) は両者のポインタのみを持ち、concretion を
+  二重管理しない。

@@ -1,0 +1,39 @@
+# ori-generate infra catalog (ori-bc9 / D6)
+#
+# 既知 infra service の既定定義。scenario manifest の infrastructure.services に
+# 名前が列挙された際に /ori-generate がここから解決する (サービス名解決ルール ②)。
+# manifest 側で infrastructure.overrides.<name>.{image, ports, environment} により上書き可。
+#
+# 各 entry の field:
+#   image        : docker image (必須)
+#   ports        : compose 形式 ["host:container", ...]
+#   environment  : infra 自身の env (認証情報等は scenario 実行専用の既定値)
+#   healthcheck  : compose healthcheck block (TCP probe を image ファミリ別 command に翻訳したもの)
+#   app_env      : 参加 app service に追記すべき接続 env の既定値 (catalog 既定値は生成、
+#                  app 固有値は導出不能なら TBD マーカー — design.md §9)
+infra:
+  postgres:
+    image: postgres:16
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    app_env:
+      DATABASE_URL: postgres://app:app@postgres:5432/app
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    app_env:
+      REDIS_URL: redis://redis:6379

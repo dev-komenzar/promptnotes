@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ori-derive: resolve upstream sections and compute hashes.
 #
-# Usage: resolve-upstream.sh <slice-id> [--manifest <path>] [--project-root <dir>]
+# Usage: resolve-upstream.sh <slice-id | scenario-id> [--manifest <path>] [--project-root <dir>]
 #
-# Reads `.ori/slices/<slice-id>/manifest.yaml` (or --manifest path) and emits
-# one line per derives_from entry:
+# Reads `.ori/slices/<id>/manifest.yaml` or `.ori/scenarios/<id>/manifest.yaml`
+# (or --manifest path) and emits one line per derives_from entry:
 #
 #   <ref> <sha-prefix>          (file resolved, hash computed)
 #   <ref> NOT_FOUND  (to stderr) (file missing)
@@ -40,7 +40,7 @@ ID=""
 
 usage() {
   cat >&2 <<'EOF'
-Usage: resolve-upstream.sh <slice-id> [options]
+Usage: resolve-upstream.sh <slice-id | scenario-id> [options]
 
 Options:
   --manifest <path>       Override manifest.yaml location (skip slice-id lookup)
@@ -97,6 +97,9 @@ else
     exit 1
   fi
   MANIFEST="$PROJECT_ROOT/.ori/slices/$ID/manifest.yaml"
+  if [[ ! -f "$MANIFEST" && -f "$PROJECT_ROOT/.ori/scenarios/$ID/manifest.yaml" ]]; then
+    MANIFEST="$PROJECT_ROOT/.ori/scenarios/$ID/manifest.yaml"
+  fi
 fi
 
 if [[ ! -f "$MANIFEST" ]]; then

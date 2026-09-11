@@ -1,6 +1,6 @@
 ---
 name: ori-architect
-description: /ori-arch から委譲され、要件対話 (platforms / os_integration / ui_native 等) から `.ori/architecture.md` を動的生成する。DDD + vsa-hex の核 (invariants) は不変、ビルド/配信/OS 統合の差は decision_points としてメイン session で対話確定する。/ori-init → /ori-arch の次に呼ばれる。
+description: /ori-arch の「ori artifact 追加」step として委譲され、要件対話 (platforms / os_integration / ui_native 等) から `.ori/architecture.md` を動的生成する。DDD + vsa-hex の核 (invariants) は不変、ビルド/配信/OS 統合の差は decision_points としてメイン session で対話確定する。
 ---
 
 `/ori-arch` の「ori artifact 追加」step として動作する。**このスキルはメイン session で
@@ -12,15 +12,16 @@ ori-c79 で agent として定義したが ori-8gz でスキルへ書き直し�
 - 入力：
   - ユーザ要件（platforms / os_integration / ui_native / language / BC 名）— 対話で引き出す
   - app 名（`.ori/config.yaml` の `workspace.apps[0].name`）
-  - upstream framework init 済みの `apps/<app>/`（`/ori-arch` の手順 5 で案内済み）
+  - upstream framework init 済みの `apps/<app>/`（`/ori-arch` の手順 2 で案内済み）
 - 出力：`.ori/architecture.md` 1 ファイルのみ。それ以外 ori は target にファイルを足さない
-  - frontmatter: ArchitectureSpec (`version: 1`、root/roots、layer_sets、slice_internal、
-    cross_slice、cross_bc、cross_root、`phase_hooks:`)
+  - frontmatter: ArchitectureSpec (`version: 1`、workspace (runtime blocks)、root/roots、
+    layer_sets、slice_internal、cross_slice、cross_bc、cross_root、`phase_hooks:`、
+    `scenario_test_runner:`)
   - 本文: `## Decisions` に decision_points の回答を記録
 
 ## 手順
 
-1. **elicit** — `questions:` を順に提示し、ユーザの回答を得る（推奨 + 上書き可。ハイブリッド UI 対応）
+1. **elicit** — `questions:` を順に提示し、ユーザの回答を得る（推奨 + 上書き可。ハイブリッド UI 対応）。pattern は `ddd-vsa-hex`（唯一の curated pattern）で固定のため質問対象外。
 2. **decide** — decision_points を確定し、roots（id / language / adapter / slice_root /
    public_entry）と layer_sets を決める
 3. **compose** — `invariants:` から layer graph / slice_internal / boundaries を選択・結合して
@@ -193,12 +194,54 @@ questions:
     affects: roots[].language / adapter、slice_internal の選択 (ts / rs)
   bc_names:
     prompt: "最初の BC 名を決めてください (識別子規則: TS=kebab-case / Rust=snake_case)"
-    default: (ユーザ入力)
+    default: task-management
     affects: roots[].slice_root と public_entry パス
   cross_root_contracts:
     prompt: root 間で共有する生成物 (type bridge 等) があれば宣言してください
     default: []
     affects: cross_root エントリ、phase_hooks の要否
+```
+
+## runtime recipes
+
+scenario 実行モデル (design.md §9) の起動知識。scenario に参加する app は
+`workspace.apps[].runtime` block を書く (D3: SSoT)。mode は decision_points から導出する
+(platforms `web`/`server` → `compose-service`、os_integration `tauri` → `local`)。
+mode 命名は RN/Expo 拡張を見据えた一般化 (`local` + `target: host|ios-simulator|android-emulator`)。
+
+```yaml
+runtime_recipes:
+  modes: [compose-service, local]
+  local_targets: [host, ios-simulator, android-emulator]
+  stacks:
+    typescript:
+      runtime:
+        mode: compose-service        # B′ descriptor (image + command、Dockerfile なし)
+        image: node:22-slim
+        install: corepack enable && pnpm install --frozen-lockfile   # node:22-slim は pnpm 同梱外のため corepack で有効化
+        run: pnpm dev --host 0.0.0.0
+        ports: [5173]               # dev server port (静的宣言、衝突は generate エラー)
+        cache_volumes: [.pnpm-store]
+      scenario_test_runner: playwright
+      runner_deps: ["@playwright/test"]
+    typescript-tauri:
+      runtime:
+        mode: local                 # build-then-test
+        build: pnpm tauri build --debug --no-bundle
+        binary: apps/<app>/src-tauri/target/debug/<app>
+        target: host
+        runner: wdio                # derive の runner chain 優先チェーン 2 で使用
+      scenario_test_runner: wdio    # @wdio/tauri-service 経由で native window を駆動
+      # framework / globals / types まで含める (ori-bc9.5 tauri F-1: v1.4.0 は mocha framework +
+      # @wdio/globals 型 + skipLibCheck を要し、runner_deps 不足だと generate 後の tsc/実行が失敗する)
+      runner_deps: ["@wdio/cli", "@wdio/local-runner", "webdriverio", "@wdio/tauri-service",
+                    "@wdio/mocha-framework", "@wdio/spec-reporter", "@wdio/globals",
+                    "@types/mocha", "@types/node"]
+  notes:
+    - "healthcheck は default TCP probe。runtime.healthcheck: {http: /health} 宣言時のみ HTTP 待機"
+    - runner_deps は /ori-arch がプロジェクト root package.json に pnpm add -D で追加
+    - 新 stack (go / rust backend / RN 等) は recipe をこの知識に追加するだけで参加する
+      (cartesian template 増幅なし)
 ```
 
 ## generation_procedure
@@ -213,7 +256,7 @@ generation_procedure:
     - id: elicit
       action: questions を順に提示し回答を得る (推奨を示し上書きを許可する)
     - id: decide
-      action: decision_points を確定し roots (id / language / adapter / slice_root / public_entry) と layer_sets を決める
+      action: decision_points を確定し roots (id / language / adapter / slice_root / public_entry) と layer_sets を決める。scenario 参加 app の runtime block (runtime recipes 参照) と scenario_test_runner も決める
     - id: compose
       action: invariants から layer graph / slice_internal / boundaries を選択・結合して frontmatter を組み立てる
     - id: generate
@@ -227,6 +270,8 @@ generation_procedure:
     - shared / domain は常に invariants の層構造に従う
     - decision_point の回答は生成物のコメントや本文の "Decisions" 節に残す
     - "frontmatter に phase_hooks: block を含める (hook 不要な stack は phase_hooks: {})"
+    - scenario 参加する app は workspace.apps[].runtime に起動知識を含める (runtime recipes の stack recipe が基準。mode は compose-service | local + target)
+    - scenario_test_runner.runner を stack の主力 runner に設定する (typescript=playwright / typescript-tauri=wdio)
 ```
 
 ## 注意

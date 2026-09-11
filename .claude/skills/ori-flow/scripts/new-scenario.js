@@ -440,9 +440,9 @@ var require_anchors = __commonJS({
       }
       return true;
     }
-    function anchorNames(root2) {
+    function anchorNames(root) {
       const anchors = /* @__PURE__ */ new Set();
-      visit.visit(root2, {
+      visit.visit(root, {
         Value(_key, node) {
           if (node.anchor)
             anchors.add(node.anchor);
@@ -3329,9 +3329,9 @@ var require_stringifyDocument = __commonJS({
       const lines = [];
       let hasDirectives = options.directives === true;
       if (options.directives !== false && doc.directives) {
-        const dir = doc.directives.toString(doc);
-        if (dir) {
-          lines.push(dir);
+        const dir2 = doc.directives.toString(doc);
+        if (dir2) {
+          lines.push(dir2);
           hasDirectives = true;
         } else if (doc.directives.docStart)
           hasDirectives = true;
@@ -8122,11 +8122,16 @@ ${e.cyan(d)}
   }
 });
 
-// packages/skills/ori-sync/src/sync.ts
+// packages/skills/ori-flow/src/new-scenario.ts
 var import_yaml = __toESM(require_dist(), 1);
-import { execSync } from "node:child_process";
-import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
+import { mkdir, writeFile, access, readFile } from "node:fs/promises";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// packages/slice-runner/dist/index.js
+function formatEpicId(kind, id2) {
+  return `ori-${kind}-${id2}`;
+}
 
 // node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/core.mjs
 var LogLevels = {
@@ -8640,8 +8645,8 @@ function createConsola(options = {}) {
 import { formatWithOptions } from "node:util";
 import { sep } from "node:path";
 function parseStack(stack, message) {
-  const cwd = process.cwd() + sep;
-  const lines = stack.split("\n").splice(message.split("\n").length).map((l2) => l2.trim().replace("file://", "").replace(cwd, ""));
+  const cwd2 = process.cwd() + sep;
+  const lines = stack.split("\n").splice(message.split("\n").length).map((l2) => l2.trim().replace("file://", "").replace(cwd2, ""));
   return lines;
 }
 function writeStream(data, stream) {
@@ -9226,267 +9231,93 @@ function _getDefaultLogLevel() {
 }
 var consola = createConsola2();
 
-// packages/skills/ori-sync/src/sync.ts
-var args = process.argv.slice(2);
-function flag(name) {
-  const idx = args.findIndex((a3) => a3 === `--${name}` || a3.startsWith(`--${name}=`));
-  if (idx === -1) return void 0;
-  const a2 = args[idx];
-  if (a2.includes("=")) return a2.split("=").slice(1).join("=");
-  return args[idx + 1];
-}
-function boolFlag(name) {
-  return args.some((a2) => a2 === `--${name}` || a2.startsWith(`--${name}=`));
-}
-var fileArg = flag("file");
-var since = flag("since") ?? "HEAD";
-var check = boolFlag("check");
-var force = boolFlag("force");
-function resolveForceTarget() {
-  const eq = flag("force");
-  if (eq !== void 0 && !eq.startsWith("-")) return eq;
-  const idx = args.indexOf("--force");
-  if (idx !== -1) {
-    const next = args[idx + 1];
-    if (next && !next.startsWith("-")) return next;
-  }
-  return void 0;
-}
-var forceTarget = resolveForceTarget();
-async function exists(p) {
+// packages/skills/ori-flow/src/new-scenario.ts
+async function exists(path) {
   try {
-    await access(p);
+    await access(path);
     return true;
   } catch {
     return false;
   }
 }
-async function findProjectRoot(start) {
-  let d2 = resolve(start);
-  while (d2 !== "/") {
-    if (await exists(join(d2, ".ori"))) return d2;
-    d2 = dirname(d2);
-  }
-  throw new Error("project root not found (.ori/ missing)");
-}
-var root = await findProjectRoot(process.cwd());
-process.chdir(root);
-function gitDiffNames(sinceRef) {
+async function loadTemplate(name) {
+  const templatesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "templates");
+  const tplPath = join(templatesDir, name);
   try {
-    const out = execSync(`git diff --name-only ${sinceRef} -- .ori/domain/`, {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    });
-    return out.split("\n").map((s2) => s2.trim()).filter(Boolean);
+    return await readFile(tplPath, "utf8");
   } catch {
-    return [];
+    return "";
   }
 }
-function normalizeRef(s2) {
-  const [p, sec] = s2.split("#");
-  const path = (p ?? "").replace(/^\.\//, "");
-  return { path, sectionId: sec ? sec.trim() : null };
+function renderTemplate(tpl2, vars) {
+  return tpl2.replace(/\{\{(\w+)\}\}/g, (_3, k2) => vars[k2] ?? `{{${k2}}}`);
 }
-function pathMatches(derivesValue, changedFile) {
-  const ref = normalizeRef(derivesValue);
-  const changed = changedFile.replace(/^\.\//, "");
-  if (ref.path === changed) return true;
-  if (`.ori/${ref.path}` === changed) return true;
-  if (ref.path === changed.replace(/^\.ori\//, "")) return true;
-  return false;
+var args = process.argv.slice(2);
+var id = args.find((a2) => !a2.startsWith("--")) ?? "";
+if (!id || !/^[a-z][a-z0-9-]*$/.test(id)) {
+  consola.error("Usage: new-scenario.js <id>\nscenario id must be lower-kebab-case");
+  process.exit(1);
 }
-async function listManifests() {
-  const out = [];
-  for (const kind of ["slices", "pages", "scenarios"]) {
-    const baseDir = join(root, ".ori", kind);
-    if (!await exists(baseDir)) continue;
-    const entries = await readdir(baseDir, { withFileTypes: true });
-    for (const e2 of entries) {
-      if (!e2.isDirectory()) continue;
-      const dir = join(baseDir, e2.name);
-      const manifestPath = join(dir, "manifest.yaml");
-      if (!await exists(manifestPath)) continue;
-      try {
-        const yaml = await readFile(manifestPath, "utf8");
-        const manifest = (0, import_yaml.parse)(yaml);
-        const kindType = kind === "slices" ? "slice" : kind === "pages" ? "page" : "scenario";
-        out.push({ id: e2.name, kind: kindType, dir, manifest });
-      } catch (err) {
-        consola.warn(`failed to parse ${relative(root, manifestPath)}: ${err.message}`);
-      }
-    }
-  }
-  return out;
+var cwd = process.cwd();
+var dir = join(cwd, ".ori/scenarios", id);
+if (await exists(dir)) {
+  consola.error(`Scenario already exists: .ori/scenarios/${id}`);
+  process.exit(1);
 }
-function collectDerivedRefs(manifest) {
-  const refs = [];
-  if (Array.isArray(manifest?.derives_from)) {
-    for (const r3 of manifest.derives_from) if (typeof r3 === "string") refs.push(r3);
-  }
-  if (Array.isArray(manifest?.relations)) {
-    for (const rel of manifest.relations) {
-      if (rel && rel.type === "derives_from" && typeof rel.target === "string") {
-        refs.push(rel.target);
-      }
-    }
-  }
-  return refs;
+await mkdir(dir, { recursive: true });
+var tpl = await loadTemplate("scenario-manifest.yaml.tpl");
+var manifestContent;
+if (tpl) {
+  manifestContent = renderTemplate(tpl, { id });
+} else {
+  manifestContent = (0, import_yaml.stringify)({
+    scenario_id: id,
+    type: "scenario",
+    derives_from: [],
+    relations: [],
+    implementation: { language: "typescript", primary_bc: "TODO", generates: [] }
+  });
 }
-async function appendDirty(statusPath, newEntries) {
-  let status = {};
-  if (await exists(statusPath)) {
-    const raw = await readFile(statusPath, "utf8");
-    status = (0, import_yaml.parse)(raw) ?? {};
-  }
-  const existing = Array.isArray(status.dirty) ? status.dirty : [];
-  const key = (e2) => `${e2.source.path}#${e2.source.sectionId ?? ""}|${e2.affected_phase}|${e2.reason ?? ""}`;
-  const seen = new Set(existing.map(key));
-  let added = 0;
-  for (const e2 of newEntries) {
-    if (seen.has(key(e2))) continue;
-    existing.push(e2);
-    seen.add(key(e2));
-    added++;
-  }
-  status.dirty = existing;
-  await writeFile(statusPath, (0, import_yaml.stringify)(status), "utf8");
-  return added;
-}
-async function generateProposal(forcedPath) {
-  const proposalsDir = join(root, ".ori/proposals");
-  await mkdir(proposalsDir, { recursive: true });
-  const rel = relative(root, resolve(root, forcedPath));
-  const segs = rel.split("/");
-  let owner = "unknown";
-  if (segs[0] === ".ori" && (segs[1] === "slices" || segs[1] === "pages") && segs[2]) {
-    owner = segs[2];
-  }
-  const manifests = await listManifests();
-  const ownerEntry = manifests.find((m2) => m2.id === owner);
-  const upstream = ownerEntry ? collectDerivedRefs(ownerEntry.manifest) : [];
-  const targetSlug = upstream[0] ? upstream[0].replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : "target";
-  const date = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  const file = join(proposalsDir, `${date}-${owner}-${targetSlug}.md`);
-  const body = `---
-date: ${date}
-slice: ${owner}
-edited_file: ${rel}
-upstream:
-${upstream.length ? upstream.map((u3) => `  - ${u3}`).join("\n") : "  - <unknown>"}
-status: pending
+await writeFile(join(dir, "manifest.yaml"), manifestContent, "utf8");
+var specStub = `---
+ori:
+  schema:
+    propagation_level: file
+coherence:
+  derives_from: []
 ---
 
-# Proposal: propagate edits from \`${rel}\` upstream
+# ${id} \u2014 Scenario Specification
 
-This proposal was auto-generated by \`/ori-sync --force\` because a derived
-document was edited directly. Human review is required before the change
-can be merged into the source of truth.
+> This file is a derived document. Edit the source manifest + domain docs and re-run \`/ori-flow ${id} phase=derive\`. Use \`/ori-sync\` if you need to edit here directly; ori will create a proposal for the upstream review.
 
-## Edited file
-- \`${rel}\`
+## \u6982\u8981 {#overview}
 
-## Suggested upstream targets
-${upstream.length ? upstream.map((u3) => `- \`${u3}\``).join("\n") : "- _(no derives_from declared; please specify manually)_"}
+TODO
 
-## Next steps
-1. Inspect the diff in \`${rel}\` (e.g. \`git diff -- ${rel}\`).
-2. Decide how to reflect those edits in the upstream targets above.
-3. Run \`/ori-review-proposals\` to accept / reject / merge this proposal.
+## \u30B7\u30CA\u30EA\u30AA\u30B9\u30C6\u30C3\u30D7 {#scenario-steps}
+
+TODO
+
+## \u30C6\u30B9\u30C8\u89B3\u70B9 {#test-points}
+
+TODO
+
+## \u5B9F\u88C5\u30CE\u30FC\u30C8 {#impl-notes}
+
+TODO
 `;
-  await writeFile(file, body, "utf8");
-  return file;
-}
-async function run() {
-  let changedFiles;
-  if (fileArg) {
-    changedFiles = [relative(root, resolve(process.cwd(), fileArg)) || fileArg];
-  } else {
-    changedFiles = gitDiffNames(since);
-  }
-  let proposalPath;
-  if (force) {
-    const target = forceTarget ?? fileArg;
-    if (!target) {
-      consola.error("--force requires a target path (e.g. --force <path> or --file=<path> --force)");
-      process.exit(2);
-    }
-    proposalPath = await generateProposal(target);
-    consola.success(`generated proposal: ${relative(root, proposalPath)}`);
-    if (!changedFiles.length) changedFiles = [relative(root, resolve(root, target))];
-  }
-  if (!changedFiles.length) {
-    consola.success(`/ori-sync: no domain changes since ${since}`);
-    if (check) {
-      const dirtyRemaining = await countRemainingDirty();
-      if (dirtyRemaining > 0) {
-        consola.error(`${dirtyRemaining} dirty mark(s) still pending across slices/pages`);
-        process.exit(1);
-      }
-    }
-    process.exit(0);
-  }
-  consola.info(`/ori-sync: ${changedFiles.length} changed file(s) (since=${since})`);
-  for (const f3 of changedFiles) consola.log(`  - ${f3}`);
-  const manifests = await listManifests();
-  const now = (/* @__PURE__ */ new Date()).toISOString();
-  let totalDirty = 0;
-  const affectedIds = [];
-  for (const m2 of manifests) {
-    const refs = collectDerivedRefs(m2.manifest);
-    if (!refs.length) continue;
-    const hits = [];
-    for (const ref of refs) {
-      for (const cf of changedFiles) {
-        if (pathMatches(ref, cf)) {
-          const norm = normalizeRef(ref);
-          hits.push({
-            path: norm.path.startsWith(".ori/") ? norm.path : `.ori/${norm.path}`,
-            sectionId: norm.sectionId
-          });
-        }
-      }
-    }
-    if (!hits.length) continue;
-    const entries = hits.map((h2) => ({
-      source: h2,
-      detected_at: now,
-      affected_phase: "derive",
-      reason: force ? "force" : "edit"
-    }));
-    const statusPath = join(m2.dir, "status.yaml");
-    const added = await appendDirty(statusPath, entries);
-    if (added > 0) {
-      totalDirty += added;
-      affectedIds.push(m2.id);
-      consola.log(`  dirty +${added} \u2192 ${m2.kind}/${m2.id}`);
-    }
-  }
-  if (totalDirty === 0) {
-    consola.success("/ori-sync: no slices/pages affected by these changes");
-  } else {
-    consola.success(`/ori-sync: marked ${totalDirty} dirty entr${totalDirty === 1 ? "y" : "ies"} across ${affectedIds.length} ${affectedIds.length === 1 ? "doc" : "docs"}`);
-    consola.info(`affected: ${affectedIds.join(", ")}`);
-  }
-  if (check) {
-    const dirtyRemaining = await countRemainingDirty();
-    if (dirtyRemaining > 0) {
-      consola.error(`${dirtyRemaining} dirty mark(s) still pending across slices/pages`);
-      process.exit(1);
-    }
-  }
-}
-async function countRemainingDirty() {
-  const manifests = await listManifests();
-  let n2 = 0;
-  for (const m2 of manifests) {
-    const statusPath = join(m2.dir, "status.yaml");
-    if (!await exists(statusPath)) continue;
-    try {
-      const data = (0, import_yaml.parse)(await readFile(statusPath, "utf8")) ?? {};
-      if (Array.isArray(data.dirty)) n2 += data.dirty.length;
-    } catch {
-    }
-  }
-  return n2;
-}
-await run();
+await writeFile(join(dir, "spec.md"), specStub, "utf8");
+await writeFile(join(dir, "notes.md"), `# ${id} \u2014 Scenario implementation notes
+
+`, "utf8");
+var status = {
+  scenario_id: id,
+  derived_at: (/* @__PURE__ */ new Date()).toISOString(),
+  beads: { epic: formatEpicId("scenario", id), current_phase: null, completion: [] },
+  phases: {},
+  dirty: []
+};
+await writeFile(join(dir, "status.yaml"), (0, import_yaml.stringify)(status), "utf8");
+consola.success(`Created .ori/scenarios/${id}/ (manifest, spec, notes, status)`);
+consola.info("Next: edit manifest.yaml to add derives_from references, then run the derive phase");

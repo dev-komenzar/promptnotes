@@ -25,7 +25,7 @@ description: /ori-flow phase 4。failing test を GREEN にする最小実装を
   - `<source_root>/<bc>/slices/<slice-id>/tests/*.test.ts`（phase 3 で RED 確認済み）
   - 実装規約 (SSoT):
     - `.apm/instructions/ddd-typescript.instructions.md`
-    - `.apm/instructions/ddd-rust.instructions.md` (Tauri stack の場合、特に "commands.rs (Tauri stack)" section)
+    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` (Tauri stack の場合、特に "#commands-rs-required" section)
     - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` (Slice DoD)
     - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/` (worked code)
 - 出力：
@@ -87,13 +87,13 @@ skill 起動時に以下の順序で resolve:
    - 関連する VO / entity / workflow ステップを `<base>/domain/` に追加
    - I/O が必要なら `<base>/infrastructure/` に repository 実装を追加し、`<base>/application/` で DI
 
-3. **Tauri stack の場合: Rust 側を最小実装で GREEN にする** (DoD rule 2/3/4 → `pattern.md` + `ddd-rust.instructions.md` の "commands.rs (Tauri stack)"):
-   1. **stub `commands.rs` の `Err("pending")` を real impl で置換**: thin adapter として `application::handle_<verb>_<noun>` を呼ぶだけ。domain logic は書かない (`ddd-rust.instructions.md` の Green 条件 #1)
-   2. **`application.rs` / `infrastructure.rs` の production adapter 実装**: domain 関数を組み合わせ、infrastructure adapter (DB / repository / clock 等) を DI で受け取る。Repository trait は domain で宣言、実装は infrastructure (`ddd-rust.instructions.md` の依存方向)
+3. **Tauri stack の場合: Rust 側を最小実装で GREEN にする** (DoD rule 2/3/4 → `pattern.md` + `stacks/typescript-tauri/test.md` の "#commands-rs-required"):
+   1. **stub `commands.rs` の `Err("pending")` を real impl で置換**: thin adapter として `application::handle_<verb>_<noun>` を呼ぶだけ。domain logic は書かない (`stacks/typescript-tauri/test.md` の Green 条件 #1)
+   2. **`application.rs` / `infrastructure.rs` の production adapter 実装**: domain 関数を組み合わせ、infrastructure adapter (DB / repository / clock 等) を DI で受け取る。Repository trait は domain で宣言、実装は infrastructure (`stacks/rust/test.md` の依存方向)
    3. **`lib.rs` の `tauri_specta::Builder::commands![...]` に当該 command を追加配線** (Green 条件 #2)
    4. **Cargo deps の追加** (必要な場合): scaffold 由来の `tauri-specta` / `specta` / `specta-typescript` は ori-fzr.5 の `install-tauri-scaffold.sh` で配置済み。新規に必要な crate (例: `serde` / `chrono` / `uuid`) は `cd apps/<app>/src-tauri && cargo add <crate>` で追加
    5. **package.json deps の追加** (TS 側 fixture 用): `@tauri-apps/api/mocks` を含む `@tauri-apps/api` は upstream `pnpm tauri init` で配置済み。新規 fixture 依存 (例: `vitest`) が未配置なら `pnpm -F <app> add -D <pkg>`
-   6. **`shared/test-fixtures/setupProductionBuilder.ts` に dispatch arm を追加**: 新 command の `case "<cmd_name>"` を追加し、production wiring (実 adapter set + Rust handler invoke) を仕込む。fake/mock を返さない (DoD rule 3)。雛形は `install-tauri-scaffold.sh` 配置のもの、書き方は `ddd-rust.instructions.md` を参照
+   6. **`shared/test-fixtures/setupProductionBuilder.ts` に dispatch arm を追加**: 新 command の `case "<cmd_name>"` を追加し、production wiring (実 adapter set + Rust handler invoke) を仕込む。fake/mock を返さない (DoD rule 3)。雛形は `install-tauri-scaffold.sh` 配置のもの、書き方は `stacks/typescript-tauri/test.md` を参照
 
 4. **層配置のチェック**:
    - `domain/` に I/O 依存がないか (TS / Rust 共通)
@@ -164,7 +164,7 @@ skill 起動時に以下の順序で resolve:
 | Tauri stack の Rust 側 (commands.rs / application.rs / infrastructure.rs / domain.rs) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/` |
 | Tauri stack の TS 側 (shared/ipc / shared/test-fixtures / boundary test) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/` |
 | Slice DoD の rule 全文 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
-| commands.rs Green 条件 (Tauri stack) | `.apm/instructions/ddd-rust.instructions.md` "Slice 完了の必須成果物: commands.rs" section |
+| commands.rs Green 条件 (Tauri stack) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` "#commands-rs-required" section |
 | 境界契約宣言の写し方 | `.apm/instructions/feature-spec.instructions.md` "境界契約 section 必須化" |
 | production fixture 雛形 | ori-init scaffold (`install-tauri-scaffold.sh` 配置物) — `apps/<app>/src/<bc>/shared/test-fixtures/setupProductionBuilder.ts` |
 | `phase_hooks` 由来 specta 再生成 | `architecture.md` frontmatter `phase_hooks.flow-impl-green-post` + `apm-scripts/specta-build.sh` |

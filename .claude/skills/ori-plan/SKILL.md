@@ -37,7 +37,7 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
 | --- | --- |
 | Slice DoD rules 1-4 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
 | b3 emit 仕様 (stub → invoke_handler → specta rebuild → fixture → dod.test.ts) | `.apm/skills/ori-test-red/SKILL.md` "手順" (ori-fzr.8 で normative 化) |
-| production fixture 規約 (`setupProductionBuilder()`) | `.apm/instructions/ui-test.instructions.md` "Production fixture convention" |
+| production fixture 規約 (`setupProductionBuilder()`) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` "#setup-production-builder" |
 | 境界契約 section 必須化 | `.apm/instructions/feature-spec.instructions.md` "境界契約 section 必須化" |
 | `expected_deliverables` schema | `.apm/instructions/feature-manifest.instructions.md` "expected_deliverables の宣言" |
 

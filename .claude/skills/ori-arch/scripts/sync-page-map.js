@@ -8400,16 +8400,54 @@ var CrossSliceSchema = external_exports.object({
   prohibited_direct: external_exports.boolean().default(true),
   via: external_exports.array(external_exports.string()).default([])
 }).passthrough();
+var ScenarioTestRunnerSchema = external_exports.object({
+  runner: external_exports.string(),
+  config_path: external_exports.string().optional(),
+  command: external_exports.string().optional()
+}).passthrough();
+var RunTargetSchema = external_exports.enum(["host", "ios-simulator", "android-emulator"]);
+var ComposeServiceRuntimeSchema = external_exports.object({
+  mode: external_exports.literal("compose-service"),
+  image: external_exports.string().describe("docker image (B\u2032 descriptor\u3001Dockerfile \u306A\u3057)"),
+  install: external_exports.string().optional().describe("install command (e.g. pnpm install)"),
+  build: external_exports.string().optional().describe("build command"),
+  run: external_exports.string().describe("service \u8D77\u52D5 command"),
+  ports: external_exports.array(external_exports.number().int().positive()).default([]).describe("host ports (\u9759\u7684\u5BA3\u8A00\u3002\u540C\u4E00 scenario \u5185\u885D\u7A81\u306F generate \u30A8\u30E9\u30FC)"),
+  healthcheck: external_exports.object({ http: external_exports.string().describe("HTTP \u5F85\u6A5F path (\u4F8B: /health)\u3002default \u306F TCP probe") }).passthrough().optional(),
+  cache_volumes: external_exports.array(external_exports.string()).default([])
+}).passthrough();
+var LocalRuntimeSchema = external_exports.object({
+  mode: external_exports.literal("local"),
+  build: external_exports.string().optional().describe("binary build command (\u4F8B: pnpm tauri build --debug --no-bundle)"),
+  binary: external_exports.string().describe("\u30D3\u30EB\u30C9\u6E08\u307F binary path (build-then-test)"),
+  target: RunTargetSchema.describe("\u5B9F\u884C\u57FA\u76E4"),
+  runner: external_exports.string().describe("UI \u99C6\u52D5 runner (\u4F8B: wdio)\u3002derive \u306E runner chain \u512A\u5148\u30C1\u30A7\u30FC\u30F3 2 \u3067\u4F7F\u7528")
+}).passthrough();
+var AppRuntimeSchema = external_exports.discriminatedUnion("mode", [
+  ComposeServiceRuntimeSchema,
+  LocalRuntimeSchema
+]);
+var AppSchema = external_exports.object({
+  name: external_exports.string(),
+  path: external_exports.string(),
+  runtime: AppRuntimeSchema.optional()
+}).passthrough();
+var WorkspaceSchema = external_exports.object({
+  apps_root: external_exports.string().default("apps"),
+  apps: external_exports.array(AppSchema).min(1)
+}).passthrough();
 var FrontmatterSchema = external_exports.object({
   version: external_exports.literal(1),
   default_root: external_exports.string().optional(),
+  workspace: WorkspaceSchema.optional(),
   root: RootSchema.optional(),
   roots: external_exports.array(RootSchema).optional(),
   cross_root: external_exports.array(CrossRootSchema).optional(),
   layer_sets: external_exports.record(LayerSetSchema),
   slice_internal: external_exports.record(SliceInternalSchema).optional(),
   cross_slice: CrossSliceSchema,
-  page_map_marker: external_exports.string().optional()
+  page_map_marker: external_exports.string().optional(),
+  scenario_test_runner: ScenarioTestRunnerSchema.optional()
 }).passthrough().refine((v2) => v2.root != null || v2.roots != null && v2.roots.length > 0, {
   message: "either `root` (single-root shorthand) or non-empty `roots[]` must be present"
 });
