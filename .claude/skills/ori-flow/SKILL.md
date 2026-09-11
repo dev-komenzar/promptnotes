@@ -43,11 +43,16 @@ node ./scripts/new-slice.js <id> [--type=command|query]
 # page scaffold
 node ./scripts/new-page.js <id>
 
-# scenario scaffold
+# scenario scaffold — id は .ori/domain/validation.md の H2 section anchor と 1:1
 node ./scripts/new-scenario.js <id>
+
+# validation.md の scenario section anchor 一覧 + scaffold 済み coverage の確認
+node ./scripts/new-scenario.js --list-validation
 ```
 
 manifest テンプレートは skill bundle 内の `./templates/slice-manifest.yaml.tpl` / `./templates/page-manifest.yaml.tpl` / `./templates/scenario-manifest.yaml.tpl` から読み込まれる（SSoT）。bundle 隣接 (`scripts/` の sibling) にあるため install 場所に依存せず解決される。
+
+**scenario scaffold の機械 guard（id 創作防止）**: `new-scenario.js <id>` は次の場合にエラー停止する — ① `.ori/domain/validation.md` が存在しない ② id が validation.md の `## Scenario ... {#anchor}` と一致しない。新規 workflow の場合は先に validation.md に section を追加する（`scenario.instructions.md` §id-convention）。
 
 ## 引数
 

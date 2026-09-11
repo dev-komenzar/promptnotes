@@ -105,12 +105,13 @@ description: /ori-flow phase 1。manifest の derives_from とドメイン文書
 
 ### scenario workflow
 
-2. **scenario 存在確認**：
+2. **scenario 存在確認**（script は ori-generate skill bundle にある — ori-derive bundle には同梱されない）：
    ```bash
-   bash ./scripts/check-scenario-exists.sh <scenario-id>
+   bash .apm/skills/ori-generate/scripts/check-scenario-exists.sh <scenario-id>
    ```
    - exit 0: 存在 → 次のステップへ
    - exit 2: 類似候補あり → ユーザに「これですか？」と確認、Yes なら正しい id で再開
+   - exit 3: 未 scaffold だが validation.md に一致する section anchor がある（scenario id = anchor、1:1）→ ユーザ確認の上 `new-scenario.js <id>`（ori-flow skill bundle）で scaffold するか確認
    - exit 1: 未発見 → 新規 scenario 作成を**ユーザに確認**してから進める
 3. **manifest.yaml の読み込み**：`.ori/scenarios/<id>/manifest.yaml` を Read。`derives_from:` が空ならエラー停止し「先に DDD phase で domain を整備するか、manifest に upstream を追記してください」と案内
 4. **upstream section の取得**：

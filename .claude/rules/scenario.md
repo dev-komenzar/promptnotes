@@ -71,9 +71,16 @@ scenario の manifest.yaml は以下のフィールドを持つ:
 
 ### 必須フィールド {#required-fields}
 
-- **`scenario_id`**: kebab-case。ファイルパス・beads issue ID と連動するため **rename 禁止**
+- **`scenario_id`**: kebab-case。**`.ori/domain/validation.md` の H2 section anchor と 1:1**（§id-convention 参照）。ファイルパス・beads issue ID と連動するため **rename 禁止**
 - **`type`**: `scenario` 固定
-- **`derives_from`**: ドメイン文書の `path` または `path#section-id` のリスト
+- **`derives_from`**: ドメイン文書の `path` または `path#section-id` のリスト。**`domain/validation.md#<scenario-id>` を必ず含める**（1:1 anchor）。任意で workflow section 等を追加できる
+
+### id 規約 {#id-convention}
+
+- **source**: `.ori/domain/validation.md` の H2 section anchor（例: `## Scenario S1: ... {#s1-note-created-happy}` → scenario id = `s1-note-created-happy`）。**validation.md が scenario id の registry** であり、id を創作する場合は先に validation.md へ section を追加する
+- **1:1 対応**: 1 scenario = 1 validation section。複数の validation section を 1 scenario で cover したい場合は、先に validation.md 側で section を統合する
+- **列挙**: `new-scenario.js --list-validation`（ori-flow skill bundle の `scripts/`）で anchor 一覧と scaffold 済み coverage を確認できる
+- **機械 guard**: `new-scenario.js <id>` は id が validation.md の anchor と一致しない場合・validation.md が存在しない場合にエラー停止する（推測で id を作らせない）
 
 ### オプションフィールド {#optional-fields}
 
@@ -96,7 +103,7 @@ scenario_id: order-flow-e2e
 type: scenario
 derives_from:
   - domain/workflows.md#order-workflow
-  - domain/validation.md#order-validation
+  - domain/validation.md#order-flow-e2e
 pages:
   - order-page
   - payment-page
@@ -123,7 +130,7 @@ infrastructure:
 ## 作成タイミング {#creation-timing}
 
 1. **DDD pipeline 完了**: `/ori-distill` で workflows + validation が整備される
-2. **manifest 自動生成**: `/ori-sync` が scenario manifest の雛形を生成（人間が確認・修正）
+2. **manifest scaffold**: `new-scenario.js <id>`（ori-flow skill bundle の `scripts/`）。id は validation.md の section anchor から選択する（`--list-validation` で anchor 一覧と coverage を確認。§id-convention）。`/ori-arch` 完了時の次アクション・`/ori-feature-status` の coverage 表示が導線になる
 3. **beads dep 設定**: 参加 slice の beads issue に `bd depends` が自動設定
 4. **全 slice 完了で unblock**: 参加 slice が全て完了したら、scenario の `/ori-flow` が unblock
 

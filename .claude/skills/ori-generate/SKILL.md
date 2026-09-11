@@ -36,6 +36,7 @@ description: /ori-flow phase 2。scenario spec からテストコード・runner
    ```
    - exit 0: 存在 → 次のステップへ
    - exit 2: 類似候補あり → ユーザに「これですか？」と確認、Yes なら正しい id で再開
+   - exit 3: 未 scaffold だが validation.md に一致する section anchor がある（scenario id = anchor、1:1）→ ユーザ確認の上 `new-scenario.js <id>`（ori-flow skill bundle）で scaffold するか確認
    - exit 1: 未発見 → 新規 scenario 作成を**ユーザに確認**してから進める
 
 2. **manifest.yaml の読み込み**：`.ori/scenarios/<id>/manifest.yaml` を Read。`infrastructure.services` が空ならエラー停止し、「先に manifest に infrastructure.services を追記してください」と案内

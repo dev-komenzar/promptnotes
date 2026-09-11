@@ -1,11 +1,11 @@
 lockfile_version: '1'
-generated_at: '2026-09-01T09:46:43.339321+00:00'
-apm_version: 0.21.0
+generated_at: '2026-09-11T12:52:30.605107+00:00'
+apm_version: 0.29.0
 dependencies:
 - repo_url: dev-komenzar/ori
   name: ori
   host: github.com
-  resolved_commit: 89cacd997c632ff439146287366a1c62a107091a
+  resolved_commit: c3faebcaac5bd19ca9bd135ed6d31252c3f66a5f
   version: 0.3.0
   package_type: apm_package
   deployed_files:
@@ -210,10 +210,10 @@ dependencies:
     .claude/rules/feature-spec.md: sha256:3b46a931712c927bf5c68d6936ec5240c14106760c5f89a8826d787d0097fd3f
     .claude/rules/ori-conventions.md: sha256:d0856292b61e0c30b70ad3bc1503452945453e1a67e796e71c7e2f3ba73ba23d
     .claude/rules/scenario-test.md: sha256:69116389b7b1e8d511b21741b6eb71e806006ac8c2acc0a6b997580f2e08df76
-    .claude/rules/scenario.md: sha256:41d6804414a520dc48cdcc06549e69e69c824909e46700f43d78e0b1a4625ffe
+    .claude/rules/scenario.md: sha256:6c209d1c2236f916bd67666ccb9d3abd88bc531526eb7a82fe34f3b56da37717
     .claude/rules/task-management.md: sha256:555113758ae4181db7b42bcaf7230117ba9a746e9e5509653d2db57755bbbbfa
     .claude/rules/ui-test.md: sha256:e643164b0ad615ef282f78724e6056b90d98b52caf1d2740567e89a71dafffb2
-    .claude/skills/ori-arch/SKILL.md: sha256:98a984ae22b87c9a081296ab098ffadf5241c648e55d4c4d69bf5f778ed0e765
+    .claude/skills/ori-arch/SKILL.md: sha256:feb7275782eb95ebc45ea0d0c522eeec2b0c26a6cd281165667b27aba69da720
     .claude/skills/ori-arch/adapters/eslint/index.js: sha256:4d47a58b682bdfe7817629f74b70b240b178994f39979c42fee65fd29b051c5b
     .claude/skills/ori-arch/adapters/eslint/templates/flat-config.js.tpl: sha256:d07e829ab64e92479bb02f38208d2df4d55bba6a3844f80ee8444df16d4bceeb
     .claude/skills/ori-arch/adapters/generic/index.js: sha256:b497a9d6cb4470e457f3dec17410554ea41bea30a891b7cdce0e2ed89c16bc5c
@@ -332,7 +332,7 @@ dependencies:
     .claude/skills/ori-ddd-8-glossary/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
     .claude/skills/ori-ddd-9-workflows/SKILL.md: sha256:fd48086c2da6001dfdf5009552874d76f2843089d318d2428c6785aec70aa3f3
     .claude/skills/ori-ddd-9-workflows/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
-    .claude/skills/ori-derive/SKILL.md: sha256:a1294b467ae9e6b4e0562b34e90270360273e722a788cb7e99825f2c7e3372bb
+    .claude/skills/ori-derive/SKILL.md: sha256:0d12da281ec2c4b487741295ceb248128b15e8d405522ef803c0a8f26d844141
     .claude/skills/ori-derive/scripts/check-slice-exists.sh: sha256:16d456368d02dc02dd60339712616a9ac907c6a757225328d3fdef72c37d4e05
     .claude/skills/ori-derive/scripts/resolve-upstream.sh: sha256:b2e77a1c51e06bb585288be3b34cab320335359d07b28154cc5139c2c85a9d24
     .claude/skills/ori-distill/SKILL.md: sha256:666c83df648ba4800be8bf01176a5f0bc46fe4f96915ea34057432d1947b982c
@@ -347,21 +347,21 @@ dependencies:
     .claude/skills/ori-doctor/scripts/check-slice-schema.sh: sha256:3ef5dbdbc5e41dc05970c2af7fd354fc26760a8adc85dac2e7b014c1872cb0cc
     .claude/skills/ori-doctor/scripts/lint.js: sha256:47700b5037393e578a611d6f3714fe45d0a2ee79d7ad322c88a25037de51c10e
     .claude/skills/ori-doctor/scripts/run-checks.sh: sha256:2c1c7ddea05e43a8b94efe0f274871483bb397e94c66c5fb6ca1b0e0dd360f4d
-    .claude/skills/ori-feature-status/SKILL.md: sha256:6c724373e1d0fb39d9f3138d6ebdbde50c6456b767b9c253842da8415ee7d624
+    .claude/skills/ori-feature-status/SKILL.md: sha256:2bb7c71a4a65751e1941f7c7201ea759ccc3c1df13356487609f520710e5e7df
     .claude/skills/ori-feature-status/scripts/list-pages.sh: sha256:f027e1b572c365ed6329b7e38eda95f86f5df51c44432edc45dc952573067ca8
     .claude/skills/ori-feature-status/scripts/list-slices.sh: sha256:2d0d4c723f398a03f0f534d84be174924aade96043b57ffa6342a1aa144b46ce
     .claude/skills/ori-finalize/SKILL.md: sha256:41b6c026e61b37b4328a3d70cbeb99fb6951bccaa88882e0b8c578e268b41c3a
     .claude/skills/ori-finalize/scripts/clear-dirty.sh: sha256:7aad96caa246d91024f56d8e66fb52031e08e245da47ad90e76b55d5d4cbf45d
     .claude/skills/ori-finalize/scripts/update-hash.sh: sha256:64f6639bd66abe3271ee956f8c180ffaab3468d74dd552bf3761c91b6d7aa69c
-    .claude/skills/ori-flow/SKILL.md: sha256:9f9c7b91525728fe1d76c6c72dc0983d372469fe4b0bf458c19c34db6a9c63da
+    .claude/skills/ori-flow/SKILL.md: sha256:d0214193e340bf94edd13274649fff9cb1387c5b1da7467828b1e06d7bbe0cf4
     .claude/skills/ori-flow/scripts/new-page.js: sha256:154787555116740b036e820d7fb8baf4d0bb4344339b6de2d77ac0ae68431de2
-    .claude/skills/ori-flow/scripts/new-scenario.js: sha256:9baf093529fac3a68ab499a4b6a1d27c7a7b4beb42c9e9721ce1012856971815
+    .claude/skills/ori-flow/scripts/new-scenario.js: sha256:4a36d0d97f544068f5d242b4c4bd293126d3b471655132998112ceb07754870a
     .claude/skills/ori-flow/scripts/new-slice.js: sha256:a2007bb8835f4e4f2572fa57c51bab8377ee1a1091d617404dab6123db78b990
     .claude/skills/ori-flow/templates/page-manifest.yaml.tpl: sha256:d755252ecb59b793cc0b06cccf66c1653e8c214eedb5d39a177bb70ff26c4077
-    .claude/skills/ori-flow/templates/scenario-manifest.yaml.tpl: sha256:52a5d6a088c591da515999bac0b1b61f3b24e4e66afbf478434c83468d982306
+    .claude/skills/ori-flow/templates/scenario-manifest.yaml.tpl: sha256:3c9a9ba4996a96cfbb14104de1816a8f38d83242050e99c12f9b94e576467ae5
     .claude/skills/ori-flow/templates/slice-manifest.yaml.tpl: sha256:65c6b09200073a6210a293510b666025be5e80f99f11129ae65cf0bb050458f7
-    .claude/skills/ori-generate/SKILL.md: sha256:397ca86abfc56fbfc87e51faccf5892b155bee01e408e541ffac893df58f8315
-    .claude/skills/ori-generate/scripts/check-scenario-exists.sh: sha256:c28bf5b22a30d9e72fde4c6cb52e883e88d05ee4c6e6de087ad381f7d71f6f6a
+    .claude/skills/ori-generate/SKILL.md: sha256:5ceaa9e9ee6a465c4bbe32ddaa39a6fefef7a1542296720c86562a00208df37c
+    .claude/skills/ori-generate/scripts/check-scenario-exists.sh: sha256:bfd79258e240035a385761ba713d25e10239ffb54dea2be3e3d303edc9d48f29
     .claude/skills/ori-generate/scripts/generate-docker-compose.sh: sha256:1957f8c9696b34d2fced26b352f417f86a49321f6e14b7e007603eb1788eafeb
     .claude/skills/ori-generate/scripts/infra-catalog.yaml: sha256:2705341f43809114d4a98ed81d925df143746227604c1d149e00e5541f091fee
     .claude/skills/ori-graph/SKILL.md: sha256:57905b17f7881e069ed372a7b8e2a3d5022a6a8bbf78b7699450fa92768877bd
@@ -389,7 +389,7 @@ dependencies:
     .claude/skills/ori-sync/SKILL.md: sha256:564758bcd2ddb3c64147145646a5b0595957413e9ccef8b92cdd0c0b81d3d231
     .claude/skills/ori-sync/scripts/sync.js: sha256:db5a05fe609e5f1488b62703464fa6596ff5bb9188858075088b130e2010b16c
     .claude/skills/ori-test-red/SKILL.md: sha256:7d82a398c06bef2071f9857761e82225a61b7effad268699aa4f1edbef0a677f
-  content_hash: sha256:b26744f031583d604b13feccf986f44ccd81e017e496d61fca0a9f310d59c15e
+  content_hash: sha256:b2b9ce8706a3b8b7be89db1ea8916ceca44ba3d606fbeb135736d268e31261a3
   declared_license: MIT
 deployments:
 - kind: project-relative
@@ -481,7 +481,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:41d6804414a520dc48cdcc06549e69e69c824909e46700f43d78e0b1a4625ffe
+  content_hash: sha256:6c209d1c2236f916bd67666ccb9d3abd88bc531526eb7a82fe34f3b56da37717
 - kind: project-relative
   target: claude
   value: .claude/rules/task-management.md
@@ -517,7 +517,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:98a984ae22b87c9a081296ab098ffadf5241c648e55d4c4d69bf5f778ed0e765
+  content_hash: sha256:feb7275782eb95ebc45ea0d0c522eeec2b0c26a6cd281165667b27aba69da720
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-arch/adapters/eslint/index.js
@@ -1444,7 +1444,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:a1294b467ae9e6b4e0562b34e90270360273e722a788cb7e99825f2c7e3372bb
+  content_hash: sha256:0d12da281ec2c4b487741295ceb248128b15e8d405522ef803c0a8f26d844141
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-derive/scripts/check-slice-exists.sh
@@ -1606,7 +1606,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:6c724373e1d0fb39d9f3138d6ebdbde50c6456b767b9c253842da8415ee7d624
+  content_hash: sha256:2bb7c71a4a65751e1941f7c7201ea759ccc3c1df13356487609f520710e5e7df
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-feature-status/scripts/list-pages.sh
@@ -1678,7 +1678,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:9f9c7b91525728fe1d76c6c72dc0983d372469fe4b0bf458c19c34db6a9c63da
+  content_hash: sha256:d0214193e340bf94edd13274649fff9cb1387c5b1da7467828b1e06d7bbe0cf4
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-flow/scripts/new-page.js
@@ -1696,7 +1696,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:9baf093529fac3a68ab499a4b6a1d27c7a7b4beb42c9e9721ce1012856971815
+  content_hash: sha256:4a36d0d97f544068f5d242b4c4bd293126d3b471655132998112ceb07754870a
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-flow/scripts/new-slice.js
@@ -1723,7 +1723,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:52a5d6a088c591da515999bac0b1b61f3b24e4e66afbf478434c83468d982306
+  content_hash: sha256:3c9a9ba4996a96cfbb14104de1816a8f38d83242050e99c12f9b94e576467ae5
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-flow/templates/slice-manifest.yaml.tpl
@@ -1750,7 +1750,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:397ca86abfc56fbfc87e51faccf5892b155bee01e408e541ffac893df58f8315
+  content_hash: sha256:5ceaa9e9ee6a465c4bbe32ddaa39a6fefef7a1542296720c86562a00208df37c
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-generate/scripts/check-scenario-exists.sh
@@ -1759,7 +1759,7 @@ deployments:
   owners:
   - dev-komenzar/ori
   active_owner: dev-komenzar/ori
-  content_hash: sha256:c28bf5b22a30d9e72fde4c6cb52e883e88d05ee4c6e6de087ad381f7d71f6f6a
+  content_hash: sha256:bfd79258e240035a385761ba713d25e10239ffb54dea2be3e3d303edc9d48f29
 - kind: project-relative
   target: claude
   value: .claude/skills/ori-generate/scripts/generate-docker-compose.sh

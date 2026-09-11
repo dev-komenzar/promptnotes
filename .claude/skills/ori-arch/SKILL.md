@@ -187,5 +187,6 @@ node ./scripts/sync-page-map.js --dry-run
   - `typescript` (vite vanilla-ts)：`pnpm install && pnpm build`（vanilla-ts には `test` script が無いため `build` で代用）
   - `typescript-tauri`：`pnpm install && pnpm build`（Rust 側は `pnpm tauri build` で確認可、初回は時間がかかる）
 - **最初の slice 作成パス**：`/ori-flow new-slice <id>` で新 slice を scaffold → 7-phase 開発を回す
+- **scenario scaffold パス**: `node .apm/skills/ori-flow/scripts/new-scenario.js --list-validation` で validation.md の未 cover section（scenario 候補）を確認 → ユーザ確認の上 `new-scenario.js <id>` で scaffold → `/ori-flow <id>`（4 phase。scenario id = validation section anchor、1:1）
 - **domain 起点で進めるパス**：`/ori-distill phase=discovery` で distill-ddd phase 1 から domain を立ち上げる
 - **既存 domain がある場合のパス**：`/ori-migrate` で `docs/domain/` 等を `.ori/domain/` に昇格
