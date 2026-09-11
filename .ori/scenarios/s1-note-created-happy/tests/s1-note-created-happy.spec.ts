@@ -17,7 +17,7 @@ describe('scenario:s1-note-created-happy', () => {
     await browser.pause(300);
 
     // When 2: "docs を書く" を入力
-    const draftEditor = await $('[data-testid="draft-input"]');
+    const draftEditor = await $('[data-testid="screen-1-draft-body"]');
     await draftEditor.click();
     await browser.keys('docs を書く');
     await browser.pause(200);
@@ -27,7 +27,7 @@ describe('scenario:s1-note-created-happy', () => {
     await browser.pause(1500);
 
     // Then 1: NoteFeed に 1 件表示
-    const noteBlocks = await $$('[data-testid="note-block"]');
+    const noteBlocks = await $$('[data-testid="screen-1-block"]');
     expect(noteBlocks.length).toBe(1);
 
     // Then 2: body が "docs を書く" と一致
@@ -49,7 +49,7 @@ describe('scenario:s1-note-created-happy', () => {
     await browser.pause(500);
 
     // Then: NoteFeed 件数は変わらない（空ボディでは Note::create が呼ばれない）
-    const noteBlocks = await $$('[data-testid="note-block"]');
+    const noteBlocks = await $$('[data-testid="screen-1-block"]');
     expect(noteBlocks.length).toBeGreaterThanOrEqual(1);
   });
 });

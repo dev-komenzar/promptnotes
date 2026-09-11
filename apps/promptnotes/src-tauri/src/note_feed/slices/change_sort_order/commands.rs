@@ -18,6 +18,7 @@ use super::application::ChangeSortOrderUseCase;
 use super::domain::{ChangeSortOrderCommand, ChangeSortOrderError};
 use crate::note_feed::shared::adapters::InMemoryNoteFeedState;
 use crate::user_preferences::shared::adapters::{PreloadedFsSettingsRepository, TauriEventBus};
+use crate::user_preferences::shared::test_support::apply_storage_dir_override;
 use crate::user_preferences::shared::types::{SortOrder, StorageDir};
 use crate::user_preferences::slices::load_settings::application::LoadSettingsUseCase;
 use crate::user_preferences::slices::load_settings::domain::LoadSettingsCommand;
@@ -80,9 +81,9 @@ pub async fn change_sort_order<R: Runtime>(
     let default_storage_dir = resolve_default_storage_dir(&app);
 
     let loader = LoadSettingsUseCase::new(StdFileSystem, FixedOsDirs::new(default_storage_dir));
-    let current_settings = loader.execute(LoadSettingsCommand {
+    let current_settings = apply_storage_dir_override(loader.execute(LoadSettingsCommand {
         config_path: config_path.clone(),
-    });
+    }));
 
     let repo = PreloadedFsSettingsRepository::new(current_settings, config_path.clone());
     let bus = TauriEventBus::new(app.clone());

@@ -11,20 +11,13 @@ use tauri::{AppHandle, Manager, Runtime};
 use super::application::LoadSettingsUseCase;
 use super::domain::LoadSettingsCommand;
 use super::infrastructure::{FixedOsDirs, StdFileSystem};
+use crate::user_preferences::shared::test_support::apply_storage_dir_override;
 use crate::user_preferences::shared::types::{Settings, StorageDir};
 
 /// Tauri が `app_data_dir()` 解決に失敗した場合の最終 fallback。
 /// `std::env::temp_dir()` は POSIX/Windows ともに OS 契約上 **絶対パス** を返すため、
 /// `StorageDir::try_from` は必ず成功する。
 fn resolve_default_storage_dir<R: Runtime>(app: &AppHandle<R>) -> StorageDir {
-    // TAURI_TEST_STORAGE_DIR: scenario test override — scenario wdio tests set this
-    // before launching the Tauri binary so that tests can operate on a controlled
-    // temp directory instead of the real OS convention path.
-    if let Ok(d) = env::var("TAURI_TEST_STORAGE_DIR") {
-        return StorageDir::try_from(PathBuf::from(d)).expect(
-            "TAURI_TEST_STORAGE_DIR must be an absolute path (set by wdio scenario onPrepare)",
-        );
-    }
     let candidate = app
         .path()
         .app_data_dir()
@@ -45,10 +38,17 @@ fn resolve_config_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .unwrap_or_else(|| env::temp_dir().join("promptnotes/settings.json"))
 }
 
+/// E2E scenario override: `TAURI_TEST_STORAGE_DIR` が設定されていれば、永続化済み
+/// `settings.json` の `storage_dir` より優先してテスト用ディレクトリへ差し替える。
+/// wdio の `onPrepare` が起動前に env を設定する前提。
+fn override_storage_dir_for_test(settings: Settings) -> Settings {
+    apply_storage_dir_override(settings)
+}
+
 #[tauri::command]
 pub async fn load_settings<R: Runtime>(app: AppHandle<R>) -> Settings {
     let default = resolve_default_storage_dir(&app);
     let config_path = resolve_config_path(&app);
     let uc = LoadSettingsUseCase::new(StdFileSystem, FixedOsDirs::new(default));
-    uc.execute(LoadSettingsCommand { config_path })
+    override_storage_dir_for_test(uc.execute(LoadSettingsCommand { config_path }))
 }

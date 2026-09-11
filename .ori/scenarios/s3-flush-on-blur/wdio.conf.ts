@@ -1,17 +1,29 @@
 // @ori-generated scenario:s3-flush-on-blur
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const BINARY = resolve(
   __dirname,
-  '../../../apps/promptnotes/src-tauri/target/debug/promptnotes'
+  '../../../apps/promptnotes/src-tauri/target/debug/app'
 );
 
 let tmpDir: string;
+
+function seedNote(id: string, body: string): void {
+  const content = [
+    '---',
+    `createdAt: ${id}`,
+    `updatedAt: ${id}`,
+    'tags: []',
+    '---',
+    body,
+  ].join('\n');
+  writeFileSync(join(tmpDir, `${id}.md`), content, 'utf-8');
+}
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -28,6 +40,8 @@ export const config: WebdriverIO.Config = {
 
   onPrepare: async () => {
     tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s3-');
+    seedNote('20260620120000', 'hello A');
+    seedNote('20260620130000', 'hello B');
     process.env.TAURI_TEST_STORAGE_DIR = tmpDir;
   },
 

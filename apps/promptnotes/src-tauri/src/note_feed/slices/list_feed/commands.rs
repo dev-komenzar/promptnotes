@@ -16,6 +16,7 @@ use super::domain::ListFeedCommand;
 use crate::note_capture::shared::types::Note;
 use crate::note_capture::slices::create_note::infrastructure::FsNoteRepository;
 use crate::note_feed::shared::adapters::InMemoryNoteFeedState;
+use crate::user_preferences::shared::test_support::apply_storage_dir_override;
 use crate::user_preferences::shared::types::StorageDir;
 use crate::user_preferences::slices::load_settings::application::LoadSettingsUseCase;
 use crate::user_preferences::slices::load_settings::domain::LoadSettingsCommand;
@@ -81,7 +82,7 @@ pub async fn list_notes<R: Runtime>(
     let config_path = resolve_config_path(&app);
     let default_storage_dir = resolve_default_storage_dir(&app);
     let loader = LoadSettingsUseCase::new(StdFileSystem, FixedOsDirs::new(default_storage_dir));
-    let settings = loader.execute(LoadSettingsCommand { config_path });
+    let settings = apply_storage_dir_override(loader.execute(LoadSettingsCommand { config_path }));
 
     let storage_dir = settings.storage_dir().as_path().to_path_buf();
     let repo = FsNoteRepository::new(storage_dir);

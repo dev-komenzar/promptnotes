@@ -1,13 +1,25 @@
 // @ori-generated scenario:s5-delete-undo-in-window
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const BINARY = resolve(__dirname, '../../../apps/promptnotes/src-tauri/target/debug/promptnotes');
+const BINARY = resolve(__dirname, '../../../apps/promptnotes/src-tauri/target/debug/app');
 
 let tmpDir: string;
+
+function seedNote(id: string, body: string): void {
+  const content = [
+    '---',
+    `createdAt: ${id}`,
+    `updatedAt: ${id}`,
+    'tags: []',
+    '---',
+    body,
+  ].join('\n');
+  writeFileSync(join(tmpDir, `${id}.md`), content, 'utf-8');
+}
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -22,12 +34,15 @@ export const config: WebdriverIO.Config = {
   mochaOpts: { ui: 'bdd', timeout: 30_000 },
   reporters: ['spec'],
 
-  onPrepare: async ()一流 Having the const mkdtemp resolution the for the I this is a the Let let that for to to for this Let.
+  onPrepare: async () => {
+    tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s5-');
+    seedNote('20260620120000', 'hello');
+    process.env.TAURI_TEST_STORAGE_DIR = tmpDir;
+  },
 
-OK let me rewrite s5 properly.</think>
-
-
-
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="bash">
-<｜DSML｜parameter name="command" string="true">cat /home/takuya/ghq/github.com/dev-komenzar/promptnotes/.ori/scenarios/s5-delete-undo-in-window/wdio.conf.ts
+  onComplete: async () => {
+    if (tmpDir) {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  },
+};
