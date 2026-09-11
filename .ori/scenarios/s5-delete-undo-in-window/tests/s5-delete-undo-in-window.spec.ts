@@ -33,11 +33,11 @@ describe('scenario:s5-delete-undo-in-window', () => {
 
     // ---- Step 2: delete the note ----
     // delete ボタンは hover 時のみ操作可能（opacity-0 / pointer-events-none）。
-    // WebKitWebDriver の moveTo は CSS :hover を安定して発火しないため JS click を使う。
-    await $('[data-testid="screen-1-block"]').moveTo();
+    // WebKitWebDriver の moveTo は CSS :hover を安定して発火しないため、
+    // 対象 button に click イベントを直接 dispatch する。
     await browser.execute(() => {
       const btn = document.querySelector<HTMLElement>('[data-testid="screen-1-block-delete"]');
-      btn?.click();
+      btn?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
 
     await browser.pause(1000);
@@ -53,7 +53,7 @@ describe('scenario:s5-delete-undo-in-window', () => {
     // ---- Step 3: undo the delete ----
     await browser.execute(() => {
       const btn = document.querySelector<HTMLElement>('[data-testid="screen-1-toast-undo"]');
-      btn?.click();
+      btn?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
 
     await browser.pause(1000);

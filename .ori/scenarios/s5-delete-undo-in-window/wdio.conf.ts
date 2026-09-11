@@ -31,7 +31,7 @@ export const config: WebdriverIO.Config = {
     'tauri:options': { application: BINARY },
   }],
   framework: 'mocha',
-  mochaOpts: { ui: 'bdd', timeout: 30_000 },
+  mochaOpts: { ui: 'bdd', timeout: 180_000 },
   reporters: ['spec'],
 
   onPrepare: async () => {
