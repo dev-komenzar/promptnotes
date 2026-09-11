@@ -40,7 +40,9 @@
 # Disabled: dolt DB is the source of truth. Auto-export to .beads/issues.jsonl
 # causes parallel-slice merge conflicts because every PR mutates the same file.
 backup:
-  enabled: false
+    enabled: false
+sync:
+    remote: "git+https://github.com/dev-komenzar/promptnotes.git"
 
 # Integration settings (access with 'bd config get/set')
 # These are stored in the database, not in this file:
