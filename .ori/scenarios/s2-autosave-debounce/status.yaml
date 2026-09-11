@@ -1,0 +1,11 @@
+scenario_id: s2-autosave-debounce
+derived_at: 2026-09-11T13:12:09.276Z
+beads:
+  epic: ori-scenario-s2-autosave-debounce
+  current_phase: null
+  completion: [derive, generate, review]
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+dirty: []
