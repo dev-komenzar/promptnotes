@@ -17,6 +17,14 @@ use crate::user_preferences::shared::types::{Settings, StorageDir};
 /// `std::env::temp_dir()` は POSIX/Windows ともに OS 契約上 **絶対パス** を返すため、
 /// `StorageDir::try_from` は必ず成功する。
 fn resolve_default_storage_dir<R: Runtime>(app: &AppHandle<R>) -> StorageDir {
+    // TAURI_TEST_STORAGE_DIR: scenario test override — scenario wdio tests set this
+    // before launching the Tauri binary so that tests can operate on a controlled
+    // temp directory instead of the real OS convention path.
+    if let Ok(d) = env::var("TAURI_TEST_STORAGE_DIR") {
+        return StorageDir::try_from(PathBuf::from(d)).expect(
+            "TAURI_TEST_STORAGE_DIR must be an absolute path (set by wdio scenario onPrepare)",
+        );
+    }
     let candidate = app
         .path()
         .app_data_dir()

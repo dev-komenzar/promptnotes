@@ -1,30 +1,39 @@
-// @ori-generated scenario:s3-flush-on-blur — wdio.conf.ts
+// @ori-generated scenario:s3-flush-on-blur
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// runtime.binary (build-then-test) を絶対パスで解決。
-// .ori/architecture.md workspace.apps[].runtime.binary 準拠。
 const BINARY = resolve(
   __dirname,
   '../../../apps/promptnotes/src-tauri/target/debug/promptnotes'
 );
 
-export const config = {
-  runner: 'local' as const,
+let tmpDir: string;
+
+export const config: WebdriverIO.Config = {
+  runner: 'local',
   specs: ['./tests/**/*.spec.ts'],
   maxInstances: 1,
   services: [['@wdio/tauri-service', { driverProvider: 'external' }]],
-  capabilities: [
-    {
-      browserName: 'tauri',
-      'tauri:options': { application: BINARY }
-    }
-  ],
+  capabilities: [{
+    browserName: 'tauri',
+    'tauri:options': { application: BINARY },
+  }],
   framework: 'mocha',
   mochaOpts: { ui: 'bdd', timeout: 60_000 },
   reporters: ['spec'],
-  // compose-service 系参加者なし（全参加者は local tauri app のみ）のため
-  // onPrepare / onComplete は compose lifecycle を実行しない
+
+  onPrepare: async () => {
+    tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s3-');
+    process.env.TAURI_TEST_STORAGE_DIR = tmpDir;
+  },
+
+  onComplete: async () => {
+    if (tmpDir) {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  },
 };

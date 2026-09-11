@@ -1,10 +1,14 @@
 // @ori-generated scenario:s1-note-created-happy
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // runtime.binary (build-then-test) — Cargo project name = "app"
 const BINARY = resolve(__dirname, '../../../apps/promptnotes/src-tauri/target/debug/app');
+
+let tmpDir: string;
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -22,6 +26,17 @@ export const config: WebdriverIO.Config = {
     timeout: 60000,
   },
   reporters: ['spec'],
-  // No onPrepare/onComplete — all participants are local (Tauri desktop).
-  // docker-compose not generated (compose-service participants = 0).
+
+  onPrepare: async () => {
+    tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s1-');
+    process.env.TAURI_TEST_STORAGE_DIR = tmpDir;
+    console.log(`[scenario:s1] temp storage dir: ${tmpDir}`);
+  },
+
+  onComplete: async () => {
+    if (tmpDir) {
+      rmSync(tmpDir, { recursive: true, force: true });
+      console.log(`[scenario:s1] cleaned temp dir: ${tmpDir}`);
+    }
+  },
 };
