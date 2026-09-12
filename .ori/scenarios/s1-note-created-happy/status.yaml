@@ -2,7 +2,15 @@ scenario_id: s1-note-created-happy
 derived_at: 2026-09-11T13:12:09.223Z
 beads:
   epic: ori-scenario-s1-note-created-happy
-  current_phase: null
-  completion: []
-phases: {}
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+  finalize: closed
 dirty: []
