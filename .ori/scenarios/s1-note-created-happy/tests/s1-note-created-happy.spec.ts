@@ -11,14 +11,22 @@ describe('scenario:s1-note-created-happy', () => {
 
   it('step 1 — validation#s1-note-created-happy: Cmd+N → 入力 → Cmd+Enter で Note 作成と UI 反映', async () => {
     // Given: アプリ起動直後、保存先は OS 慣習パス、フィード 0 件、Draft 空
+    const draftEditor = await $('[data-testid="screen-1-draft-body"]');
+    await draftEditor.waitForExist({ timeout: 15000 });
+    await browser.pause(300);
 
     // When 1: Cmd+N で Draft 入力欄にフォーカス
     await browser.keys(['Control', 'n']);
     await browser.pause(300);
 
-    // When 2: "docs を書く" を入力
-    const draftEditor = await $('[data-testid="screen-1-draft-body"]');
-    await draftEditor.click();
+    // Then: フォーカスが Draft 本文 (CodeMirror .cm-content) に移っている
+    const focusedInDraft = await browser.execute(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return !!(el && el.closest('[data-testid="screen-1-draft-body"]'));
+    });
+    expect(focusedInDraft).toBe(true);
+
+    // When 2: フォーカス済み Draft に "docs を書く" を入力
     await browser.keys('docs を書く');
     await browser.pause(200);
 

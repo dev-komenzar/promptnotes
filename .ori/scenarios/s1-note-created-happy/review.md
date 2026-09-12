@@ -35,4 +35,43 @@
 
 ## Pass 2 {#pass-2}
 
-（Pass 1 PASS のため skip）
+再レビュー（Cmd+N 乖離の解消 + scenario test 更新後）。reviewer agent は spawn したが
+30 分 timeout で応答なし → main session の objective 検証で代替。
+
+### Syntax checks {#pass-2-syntax}
+
+- test code: PASS (実行で GREEN。`tsc --noEmit -p tsconfig.json` は
+  `wdio.conf.ts TS2353 'tauri:options'` の **pre-existing** 型エラーのみ — 実行時は正常。
+  s5 でも同種の tsc 制約を許容済み)
+- docker-compose: SKIPPED (compose-service 参加者ゼロ = local Tauri app。不在が正常)
+
+### Mode checklist (local tauri) {#pass-2-mode}
+
+| item | status | note |
+|---|---|---|
+| spec `runner: wdio` ↔ test import (`@wdio/globals`) ↔ wdio.conf.ts | ✅ PASS | 一致 |
+| テストコード内に service lifecycle (起動/停止/healthcheck) が無い | ✅ PASS | lifecycle は wdio.conf.ts 所有 |
+| local app が docker-compose に含まれない | ✅ PASS | compose 不在が正しい |
+| wdio `tauri:options.application` == architecture runtime `binary` | ✅ PASS | `target/debug/app` |
+| `@wdio/tauri-service` が services に含まれる | ✅ PASS | `driverProvider: 'external'` |
+
+### Semantic findings (spec ↔ test code) {#pass-2-findings}
+
+- **RESOLVED (旧 LOW)** spec.md#when: 「`Cmd+N` で Draft 入力欄にフォーカス」—
+  実装 (`PageMain.svelte` / `DraftRegion.svelte`) で対応し、scenario test step 1 が
+  `Ctrl+N` 後の `document.activeElement` が `[data-testid="screen-1-draft-body"]` 内
+  (`.cm-content`) であることを assert するよう更新。
+  - 実証: page-main component test 6 passed / フル suite 141 passed /
+    E2E s1 2 passing / E2E probe で実 Tauri(WebKit) の focus 移動を確認
+- **LOW (残)** spec.md#then: 「新規ブロックへフォーカス遷移」— 作成後の新規 Block への
+  focus 遷移は依然 assert していない。Pass 1 同様、scenario レベルでは non-blocking の
+  refinement 扱い（別途 follow-up 候補）。
+- **NOTE** テストは session 直後に `Ctrl+N` を送るため、Draft region の mount 待ち
+  (`waitForExist`) を追加した。service 起動待機ではなく UI mount 待機であり
+  `scenario-test.instructions.md` の「lifecycle は config 所有」に抵触しない。
+
+### Disposition {#pass-2-disposition}
+
+- Cmd+N 乖離は実装 + テストで解消。RESOLVED。
+- 残 LOW (新規 Block focus) は non-blocking のため差し戻し不要。
+- Verdict: **PASS**
