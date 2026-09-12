@@ -13,6 +13,7 @@
 		import ToolbarRegion from './regions/ToolbarRegion.svelte';
 		import { editingNote, type EditingNoteState } from './stores/editing-note.svelte';
 		import { feedStore } from './stores/feed.svelte';
+		import { focusStore } from './stores/focus.svelte';
 		import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
 		import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
 		import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
@@ -50,6 +51,7 @@
 
 		let settingsModalOpen = $state(false);
 		let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
+		let draftRegion: ReturnType<typeof DraftRegion> | undefined;
 
 		const themeSubscriber = createThemeSubscriber({
 		onThemeChanged: (theme) => {
@@ -237,6 +239,15 @@
 			event.preventDefault();
 			void toastStore.undoLatest();
 		}
+
+		// Cmd+N (macOS) / Ctrl+N (others) — Draft エディタにフォーカスを移動する。
+		// Feed block が EDITING 中でも常に発動する (isEditableTarget ガードは適用しない)。
+		if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'n') {
+			if (event.isComposing) return;
+			event.preventDefault();
+			focusStore.clear();
+			draftRegion?.focusDraft();
+		}
 	}
 </script>
 
@@ -248,7 +259,7 @@
 	class="flex h-screen min-h-0 w-screen flex-col overflow-hidden bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
 >
 	<ToolbarRegion onOpenSettings={handleOpenSettings} />
-	<DraftRegion />
+	<DraftRegion bind:this={draftRegion} />
 	<FeedRegion />
 	<ToastRegion />
 </div>
