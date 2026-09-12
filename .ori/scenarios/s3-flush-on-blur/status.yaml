@@ -12,4 +12,5 @@ phases:
   derive: closed
   generate: closed
   review: closed
+  finalize: closed
 dirty: []

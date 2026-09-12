@@ -1,10 +1,12 @@
 ---
+ori:
+  schema:
+    propagation_level: file
 coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s3-flush-on-blur
-      runner: wdio
-      trigger: BlockBlur
+      hash: 4a02c17cc025
 ---
 
 # s3-flush-on-blur — Scenario Specification

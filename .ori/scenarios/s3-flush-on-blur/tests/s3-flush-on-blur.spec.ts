@@ -9,110 +9,119 @@
 //
 // runner: wdio (Tauri desktop app — .ori/architecture.md workspace.apps[].runtime.mode=local, runner=wdio)
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const NOTE_A = '20260620120000';
+const NOTE_B = '20260620130000';
+
+function readNote(id: string): string {
+  return readFileSync(join(process.env.TAURI_TEST_STORAGE_DIR!, `${id}.md`), 'utf-8');
+}
+
+function extractUpdatedAt(md: string): string | null {
+  const m = md.match(/^updatedAt:\s*(.+)$/m);
+  return m ? m[1].trim() : null;
+}
+
+function block(id: string) {
+  return $(`[data-block-id="${id}"]`);
+}
+
+async function stateOf(id: string): Promise<string | null> {
+  return (await block(id)).getAttribute('data-block-state');
+}
+
+async function enterEditing(id: string): Promise<void> {
+  const el = await block(id);
+  await el.click();
+  await browser.waitUntil(
+    async () => (await el.getAttribute('data-block-state')) === 'EDITING',
+    { timeout: 5000, timeoutMsg: `block ${id} did not enter EDITING` },
+  );
+}
+
+async function focusEditor(id: string): Promise<void> {
+  const el = await block(id);
+  const editor = await el.$('.cm-editor .cm-content');
+  await editor.waitForExist({ timeout: 3000 });
+  await editor.click();
+}
+
 describe('scenario:s3-flush-on-blur', () => {
   before(async () => {
-    await browser.waitUntil(
-      async () => (await $$('[data-testid="screen-1-block"]')).length >= 2,
-      { timeout: 10000, timeoutMsg: 'seeded blocks did not appear in feed' }
-    );
+    await (await block(NOTE_A)).waitForExist({ timeout: 10000 });
+    await (await block(NOTE_B)).waitForExist({ timeout: 10000 });
     await browser.pause(1500);
   });
 
-  describe('ブロック focus 喪失時の即時 Flush', () => {
-    it('別ブロッククリックで debounce を待たずに即時保存されること', async () => {
-      const blocks = await $$('[data-testid="screen-1-block"]');
-      expect(blocks.length).toBeGreaterThanOrEqual(2);
+  it('step 1 — validation#s3-flush-on-blur: 別ブロッククリックで debounce を待たず即時 Flush し、重複保存しない', async () => {
+    const before = readNote(NOTE_A);
+    expect(before).toContain('hello A');
+    const beforeUpdatedAt = extractUpdatedAt(before);
 
-      const blockA = blocks[0]!;
-      const blockB = blocks[1]!;
+    // blur 先の要素は事前解決しておく (timed region に findElement 往復を入れない)
+    const elB = await block(NOTE_B);
 
-      await blockA.click();
-      await browser.waitUntil(
-        async () => (await blockA.getAttribute('data-block-state')) === 'EDITING',
-        { timeout: 5000, timeoutMsg: 'Block A did not enter EDITING state' }
-      );
+    await enterEditing(NOTE_A);
+    await focusEditor(NOTE_A);
 
-      const editor = await blockA.$('.cm-editor .cm-content');
-      await editor.waitForExist({ timeout: 3000 });
-      await editor.click();
-      await browser.keys(' x');
-      await browser.pause(100);
+    const editedAt = Date.now();
+    await browser.keys('!');
+    await browser.pause(50);
+    await elB.click();
 
-      await blockB.click();
+    await browser.waitUntil(
+      () => {
+        try {
+          return readNote(NOTE_A) !== before;
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 3000, interval: 30, timeoutMsg: 'flush did not persist after blur' },
+    );
 
-      await browser.waitUntil(
-        async () => (await blockA.getAttribute('data-block-state')) === 'IDLE',
-        { timeout: 5000, timeoutMsg: 'Block A did not return to IDLE state' }
-      );
+    const after = readNote(NOTE_A);
+    expect(after).toContain('hello A!');
+    expect(extractUpdatedAt(after)).not.toBe(beforeUpdatedAt);
+    // debounce timer (500ms) より前に flush が完了している
+    expect(Date.now() - editedAt).toBeLessThan(500);
 
-      const noteAState = await blockA.getAttribute('data-block-state');
-      expect(noteAState).toBe('IDLE');
+    // debounce timer がキャンセルされ、後から 2 度目の書き込みが起きない
+    const updatedAtAfterFlush = extractUpdatedAt(after);
+    await browser.pause(800);
+    expect(extractUpdatedAt(readNote(NOTE_A))).toBe(updatedAtAfterFlush);
+  });
+
+  it('step 2 — validation#s3-flush-on-blur: body が変化していなければ Flush は no-op', async () => {
+    const before = readNote(NOTE_B);
+    const beforeUpdatedAt = extractUpdatedAt(before);
+
+    await enterEditing(NOTE_B);
+    await focusEditor(NOTE_B);
+    await browser.keys('!');
+    await browser.keys(['Backspace']);
+    await browser.pause(150);
+
+    await (await block(NOTE_A)).click();
+    await browser.pause(900);
+
+    const after = readNote(NOTE_B);
+    expect(after).toBe(before);
+    expect(extractUpdatedAt(after)).toBe(beforeUpdatedAt);
+  });
+
+  it('step 3 — I-PM10: 同時に EDITING なブロックは高々 1 つ', async () => {
+    await enterEditing(NOTE_A);
+    expect(await stateOf(NOTE_A)).toBe('EDITING');
+
+    await enterEditing(NOTE_B);
+    await browser.waitUntil(async () => (await stateOf(NOTE_A)) === 'IDLE', {
+      timeout: 5000,
+      timeoutMsg: 'Block A did not return to IDLE after Block B became EDITING',
     });
-
-    it('debounce timer のタイムアウト前に Flush が発火すること', async () => {
-      // AutoSave debounce が発火する前に Flush が実行されることを
-      // タイミングベースで検証する。
-
-      const blocks = await $$('[data-testid="screen-1-block"]');
-      expect(blocks.length).toBeGreaterThanOrEqual(2);
-
-      const blockA = blocks[0]!;
-      const blockB = blocks[1]!;
-
-      // EDITING に遷移
-      await blockA.click();
-      await browser.waitUntil(
-        async () => (await blockA.getAttribute('data-block-state')) === 'EDITING',
-        { timeout: 5000 }
-      );
-
-      const editor = blockA.$('.cm-editor .cm-content');
-      await editor.waitForExist({ timeout: 3000 });
-      await editor.click();
-
-      // 編集（即時）
-      await browser.keys('hello flush');
-
-      // 100ms 後にブロック B クリック（debounce 600ms 前に Flush が起動する）
-      await browser.pause(100);
-      await blockB.click();
-
-      // ブロック A が IDLE に戻る = Flush が実行された
-      await browser.waitUntil(
-        async () => (await blockA.getAttribute('data-block-state')) === 'IDLE',
-        { timeout: 5000, timeoutMsg: 'Block A did not flush before debounce timer fire' }
-      );
-
-      const noteAState = await blockA.getAttribute('data-block-state');
-      expect(noteAState).toBe('IDLE');
-    });
-
-    it('EDITING でないブロックのクリックでは Flush は起きないこと', async () => {
-      const blocks = await $$('[data-testid="screen-1-block"]');
-      expect(blocks.length).toBeGreaterThanOrEqual(2);
-
-      const blockA = blocks[0]!;
-      const blockB = blocks[1]!;
-
-      // Block A を EDITING にせず、そのまま Block B をクリック
-      // Block A の state が IDLE のままなら Flush が起きていない
-      await blockA.click();
-
-      // FOCUSED or EDITING になるのはクリックされたブロック
-      await browser.waitUntil(
-        async () => {
-          const state = await blockA.getAttribute('data-block-state');
-          return state !== 'IDLE' || state === 'FOCUSED';
-        },
-        { timeout: 3000, timeoutMsg: 'Block A state did not change' }
-      );
-
-      // Block B をクリック → A の focus が外れる
-      await blockB.click();
-
-      // A は IDLE に戻るが、編集していないので Flush は body 変化なしで no-op
-      const stateA = await blockA.getAttribute('data-block-state');
-      expect(stateA).toBe('IDLE');
-    });
+    expect(await stateOf(NOTE_A)).toBe('IDLE');
+    expect(await stateOf(NOTE_B)).toBe('EDITING');
   });
 });
