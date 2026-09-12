@@ -30,19 +30,49 @@ describe('scenario:s2-autosave-debounce', () => {
     const editor = await block.$('.cm-editor .cm-content');
     await editor.waitForExist({ timeout: 3000 });
     await editor.click();
+
+    const typedAt = Date.now();
     await browser.keys(' world');
 
-    await browser.pause(900);
+    await browser.waitUntil(
+      () => {
+        try {
+          return readFileSync(MD_PATH, 'utf-8').includes('hello world');
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 5000, interval: 50, timeoutMsg: 'autosave did not persist within 5s' },
+    );
+    const elapsedMs = Date.now() - typedAt;
 
     const after = readFileSync(MD_PATH, 'utf-8');
     expect(after).toContain('hello world');
     expect(extractUpdatedAt(after)).not.toBe(extractUpdatedAt(before));
+    expect(elapsedMs).toBeGreaterThanOrEqual(400);
+    expect(elapsedMs).toBeLessThanOrEqual(3000);
   });
 
-  it('no-op autosave: unchanged body does not trigger save', async () => {
+  it('no-op autosave: body を元に戻す編集試行では永続化されない (S9 idempotency)', async () => {
+    const block = await $('[data-testid="screen-1-block"]');
+    await block.click();
+    await browser.waitUntil(
+      async () => (await block.getAttribute('data-block-state')) === 'EDITING',
+      { timeout: 5000, timeoutMsg: 'block did not enter EDITING' },
+    );
+    const editor = await block.$('.cm-editor .cm-content');
+    await editor.waitForExist({ timeout: 3000 });
+    await editor.click();
+
     const before = readFileSync(MD_PATH, 'utf-8');
-    await browser.pause(900);
+    const beforeUpdatedAt = extractUpdatedAt(before);
+
+    await browser.keys(' ');
+    await browser.keys(['Backspace']);
+    await browser.pause(1200);
+
     const after = readFileSync(MD_PATH, 'utf-8');
     expect(after).toBe(before);
+    expect(extractUpdatedAt(after)).toBe(beforeUpdatedAt);
   });
 });

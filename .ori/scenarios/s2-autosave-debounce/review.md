@@ -37,3 +37,54 @@ scenario タイプのため slice/page 向けの 3 structural gate（boundary te
 | `bun run test` の wdio integration | 未設定 | package.json scripts |
 
 これらは `/ori-flow` ではなく、`/ori-distill` Phase 11b 以降で順次解決される。シナリオテストの初回実行はそのタイミングになる。
+
+## Pass 2 {#pass-2}
+
+再レビュー（status 復旧 + debounce 500ms 整合 + 初回実実行 GREEN 確認後）。Pass 1 の「skeleton」前提は
+すべて解消済みのため、実態に合わせて再判定する。
+
+### Syntax checks {#pass-2-syntax}
+
+- test code: PASS（実行で GREEN。`tsc --noEmit -p tsconfig.json` は `wdio.conf.ts TS2353 'tauri:options'`
+  の pre-existing 型エラーのみ — 実行時は正常。s5 でも同種の tsc 制約を許容済み）
+- docker-compose: SKIPPED（compose-service 参加者ゼロ = local Tauri app。不在が正常）
+
+### Pass 1 前提の解消確認 {#pass-2-resolved}
+
+| Pass 1 の記述 | 現状 |
+|---|---|
+| テストは skeleton | **解消**: `wdio.conf.ts seedNote()` で Note A を投入し、実 assert（body + updatedAt） |
+| `storage_dir` injection 未実装 | **解消**: `TAURI_TEST_STORAGE_DIR` override 実装済み |
+| `page-main` 未完了 | **解消**: page-main 全 phase done |
+| `@wdio/tauri-service` / `webdriverio` 未インストール | **解消**: 導入済み（v1.4.0） |
+| `before()/after()` fixture | **解消**: `onPrepare` で seed / `onComplete` で cleanup |
+
+### Mode checklist (local tauri) {#pass-2-mode}
+
+| item | status | note |
+|---|---|---|
+| spec `runner: wdio` ↔ test 実行 ↔ wdio.conf.ts | ✅ PASS | 一致（test は WDIO injected globals を使用） |
+| テストコード内に service lifecycle が無い | ✅ PASS | seed は onPrepare、テストは操作のみ |
+| local app が docker-compose に含まれない | ✅ PASS | compose 不在が正しい |
+| wdio `tauri:options.application` == runtime `binary` | ✅ PASS | `target/debug/app` |
+| `@wdio/tauri-service` が services に含まれる | ✅ PASS | `driverProvider: 'external'` |
+
+### Semantic findings (spec ↔ test code) {#pass-2-findings}
+
+- **RESOLVED** spec ↔ impl: debounce 値が domain (`auto-save-note.md` 500ms / README 500ms) に対し
+  実装 `Block.svelte` が 600ms だった乖離を 500ms に修正。
+- **RESOLVED** spec.md#test-points「発火タイミング」: E2E test 1 が `waitUntil` でファイル変化を
+  検知し elapsed 400–3000ms を assert するよう強化（即時発火 / 未発火を検知）。
+- **RESOLVED** spec.md#test-points「NoteFeed updatedAt sort 反映」: store unit test
+  (`stores/feed.test.ts`) で applyAutoSave 後の並び替えを決定的に検証。
+- **RESOLVED** spec.md#test-points「冪等性 (S9)」: E2E test 2 が body を変更 → 元に戻す編集試行を
+  行い、debounce 発火後も永続化されない（ファイル / updatedAt 不変）ことを検証。
+- **INFO (制約・文書化)** event `NoteBodyEdited` は production 配線が `NoOpBus`
+  (`auto_save_note/commands.rs`) のため E2E 観測不可。担保は slice unit test
+  (`auto_save_note/tests.rs`)。方針は `notes.md#event-verification-policy` に明記。
+
+### Disposition {#pass-2-disposition}
+
+- Pass 1 のブロッカー的前提はすべて解消。debounce 乖離も解消。
+- 残りは test-points の coverage refinement（MEDIUM/LOW）で、scenario レベルでは non-blocking。
+- Verdict: **PASS**
