@@ -35,7 +35,7 @@
 		focus,
 		feed,
 		onTagFilter,
-		autoSaveDebounceMs = 600,
+		autoSaveDebounceMs = 500,
 		assignTagFn = assignTag,
 		removeTagFn = removeTag,
 		autoSaveFn = autoSaveNote,

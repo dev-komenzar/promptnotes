@@ -285,6 +285,22 @@ describe('page:page-main feed store', () => {
 		expect(store.notes[0].body).toBe('orig');
 	});
 
+	it('spec#tp-sort-immediate — applyAutoSave は updated_at sort 時に note を最上部へ移動する', () => {
+		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
+		store.hydrateSort({ field: 'updated_at', direction: 'desc' });
+		store.hydrateNotes([
+			makeNote('old', { updated_at: '2026-06-26T00:00:00Z' }),
+			makeNote('new', { updated_at: '2026-06-26T02:00:00Z' }),
+			makeNote('mid', { updated_at: '2026-06-26T01:00:00Z' })
+		]);
+
+		expect(store.visibleNotes.map((n) => n.id)).toEqual(['new', 'mid', 'old']);
+
+		store.applyAutoSave('old', '2026-06-26T03:00:00Z');
+
+		expect(store.visibleNotes.map((n) => n.id)).toEqual(['old', 'new', 'mid']);
+	});
+
 	it('applyBodyEdit は body のみ更新する', () => {
 		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
 		store.prependNote(makeNote('a', { body: 'orig' }));
