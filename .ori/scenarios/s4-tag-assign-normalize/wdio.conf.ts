@@ -1,13 +1,25 @@
 // @ori-generated scenario:s4-tag-assign-normalize
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BINARY = resolve(__dirname, '../../../apps/promptnotes/src-tauri/target/debug/app');
 
 let tmpDir: string;
+
+function seedNote(id: string, body: string, tags: string[]): void {
+  const content = [
+    '---',
+    `createdAt: ${id}`,
+    `updatedAt: ${id}`,
+    `tags: [${tags.join(', ')}]`,
+    '---',
+    body,
+  ].join('\n');
+  writeFileSync(join(tmpDir, `${id}.md`), content, 'utf-8');
+}
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -28,6 +40,7 @@ export const config: WebdriverIO.Config = {
 
   onPrepare: async () => {
     tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s4-');
+    seedNote('20260620120000', 'hello', ['gpt']);
     process.env.TAURI_TEST_STORAGE_DIR = tmpDir;
     console.log(`[scenario:s4] temp storage dir: ${tmpDir}`);
   },

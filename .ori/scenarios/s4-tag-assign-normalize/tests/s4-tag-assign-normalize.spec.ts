@@ -2,126 +2,109 @@
 //
 // S4: タグ付与の正規化と重複排除
 //
-// Runner: wdio (Tauri local mode, `@wdio/tauri-service` + `tauri-driver`)
-// Binary の起動は wdio.conf.ts の tauri:options.application が担当
+// runner: wdio (Tauri local mode, @wdio/tauri-service + tauri-driver)
+// seed: wdio.conf.ts onPrepare が Note A (20260620120000, body="hello", tags=["gpt"]) を
+//       TAURI_TEST_STORAGE_DIR に投入する
 //
-// テスト戦略 (E2C / host process):
-//   Tauri IPC invoke で assign-tag コマンドを発行し、結果を検証する。
-//   ファイル永続化の検証は node:fs (host file system) で行う。
-//
-// Given: テスト用 storage_dir に Note A の .md ファイルを事前作成 (tags=["gpt"])
-// When: "  GPT  " で assign_tag → TagDiff::Unchanged (重複 no-op)
-// Then: ファイル frontmatter が変化していない、event 非発行
-// When: "coding" で assign_tag → TagDiff::Added
-// Then: ファイル frontmatter に "coding" 追加、event NoteTagsChanged 発行
+// domain/validation.md#s4-tag-assign-normalize:
+//   - Tag 正規化: "  GPT  " → "gpt" (trim + lowercase)
+//   - 正規化後 TagSet に既存 → assign は no-op (永続化・event なし, I-N5)
+//   - 変化した場合のみ NoteTagsChanged 発行
 
-import { mkdtempSync, readFileSync, writeFileSync, rmdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const NOTE_ID = '20260620120000';
 
-/** .md frontmatter から tags 配列を抽出 */
-function extractTags(mdContent: string): string[] {
-  const m = mdContent.match(/^tags:\s*\[(.*)\]$/m);
-  if (!m) return [];
-  // 単純な YAML inline list: [gpt, coding]
-  const raw = m[1].replace(/"/g, '').trim();
-  if (!raw) return [];
-  return raw.split(',').map(s => s.trim()).filter(Boolean);
+function readNote(): string {
+  return readFileSync(join(process.env.TAURI_TEST_STORAGE_DIR!, `${NOTE_ID}.md`), 'utf-8');
 }
 
-// ---------------------------------------------------------------------------
-// Test
-// ---------------------------------------------------------------------------
+function extractTags(md: string): string[] {
+  const m = md.match(/^tags:\s*\[(.*)\]$/m);
+  if (!m) return [];
+  const raw = m[1].replace(/"/g, '').trim();
+  return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+}
+
+function extractUpdatedAt(md: string): string | null {
+  const m = md.match(/^updatedAt:\s*(.+)$/m);
+  return m ? m[1].trim() : null;
+}
+
+function block() {
+  return $(`[data-block-id="${NOTE_ID}"]`);
+}
+
+async function chipTexts(): Promise<string[]> {
+  const texts = await browser.execute((id: string) => {
+    const els = document.querySelectorAll(
+      `[data-block-id="${id}"] [data-testid="screen-1-block-tag-chip"]`,
+    );
+    return Array.from(els).map((e) => (e.textContent ?? '').replace('#', '').trim());
+  }, NOTE_ID);
+  return texts as string[];
+}
+
+async function addTag(raw: string): Promise<void> {
+  const el = await block();
+  const input = await el.$('[data-testid="screen-1-block-tag-input"]');
+  await input.waitForExist({ timeout: 3000 });
+  await input.click();
+  await input.setValue(raw);
+  await browser.keys(['Enter']);
+}
 
 describe('scenario:s4-tag-assign-normalize', () => {
-  const scenarioId = 's4-tag-assign-normalize';
-  let tmpDir: string;
-  let noteId: string;
-  let mdPath: string;
-
-  before(() => {
-    noteId = '20260620120000';
-    tmpDir = mkdtempSync(join(tmpdir(), `${scenarioId}-`));
-    mdPath = join(tmpDir, `${noteId}.md`);
-
-    // 既存 Note A: tags=["gpt"], body="hello"
-    const frontmatter = [
-      '---',
-      `createdAt: 2026-06-20T12:00:00`,
-      `updatedAt: 2026-06-20T12:00:00`,
-      'tags: ["gpt"]',
-      '---',
-      '',
-      'hello',
-    ].join('\n');
-    writeFileSync(mdPath, frontmatter, 'utf-8');
+  before(async () => {
+    const el = await block();
+    await el.waitForExist({ timeout: 10000 });
+    await $('[data-testid="screen-1-block-tag-chip"]').waitForExist({ timeout: 10000 });
+    await el.click();
+    await browser.waitUntil(
+      async () => (await el.getAttribute('data-block-state')) === 'EDITING',
+      { timeout: 5000, timeoutMsg: 'block did not enter EDITING' },
+    );
+    await browser.pause(300);
   });
 
-  after(() => {
-    try { rmdirSync(tmpDir, { recursive: true }); } catch { /* best effort */ }
+  it('step 1 — validation#s4-tag-assign-normalize: 正規化後重複するタグの assign は no-op', async () => {
+    const before = readNote();
+    expect(extractTags(before)).toEqual(['gpt']);
+    const beforeUpdatedAt = extractUpdatedAt(before);
+
+    await addTag('  GPT  ');
+    await browser.pause(600);
+
+    expect(await chipTexts()).toEqual(['gpt']);
+    const after = readNote();
+    expect(extractTags(after)).toEqual(['gpt']);
+    expect(extractUpdatedAt(after)).toBe(beforeUpdatedAt);
   });
 
-  it('step 1 — validation#s4-tag-assign-normalize: duplicate tag after normalization is no-op', async () => {
-    // ── Given ──
-    // Note A (tags=["gpt"]) が存在
-    const originalContent = readFileSync(mdPath, 'utf-8');
+  it('step 2 — validation#s4-tag-assign-normalize: 新規タグ assign で永続化される', async () => {
+    const before = readNote();
+    const beforeUpdatedAt = extractUpdatedAt(before);
 
-    // ── When ──
-    // Tauri IPC: invoke assign-tag with raw_tag="  GPT  "
-    // (normalization: trim → "GPT" → lowercase → "gpt" → already in TagSet)
-    //
-    // TODO: wdio + tauri IPC interaction pattern
-    // const result = await browser.executeScript(`
-    //   window.__TAURI_INTERNALS__.invoke('plugin:note-capture|assign_tag', {
-    //     noteId: '${noteId}',
-    //     rawTag: '  GPT  '
-    //   })
-    // `);
+    await addTag('coding');
+    await browser.waitUntil(
+      () => {
+        try {
+          return extractTags(readNote()).includes('coding');
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 3000, interval: 30, timeoutMsg: 'new tag was not persisted' },
+    );
 
-    // ── Then ──
-    // ファイルが unchanged であること
-    const afterContent = readFileSync(mdPath, 'utf-8');
-    expect(afterContent).toBe(originalContent);
+    const after = readNote();
+    expect(extractTags(after)).toEqual(['gpt', 'coding']);
+    expect(extractUpdatedAt(after)).not.toBe(beforeUpdatedAt);
 
-    // TagSet に "gpt" が 1 件のみ (重複なし)
-    const tags = extractTags(afterContent);
-    expect(tags).toEqual(['gpt']);
-
-    // TODO: verify event bus — NoteTagsChanged NOT emitted
-    // expect(emittedEvents).not.toContainEqual(
-    //   expect.objectContaining({ type: 'NoteTagsChanged', noteId })
-    // );
-  });
-
-  it('step 2 — validation#s4-tag-assign-normalize: new tag assignment emits NoteTagsChanged', async () => {
-    // ── Given ──
-    // Note A (tags=["gpt"]) が存在
-
-    // ── When ──
-    // Tauri IPC: invoke assign-tag with raw_tag="coding"
-    //
-    // TODO: wdio + tauri IPC interaction pattern
-    // await browser.executeScript(`
-    //   window.__TAURI_INTERNALS__.invoke('plugin:note-capture|assign_tag', {
-    //     noteId: '${noteId}',
-    //     rawTag: 'coding'
-    //   })
-    // `);
-
-    // ── Then ──
-    // TagSet が ["gpt", "coding"] に更新
-    const afterContent = readFileSync(mdPath, 'utf-8');
-    const tags = extractTags(afterContent);
-    // TODO: wdio interaction 後に検証
-    // expect(tags).toEqual(['gpt', 'coding']);
-
-    // TODO: verify event bus — NoteTagsChanged emitted
-    // expect(emittedEvents).toContainEqual(
-    //   expect.objectContaining({ type: 'NoteTagsChanged', noteId })
-    // );
+    await browser.waitUntil(async () => (await chipTexts()).includes('coding'), {
+      timeout: 3000,
+      timeoutMsg: 'coding chip did not appear in UI',
+    });
   });
 });

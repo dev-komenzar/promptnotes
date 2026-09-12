@@ -6,9 +6,13 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s4-tag-assign-normalize
+      hash: 4a02c17cc025
     - path: domain/workflows/assign-tag.md
+      hash: 4efe2dfe63c4
     - path: domain/aggregates.md#note-aggregate
+      hash: 56f7a54a8ab2
     - path: domain/domain-events.md#note-tags-changed
+      hash: 71db66eafe03
 ---
 
 # s4-tag-assign-normalize — Scenario Specification
