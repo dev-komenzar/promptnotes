@@ -40,7 +40,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * In-memory NoteFeed.visible_notes resolution (page-main-feed sub-task の暫定実装)。
  * 本格的な永続層 hydration + Rust 側 visible_notes 解決は list-feed slice (ori-64x.10) で対応。
  *
- * - query: case-insensitive substring (body + tags)
+ * - query: **NFKC + lowercase** substring (body + tags)。Rust `NoteFeed::visible_notes`
+ *   (`note_feed/shared/types/note_feed.rs#matches_query`) と同じ正規化を適用する (I-F1 / I-F5)。
+ *   全角 `ｇｐｔ` と半角 `gpt` を互換等価変換で同一視するため NFKC が必須 (S8)。
  * - date_range: created_at が範囲内
  * - tag: 完全一致 (1 タグ)
  * - sort: field / direction
@@ -54,10 +56,13 @@ export function applyFeedFilter(
 	let result = [...notes];
 
 	if (filter.query !== null && filter.query.trim() !== '') {
-		const needle = filter.query.toLocaleLowerCase('en');
+		// I-F1 / I-F5: Rust 側 `matches_query` と同じく NFKC + lowercase してから比較する。
+		const needle = filter.query.normalize('NFKC').toLocaleLowerCase('en');
 		result = result.filter((note) => {
-			if (note.body.toLocaleLowerCase('en').includes(needle)) return true;
-			return note.tags.some((tag) => tag.toLocaleLowerCase('en').includes(needle));
+			if (note.body.normalize('NFKC').toLocaleLowerCase('en').includes(needle)) return true;
+			return note.tags.some((tag) =>
+				tag.normalize('NFKC').toLocaleLowerCase('en').includes(needle)
+			);
 		});
 	}
 

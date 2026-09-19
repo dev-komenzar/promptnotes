@@ -208,6 +208,20 @@ describe('page:page-main feed store', () => {
 		expect(filtered.map((n) => n.id)).toStrictEqual(['a']);
 	});
 
+	it('spec#I-F1/I-F5 — visibleNotes query は NFKC 互換等価で全角 body にも match する', () => {
+		const notes: NoteSummary[] = [
+			makeNote('a', { body: 'GPT を試す' }),
+			makeNote('b', { body: 'ｇｐｔ のメモ' }),
+			makeNote('c', { body: 'unrelated' })
+		];
+		const filtered = applyFeedFilter(
+			notes,
+			{ query: 'gpt', date_range: { kind: 'all' }, tag: null },
+			{ field: 'created_at', direction: 'desc' }
+		);
+		expect(filtered.map((n) => n.id).sort()).toStrictEqual(['a', 'b']);
+	});
+
 	it('spec#I-PM11 — visibleNotes は tag filter を反映する', () => {
 		const notes: NoteSummary[] = [
 			makeNote('a', { tags: ['rust'] }),
