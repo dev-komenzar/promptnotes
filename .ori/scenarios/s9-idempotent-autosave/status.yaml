@@ -1,0 +1,16 @@
+scenario_id: s9-idempotent-autosave
+derived_at: 2026-09-19T08:32:51.074Z
+beads:
+  epic: ori-scenario-s9-idempotent-autosave
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+  finalize: closed
+dirty: []
