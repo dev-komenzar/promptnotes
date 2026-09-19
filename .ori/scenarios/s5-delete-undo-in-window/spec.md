@@ -70,10 +70,16 @@ Note A を削除後、トースト表示時間内に「元に戻す」操作で�
 - **runner**: `wdio`（優先チェーン 3 — global `scenario_test_runner`。app `promptnotes` は `mode: local` のため compose に含めず、ビルド済み binary を runner が直接起動）
 - **infrastructure**: `promptnotes` のみ（local mode）。docker-compose は不要（compose-service 系 app なし）
 - **runner config**: `wdio.conf.ts` が `/ori-generate` により生成される
-- **Note A の準備**: テスト開始前に `promptnotes` アプリ内で Note A を作成しておく（`Cmd+N` → body 入力 → `Cmd+Enter`）。または `storageDir` に直接 `.md` ファイルを配置
+- **Note A の準備**: `wdio.conf.ts` の `onPrepare` が `TAURI_TEST_STORAGE_DIR` に Note A
+  （`20260620120000`, body=`"hello"`）を seed する（app の unquoted inline 形式）
 - **アサーション戦略**:
-  - ファイルの存在/不在は `wdio` の `browser.executeAsync()` で Node.js `fs` を使用（Tauri shell plugin 経由も検討）
-  - NoteFeed の DOM 状態は wdio のセレクタで検証
-  - トーストの表示状態は ARIA live region のテキスト内容で検証
-- **待機戦略**: 削除操作後、ファイル削除とイベント伝播に十分な待機時間を設定（500ms 程度）。トーストの有効期間（5s）内に Undo 操作が実行できるよう、t0 から t1 までの時間を 2s に設定
-- **テストデータのクリーンアップ**: テスト終了後、`storageDir` を初期状態に戻す（Note A の `.md` が復元されていることを確認した上で、テスト用に作成したファイルを削除）
+  - ファイルの存在/不在・内容は**テストプロセスの `node:fs`**（module スコープ）で検証する
+    （`browser.executeAsync()` 経由ではない）
+  - NoteFeed / トーストの DOM 状態は `[data-testid]` セレクタで検証する
+- **削除ボタン操作**: hover 時のみ操作可能（`opacity-0` / `pointer-events-none`）なため、
+  `dispatchEvent(new MouseEvent('click'))` で直接 dispatch する
+  （WebKitWebDriver の `moveTo` は `:hover` を安定発火しない）
+- **待機戦略**: 削除 / Undo 後に `browser.pause(1000)` で FS・UI 反映を待つ。Undo は
+  トースト有効期間（5s）内に実行する
+- **テストデータのクリーンアップ**: `wdio.conf.ts` の `onComplete` が temp `storageDir` を
+  `rmSync` で削除する

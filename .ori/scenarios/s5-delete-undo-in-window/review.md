@@ -24,33 +24,48 @@ Spec ↔ テストコード ↔ config 整合性:
 
 verdict: **PASS**（指摘は MEDIUM/LOW、scenario レベルでブロックしない）
 
+## Pass 2 {#pass-2}
 
+再レビュー（review.md の tool-call アーティファクト除去 + テスト tsc 修正 +
+status schema 統一 + spec 実装ノート是正後）。
 
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="write">
-<｜DSML｜parameter name="content" string="true"># Review: s5-delete-undo-in-window {#review-s5-delete-undo-in-window}
+### 破損の修復 {#pass-2-repair}
 
-## Pass 1 {#pass-1}
+Pass 1 の後ろに AI のツールコールブロック（write 呼び出しの擬似タグ列）がそのまま
+書き込まれ、review 本文が二重に埋め込まれた状態になっていた。監査ログとして不正な
+ため除去し、本 Pass 2 に置換した。
 
-### Syntax checks
+### Pass 1 指摘の解消 {#pass-2-resolved}
 
-- test code: SKIPPED（WDIO `@wdio/globals/types` + `mocha` の型解決が scenario 独立 tsconfig で制限あり。WDIO 実行時に解決される）
-- docker-compose: N/A（compose-service 参加者ゼロ — `promptnotes` は `mode: local`）
+- **MEDIUM（node:fs と browser.executeAsync の齟齬）**: spec 実装ノートを実態
+  （テストプロセスの `node:fs`）に修正。解消。
+- **MEDIUM（event 発行順序の明示検証なし）**: `delete_note` / `restore_deleted_note` も
+  `NoOpBus` のため E2E 不可であることを `notes.md#event-verification-policy` に明記。
+  slice unit test で担保。制約として文書化。
+- **LOW（data-testid）**: 実装に存在、ドリフトなし。
+- **tsc**: テストの `$$(...).length` が `Promise<number>` 型になる 2 件のエラーを
+  `count` ヘルパーで解消（残りは既知の `wdio.conf.ts TS2353 'tauri:options'` のみ）。
 
-### Semantic findings
+### Mode checklist (local tauri) {#pass-2-mode}
 
-**Spec ↔ Test ↔ Config alignment:**
+| item | status | note |
+|---|---|---|
+| spec `runner: wdio` ↔ test 実行 ↔ wdio.conf.ts | ✅ PASS | 一致 |
+| テストコード内に service lifecycle が無い | ✅ PASS | seed は onPrepare、テストは操作のみ |
+| local app が docker-compose に含まれない | ✅ PASS | compose 不在が正しい |
+| wdio `tauri:options.application` == runtime `binary` | ✅ PASS | `target/debug/app` |
+| `@wdio/tauri-service` が services に含まれる | ✅ PASS | `driverProvider: 'external'` |
 
-| item | status | detail |
-|------|--------|--------|
-| runner: wdio | ✓ | spec ↔ wdio.conf.ts ↔ @wdio/tauri-service 一致 |
-| delete → feed 除去 → undo → feed 復元 | ✓ | test の countBefore/countAfterDelete/countAfterUndo で検証 |
-| toast 表示/非表示 | ✓ | `toast.isDisplayed()` で削除後 true、Undo 後 false |
-| トースト有効期間内 Undo | ✓ | pause(1000) 後 Undo、5 秒以内 |
-| ファイル不在/復元 | ✓ | `existsSync` で確認（test ファイルの `node:fs` import は before/beforeEach hook 内で解決。WDIO browser context では解決されないが、file-level fixture として spec 内で fs を扱うのは E2E シナリオの許容範囲） |
-| event 発行順序 | ○ | `NoteDeletedToTrash` → `NoteRestoredFromTrash` の明示検証なし。UI+FS 状態変化で間接カバー（scenario レベルで許容） |
-| docker-compose | ✓ | compose-service 参加者ゼロのため省略（generate-docker-compose.sh の判定と一致） |
+### Semantic findings (spec ↔ test code) {#pass-2-findings}
 
-### Disposition
+- テストは実質的: 削除で `.md` 不在 / feed -1 / toast 表示 → undo で `.md` 復元
+  （body=`hello`）/ feed 復元 / toast 消滅 を assert（1 passing 確認済み）。
+- event `NoteDeletedToTrash` → `NoteRestoredFromTrash` は NoOpBus のため E2E 不可
+  （`notes.md` に明記、slice unit test で担保）。
+- spec 実装ノートを実態（seed 方式 / `node:fs` / `dispatchEvent`）に修正。
+- status.yaml を s1〜s4 と同形（`beads` + `phases: closed`）に統一。
 
-- 重大な乖離なし。verdict=PASS
+### Disposition {#pass-2-disposition}
+
+- tool-call 破損を除去。Pass 1 の指摘はすべて解消または制約として文書化。
+- Verdict: **PASS**
