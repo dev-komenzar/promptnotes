@@ -50,6 +50,7 @@
 	};
 
 		let settingsModalOpen = $state(false);
+		let restartPromptOpen = $state(false);
 		let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 		let draftRegion: ReturnType<typeof DraftRegion> | undefined;
 
@@ -141,6 +142,28 @@
 		});
 
 	$effect(() => {
+		// S11 / I-S4: StorageDirChanged subscriber。storage_dir 変更時は再起動を促すモーダルを表示し、
+		// Feed は旧ディレクトリのまま維持する (domain-events.md#storage-dir-changed-subscribers)。
+		let unlisten: (() => void) | undefined;
+		let disposed = false;
+		(async () => {
+			try {
+				const u = await listen('settings:storage_dir_changed', () => {
+					restartPromptOpen = true;
+				});
+				if (disposed) u();
+				else unlisten = u;
+			} catch {
+				// silent — non-Tauri host (e.g. vitest jsdom)
+			}
+		})();
+		return () => {
+			disposed = true;
+			unlisten?.();
+		};
+	});
+
+	$effect(() => {
 		// currentSettings.theme が変わったら DOM に反映 (I-PM16/17/18)。
 		// load-settings 後 / theme_changed event 後 / settings save 後 の全 case を cover。
 		themeSubscriber.setTheme(currentSettings.theme);
@@ -205,17 +228,30 @@
 	}
 
 	function handleSettingsSaved(next: SettingsDto) {
-		// Settings 変更後の即時反映: in-memory state を更新し、新 storage_dir で Feed を再 hydrate する。
-		// Rust 側 list_notes は呼び出し毎に settings.json を読み直すため、frontend が re-invoke するだけで足りる。
+		// S11 / I-S4: storage_dir 変更は即時マイグレーションしない。Feed を新ディレクトリで再 hydrate すると
+		// 旧ディレクトリの Note が消えてしまうため、storage_dir 非変更時のみ再 hydrate する。
+		// 再起動要求は settings:storage_dir_changed subscriber が表示する。
+		const storageDirChanged = next.storage_dir !== currentSettings.storage_dir;
 		currentSettings = { ...next };
-		feedStore.hydrateSort(next.sort_preference);
-		void listNotesFn()
-			.then((feed) => {
-				feedStore.hydrateNotes(feed.notes);
-			})
-			.catch(() => {
-				// silent fallback: feed stays as-is
-			});
+		if (!storageDirChanged) {
+			feedStore.hydrateSort(next.sort_preference);
+			void listNotesFn()
+				.then((feed) => {
+					feedStore.hydrateNotes(feed.notes);
+				})
+				.catch(() => {
+					// silent fallback: feed stays as-is
+				});
+		}
+	}
+
+	function handleRestartNow() {
+		restartPromptOpen = false;
+		if (typeof window !== 'undefined') window.location.reload();
+	}
+
+	function handleRestartLater() {
+		restartPromptOpen = false;
 	}
 
 	function settingsForModal(): SettingsDto {
@@ -256,6 +292,7 @@
 <div
 	data-testid="page-main"
 	data-settings-modal-open={settingsModalOpen}
+	data-restart-prompt-open={restartPromptOpen}
 	class="flex h-screen min-h-0 w-screen flex-col overflow-hidden bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
 >
 	<ToolbarRegion onOpenSettings={handleOpenSettings} />
@@ -270,6 +307,43 @@
 		onClose={handleSettingsModalClose}
 		onSaved={handleSettingsSaved}
 	/>
+{/if}
+
+{#if restartPromptOpen}
+	<div
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="restart-prompt-title"
+		data-testid="restart-prompt"
+		class="fixed inset-0 z-50 flex items-center justify-center"
+	>
+		<div
+			class="w-[24rem] max-w-[90vw] rounded-lg border border-neutral-200 bg-white p-5 text-neutral-900 shadow-xl dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+		>
+			<h2 id="restart-prompt-title" class="text-base font-semibold">Restart required</h2>
+			<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+				The storage directory changed. Existing notes stay visible until you restart.
+			</p>
+			<div class="mt-4 flex justify-end gap-2">
+				<button
+					type="button"
+					data-testid="restart-prompt-later"
+					class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+					onclick={handleRestartLater}
+				>
+					Later
+				</button>
+				<button
+					type="button"
+					data-testid="restart-prompt-restart"
+					class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+					onclick={handleRestartNow}
+				>
+					Restart now
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
 <WidgetUpdateToast />
