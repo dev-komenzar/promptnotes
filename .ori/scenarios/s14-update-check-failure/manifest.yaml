@@ -1,0 +1,22 @@
+# scenario manifest — SSoT（人間が書く）。new-scenario.js が scaffold する。
+#
+# scenario id は .ori/domain/validation.md の H2 section anchor と 1:1
+# （例: `## Scenario S1: ... {#s1-note-created-happy}` → scenario id = s1-note-created-happy）。
+# rename 禁止。field 仕様の SSoT: instructions/scenario.instructions.md §manifest-schema。
+scenario_id: "s14-update-check-failure"
+type: scenario
+derives_from:
+  # 必須: この scenario が anchor する validation section（1:1）
+  - domain/validation.md#s14-update-check-failure
+  # 関連 workflow / aggregate / event / ui-field section
+  - domain/workflows/check-for-updates.md#check-for-updates
+  - domain/aggregates.md#update-channel-aggregate
+  - domain/domain-events.md#new-version-detected
+  - domain/ui-fields/screen-3.md#screen-3
+  - domain/ui-fields/page-groups.md#widget-update-toast
+# ---- optional fields（詳細は scenario.instructions.md §manifest-schema）----
+pages:
+  - page-main
+infrastructure:       # 参加者（app 名 + infra 名。起動方法は runtime / infra catalog から解決）
+  services:
+    - promptnotes

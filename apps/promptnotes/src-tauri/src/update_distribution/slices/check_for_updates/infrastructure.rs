@@ -25,15 +25,35 @@ impl UpdaterPort for TauriUpdaterPort {
         // Build updater with permissive comparator so the plugin always returns
         // the remote release regardless of version. Our domain layer does the
         // real comparison (I-U2).
-        let updater = self
+        let builder = self
             .app_handle
             .updater_builder()
-            .version_comparator(|_current, _remote| true)
-            .build()
-            .map_err(|e| {
-                log::warn!("failed to build updater: {e:?}");
-                UpdateError::NetworkError
-            })?;
+            .version_comparator(|_current, _remote| true);
+
+        // S14 E2E test seam (`.ori/scenarios/s14-update-check-failure`):
+        // debug builds may point the updater at a local endpoint via
+        // `TAURI_TEST_UPDATER_ENDPOINT` to deterministically reproduce an HTTP
+        // failure. Release builds compile this branch out entirely, so the
+        // production endpoint (tauri.conf.json) is never overridden.
+        #[cfg(debug_assertions)]
+        let builder = match std::env::var("TAURI_TEST_UPDATER_ENDPOINT") {
+            Ok(endpoint) => {
+                let url = tauri::Url::parse(&endpoint).map_err(|e| {
+                    log::warn!("invalid TAURI_TEST_UPDATER_ENDPOINT ({endpoint}): {e:?}");
+                    UpdateError::ParseError
+                })?;
+                builder.endpoints(vec![url]).map_err(|e| {
+                    log::warn!("failed to apply TAURI_TEST_UPDATER_ENDPOINT: {e:?}");
+                    UpdateError::NetworkError
+                })?
+            }
+            Err(_) => builder,
+        };
+
+        let updater = builder.build().map_err(|e| {
+            log::warn!("failed to build updater: {e:?}");
+            UpdateError::NetworkError
+        })?;
 
         // Bridge async -> sync: we're inside a Tauri async command (tokio runtime),
         // so block_in_place allows us to run the async check() synchronously.
