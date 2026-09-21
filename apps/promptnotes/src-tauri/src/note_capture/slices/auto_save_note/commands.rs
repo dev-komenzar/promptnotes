@@ -19,7 +19,37 @@ use crate::note_capture::slices::create_note::FsNoteRepository;
 struct SystemClock;
 impl Clock for SystemClock {
     fn now(&self) -> Timestamp {
+        // S15 E2E test seam (`.ori/scenarios/s15-same-second-edits`): debug
+        // builds may pin `now` to a fixed second via `TAURI_TEST_FIXED_NOW_FILE`
+        // so "two edits within the same second" (I-N4) can be reproduced
+        // deterministically. Release builds compile this branch out entirely,
+        // so production keeps using the real wall clock.
+        #[cfg(debug_assertions)]
+        if let Some(fixed) = fixed_now_override() {
+            return fixed;
+        }
         Timestamp::from_offset_datetime(OffsetDateTime::now_utc())
+    }
+}
+
+/// `TAURI_TEST_FIXED_NOW_FILE` holds an RFC3339 timestamp; empty/`system`/invalid
+/// values fall back to the real clock.
+#[cfg(debug_assertions)]
+fn fixed_now_override() -> Option<Timestamp> {
+    use time::format_description::well_known::Rfc3339;
+
+    let path = std::env::var("TAURI_TEST_FIXED_NOW_FILE").ok()?;
+    let raw = std::fs::read_to_string(path).ok()?;
+    let raw = raw.trim();
+    if raw.is_empty() || raw == "system" {
+        return None;
+    }
+    match OffsetDateTime::parse(raw, &Rfc3339) {
+        Ok(dt) => Some(Timestamp::from_offset_datetime(dt)),
+        Err(e) => {
+            log::warn!("invalid TAURI_TEST_FIXED_NOW_FILE value ({raw}): {e:?}");
+            None
+        }
     }
 }
 
