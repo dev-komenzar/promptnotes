@@ -380,3 +380,70 @@ fn watcher_emits_note_file_created_externally() {
         assert_eq!(note.body().as_str(), "new note");
     }
 }
+
+// ---------------------------------------------------------------------------
+// Application: watcher restart on StorageDirChanged (C-DEC7 / C-DEC11 / TP-WL4)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn watcher_restart_drops_old_dir_and_detects_new_dir() {
+    let old_dir = tempfile::tempdir().expect("tempdir old");
+    let new_dir = tempfile::tempdir().expect("tempdir new");
+
+    let old_bus = Arc::new(SpyingEventBus::new());
+    let old_uc = DetectExternalChangesUseCase::new(Arc::new(FakeClock), old_bus.clone());
+    let old_repo: Arc<dyn NoteRepository + Send + Sync> =
+        Arc::new(FileSystemNoteRepo::new(old_dir.path().to_path_buf()));
+    let old_handle = old_uc
+        .start_watcher(
+            DetectExternalChangesCommand {
+                storage_dir: StorageDir::try_from(old_dir.path().to_path_buf()).unwrap(),
+            },
+            old_repo,
+        )
+        .expect("old watcher starts");
+
+    // StorageDirChanged: the old WatcherHandle is dropped before the new watcher
+    // is started, i.e. old-dir monitoring stops (C-DEC7).
+    drop(old_handle);
+
+    let new_bus = Arc::new(SpyingEventBus::new());
+    let new_uc = DetectExternalChangesUseCase::new(Arc::new(FakeClock), new_bus.clone());
+    let new_repo: Arc<dyn NoteRepository + Send + Sync> =
+        Arc::new(FileSystemNoteRepo::new(new_dir.path().to_path_buf()));
+    let _new_handle = new_uc
+        .start_watcher(
+            DetectExternalChangesCommand {
+                storage_dir: StorageDir::try_from(new_dir.path().to_path_buf()).unwrap(),
+            },
+            new_repo,
+        )
+        .expect("new watcher starts");
+
+    std::fs::write(
+        old_dir.path().join("20250630120000.md"),
+        "---\ncreatedAt: 20250630120000\nupdatedAt: 20250630120000\ntags: []\n---\nold",
+    )
+    .unwrap();
+    std::fs::write(
+        new_dir.path().join("20250630130000.md"),
+        "---\ncreatedAt: 20250630130000\nupdatedAt: 20250630130000\ntags: []\n---\nnew",
+    )
+    .unwrap();
+
+    std::thread::sleep(Duration::from_millis(1000));
+
+    let old_events = old_bus.published_events();
+    assert!(
+        old_events.is_empty(),
+        "dropped watcher must not observe the old dir, got: {old_events:?}"
+    );
+    let new_events = new_bus.published_events();
+    let created = new_events
+        .iter()
+        .find(|e| matches!(e, DomainEvent::NoteFileCreatedExternally { .. }));
+    assert!(
+        created.is_some(),
+        "restarted watcher must observe the new dir, got: {new_events:?}"
+    );
+}

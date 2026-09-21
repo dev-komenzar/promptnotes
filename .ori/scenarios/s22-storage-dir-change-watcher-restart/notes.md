@@ -25,7 +25,8 @@ cd ../../.ori/scenarios/s22-storage-dir-change-watcher-restart
 ../../../apps/promptnotes/node_modules/.bin/wdio run wdio.conf.ts
 ```
 
-結果: **2 passing / 2 failing (~31s)** — **RED が期待結果**（後述）。
+結果（RED 確立時）: **2 passing / 2 failing (~31s)** — **RED が期待結果**（後述）。
+結果（GREEN 化後）: **4 passing / 0 failing（~3.5s）** — [#green](#green) 参照。
 
 ## RED 契約（本 scenario の目的） {#red-contract}
 
@@ -33,6 +34,7 @@ cd ../../.ori/scenarios/s22-storage-dir-change-watcher-restart
 （`StorageDirChanged` の infrastructure subscriber = watcher 再起動）は **未実装**であり、
 E2E の step 3 / 4 が RED になることが **本 scenario の契約**である。
 GREEN 化（production 実装の追加）は次ワーカーの責務であり、本ワーカーは scenario（検証軸）のみを作った。
+→ **GREEN 化は完了済み**。実装と実測は [#green](#green) を参照（テスト assertion は非改変）。
 
 - **RED になる step**: step 3（new dir の外部変更検知）/ step 4（new dir の新規 `.md` 作成検知）
 - **PASS の step**: step 1（old dir watcher 稼働の前提実測）/ step 2（S11 回帰: 永続化 +
@@ -128,3 +130,58 @@ GREEN 化に必要な production 変更（次ワーカー向けメモ、spec.md#
 - **テストは Gherkin のステップ順に依存する**（step 1 で old dir 変更 → step 2 で storage_dir 変更
   → step 3 で new dir 変更 → step 4 で new dir 作成）。`maxInstances: 1` + mocha 逐次実行が前提
   （s1〜s21 と同方針）
+
+## GREEN 化（本 scenario の実装） {#green}
+
+本 scenario の核（`StorageDirChanged` の Infrastructure 層 subscriber = watcher 再起動）を実装し、
+E2E を **4 passing / 0 failing（~3.5s）** にした。テストコード（assertion）は一切改変していない。
+
+### cross-BC 配線の方式（選定理由） {#cross-bc-wiring}
+
+`StorageDirChanged` は User Preferences BC の `SettingsEvent`（`user_preferences::shared::types`）で、
+Note Feed BC の `DomainEvent` / `EventBus` とは別系統。cross-BC のため Note Feed が
+`SettingsEvent` 型を直接 import するのは境界違反になる。そこで **publisher が外部に公開している
+Tauri event `settings:storage_dir_changed`（`TauriEventBus` が emit）を cross-BC 契約面として使い、
+composition root（`lib.rs::setup`）で Rust 側 `app.listen` subscriber を登録する方式**を採った。
+
+- 実装: `note_feed/slices/detect_external_changes/commands.rs::register_storage_dir_changed_subscriber`
+  を `lib.rs` の `.setup()` で 1 回だけ呼ぶ
+- `app.emit` は JS listener と Rust listener の両方に配送される（Tauri v2 の `Listeners::emit` が
+  `EventTarget::App` の Rust handler にも match する — tauri 2.11.3 `src/event/listener.rs` で確認）。
+  よって `update_settings` の publish がそのまま Note Feed 側 subscriber を起動できる
+- 代替案との比較:
+  - **frontend から `start_file_watcher` を再 invoke**: 変更は最小だが、UI 層が watcher 再起動を
+    駆動することになり、domain-events.md の「Infrastructure 層 subscriber」と層が食い違う
+  - **`update_settings` command から note_feed を直接呼ぶ**: User Preferences → Note Feed の
+    逆方向依存が生じ、publisher が subscriber を知る形になるため却下
+  - **共有 EventBus への統合**: 2 つの EventBus 型（`SettingsEvent` / `DomainEvent`）の統合は
+    影響範囲が大きく回帰リスクが高いため却下
+- subscriber の handler では `WatcherState.handle` を差し替える（旧 `WatcherHandle` の Drop が
+  先に走る = C-DEC7 の「停止 → 起動」順序を RAII で保証）。失敗時は最大 3 回・1 秒間隔で retry
+- 観測点は E2E のとおり「new dir の外部変更（Modify / Create）が手動操作なしで UI に反映されること」
+
+### production 変更ファイル {#green-production-change}
+
+- `apps/promptnotes/src-tauri/src/note_feed/slices/detect_external_changes/commands.rs`
+  — `start_watcher_for_current_settings()` 抽出 / `restart_watcher_with_retry()` /
+  `register_storage_dir_changed_subscriber()` 追加
+- `apps/promptnotes/src-tauri/src/lib.rs` — `.setup()` で subscriber を登録（composition root）
+- `apps/promptnotes/src-tauri/src/note_feed/slices/detect_external_changes/tests.rs`
+  — `watcher_restart_drops_old_dir_and_detects_new_dir`（C-DEC7 / C-DEC11 / TP-WL4）追加
+
+### GREEN 実測 {#green-measurement}
+
+- S22: `bun run build:test` → `wdio run wdio.conf.ts` → **4 passing / 0 failing（~3.5s）**
+  - ✓ step 1（old dir watcher 稼働）/ ✓ step 2（S11 回帰）/ ✓ step 3（new dir Modify 検知・核）
+    / ✓ step 4（new dir Create 検知）
+- 回帰 E2E: s11 3 passing / s16 4 / s17 4 / s18 4 / s21 5（いずれも 0 failing）
+- frontend unit: `bun run test` → 164 passed
+- Rust: `cargo test detect_external_changes` → 21 passed。全体は 333 passed / 2 failed（既存
+  time-bomb `list_feed::tp_f5_last_7_days` / `tp_f6_and_composition` のみ、本変更と無関係）
+
+### 付随要件の範囲 {#green-scope}
+
+- retry（最大 3 回・1 秒間隔）は実装済み（`restart_watcher_with_retry`）。ただし watcher 起動失敗を
+  E2E から注入できないため観測対象外（#known-issues のとおり）
+- 全 retry 失敗時の「アプリ再起動を促す」は専用 UX を新設せず、S11 の `restart-prompt` に委譲
+  （`StorageDirChanged` で常に表示されるため）。slice spec の Out of scope と整合

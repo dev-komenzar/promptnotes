@@ -27,6 +27,14 @@ pub fn run() {
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),
         ))
+        // S22 / C-DEC11: `StorageDirChanged` の Infrastructure 層 subscriber。
+        // cross-BC 配線のため composition root で登録する (この slice の
+        // commands.rs module doc / .ori/scenarios/s22.../notes.md に理由を記録)。
+        .setup(|app| {
+            note_feed::slices::detect_external_changes::commands::
+                register_storage_dir_changed_subscriber(app.handle().clone());
+            Ok(())
+        })
         // S13 (.ori/domain/validation.md#s13-quit-flush) の連続 Flush は
         // frontend (PageMain.svelte) が CloseRequested を JS で intercept し、
         // pendingFlushRegistry を順次 await → window.destroy() する案 1 で実装。
