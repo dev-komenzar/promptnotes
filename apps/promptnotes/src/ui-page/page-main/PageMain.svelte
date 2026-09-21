@@ -11,8 +11,10 @@
 		import FeedRegion from './regions/FeedRegion.svelte';
 		import ToastRegion from './regions/ToastRegion.svelte';
 		import ToolbarRegion from './regions/ToolbarRegion.svelte';
-		import { editingNote, type EditingNoteState } from './stores/editing-note.svelte';
-		import { feedStore } from './stores/feed.svelte';
+	import { editingNote } from './stores/editing-note.svelte';
+	import { createExternalChangeBridge } from './stores/external-change-bridge';
+	import { hashBody } from './stores/body-hash';
+	import { feedStore } from './stores/feed.svelte';
 		import { focusStore } from './stores/focus.svelte';
 		import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
 		import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
@@ -48,6 +50,37 @@
 		theme: 'System',
 		sort_preference: { field: 'created_at', direction: 'desc' }
 	};
+
+	// S19: bridge `notes-changed` into the screen-4 conflict dialog store. The dialog itself only
+	// renders while a note is EDITING and the disk body differs (is_stale), per screen-4.md.
+	const externalChangeBridge = createExternalChangeBridge();
+	const conflictDeps = externalChangeBridge.conflictDeps((payload) => {
+		// ApplyExternal: replace the edited note with the disk version and leave EDITING.
+		feedStore.applyBodyEdit(payload.note_id, payload.note_body);
+		editingNote.setEditing(null, null);
+		focusStore.clear();
+	});
+
+	$effect(() => {
+		// Track the EDITING note + its current body hash for conflict detection (I-WC2).
+		const noteId = focusStore.activeId;
+		if (focusStore.activeState !== 'EDITING' || noteId === null) {
+			editingNote.setEditing(null, null);
+			return;
+		}
+		const body = feedStore.notes.find((note) => note.id === noteId)?.body;
+		if (body === undefined) return;
+		let cancelled = false;
+		void hashBody(body).then((hash) => {
+			if (cancelled) return;
+			editingNote.setEditing(noteId, hash);
+		});
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	let conflictLocalBody = $derived(externalChangeBridge.currentLocalBody());
 
 		let settingsModalOpen = $state(false);
 		let restartPromptOpen = $state(false);
@@ -127,7 +160,18 @@
 					unlisten = await listen('notes-changed', async () => {
 						try {
 							const feed = await listNotesFn();
-							feedStore.hydrateNotes(feed.notes);
+							const conflict = await externalChangeBridge.notifyExternalModification(feed.notes);
+							if (conflict) {
+								// S19 / I-WC2: preserve the in-flight local edit for the conflicting note so
+								// the dialog resolves it instead of silently clobbering the editor.
+								feedStore.hydrateNotes(
+									feed.notes.map((note) =>
+										note.id === conflict.noteId ? { ...note, body: conflict.localBody } : note
+									)
+								);
+							} else {
+								feedStore.hydrateNotes(feed.notes);
+							}
 						} catch {
 							// silent — re-hydration failure preserves current feed
 						}
@@ -348,7 +392,4 @@
 
 <WidgetUpdateToast />
 
-<WidgetExternalChangeConflict
-	localBody=""
-	onClose={() => {}}
-/>
+<WidgetExternalChangeConflict localBody={conflictLocalBody} onClose={() => {}} deps={conflictDeps} />

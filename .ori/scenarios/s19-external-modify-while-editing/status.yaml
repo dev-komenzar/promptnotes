@@ -1,0 +1,16 @@
+scenario_id: s19-external-modify-while-editing
+derived_at: 2026-09-21T06:04:32.452Z
+beads:
+  epic: ori-scenario-s19-external-modify-while-editing
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+  finalize: closed
+dirty: []
