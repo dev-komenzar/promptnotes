@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { NoteFileModifiedExternallyPayload } from '../../../ui-widget/external-change-conflict/store.svelte';
+import type { NoteFileDeletedExternallyPayload } from '../../../ui-widget/external-delete-notice/store.svelte';
 import { createExternalChangeBridge } from './external-change-bridge';
 import type { NoteSummary } from './feed.svelte';
 
@@ -133,5 +134,96 @@ describe('page-main:external-change-bridge', () => {
 
 		expect(editingBridge.currentLocalBody()).toBe('hello local');
 		expect(idleBridge.currentLocalBody()).toBe('');
+	});
+});
+
+describe('page-main:external-change-bridge — deletion (S20)', () => {
+	it('is silent when no note is EDITING', async () => {
+		const emit = vi.fn();
+		const bridge = createExternalChangeBridge({
+			feed: { notes: [makeNote(NOTE_A, 'hello local')] },
+			editing: makeEditing(false),
+			hashFn
+		});
+		bridge.subscribeDeletion(emit);
+
+		await expect(bridge.notifyExternalDeletion([])).resolves.toBeNull();
+		expect(emit).not.toHaveBeenCalled();
+	});
+
+	it('is silent while the note still exists on disk', async () => {
+		const emit = vi.fn();
+		const bridge = createExternalChangeBridge({
+			feed: { notes: [makeNote(NOTE_A, 'hello local')] },
+			editing: makeEditing(true),
+			hashFn
+		});
+		bridge.subscribeDeletion(emit);
+
+		await expect(
+			bridge.notifyExternalDeletion([makeNote(NOTE_A, 'hello local')])
+		).resolves.toBeNull();
+		expect(emit).not.toHaveBeenCalled();
+	});
+
+	it('is silent when the edited note is not in the feed', async () => {
+		const emit = vi.fn();
+		const bridge = createExternalChangeBridge({
+			feed: { notes: [] },
+			editing: makeEditing(true),
+			hashFn
+		});
+		bridge.subscribeDeletion(emit);
+
+		await expect(bridge.notifyExternalDeletion([])).resolves.toBeNull();
+		expect(emit).not.toHaveBeenCalled();
+	});
+
+	it('emits a deletion payload and reports the local snapshot when the EDITING note is gone', async () => {
+		const emitted: NoteFileDeletedExternallyPayload[] = [];
+		const bridge = createExternalChangeBridge({
+			feed: { notes: [makeNote(NOTE_A, 'hello local')] },
+			editing: makeEditing(true),
+			hashFn
+		});
+		bridge.subscribeDeletion((payload) => emitted.push(payload));
+
+		const deletion = await bridge.notifyExternalDeletion([makeNote('20260101000000', 'other')]);
+
+		expect(deletion).toStrictEqual({
+			noteId: NOTE_A,
+			localBody: 'hello local',
+			tags: [],
+			createdAt: '2026-06-20T12:00:00Z',
+			updatedAt: '2026-06-20T12:00:00Z'
+		});
+		expect(emitted).toHaveLength(1);
+		expect(emitted[0]).toMatchObject({
+			note_id: NOTE_A,
+			note_title: `${NOTE_A}.md`,
+			note_body: 'hello local',
+			file_path: `${NOTE_A}.md`
+		});
+	});
+
+	it('deleteDeps wires the deletion handler and currentNoteId', async () => {
+		const bridge = createExternalChangeBridge({
+			feed: { notes: [makeNote(NOTE_A, 'hello local')] },
+			editing: makeEditing(true),
+			hashFn
+		});
+		const onSaveAsNew = vi.fn();
+		const onDiscard = vi.fn();
+		const deps = bridge.deleteDeps(onSaveAsNew, onDiscard);
+		const handler = vi.fn();
+		const unsubscribe = await deps.subscribeFn!(handler);
+
+		await bridge.notifyExternalDeletion([]);
+
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(deps.currentNoteId!()).toBe(NOTE_A);
+		expect(onSaveAsNew).not.toHaveBeenCalled();
+		expect(onDiscard).not.toHaveBeenCalled();
+		unsubscribe();
 	});
 });

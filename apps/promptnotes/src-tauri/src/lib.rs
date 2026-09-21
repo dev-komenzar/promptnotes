@@ -43,6 +43,7 @@ pub fn run() {
             note_capture::slices::remove_tag::commands::remove_tag,
             note_capture::slices::delete_note::commands::delete_note,
             note_capture::slices::restore_deleted_note::commands::restore_deleted_note,
+            note_capture::slices::recreate_note::commands::recreate_note,
             note_feed::slices::update_feed_filter::commands::update_feed_filter,
             note_feed::slices::change_sort_order::commands::change_sort_order,
             note_feed::slices::list_feed::commands::list_notes,

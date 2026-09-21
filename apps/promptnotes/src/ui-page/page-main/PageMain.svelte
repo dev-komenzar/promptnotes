@@ -5,6 +5,8 @@
 		import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 		import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 		import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
+		import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
+		import { recreateNote } from '$lib/note-capture/slices/recreate-note';
 		import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
 		import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
 		import DraftRegion from './regions/DraftRegion.svelte';
@@ -60,6 +62,30 @@
 		editingNote.setEditing(null, null);
 		focusStore.clear();
 	});
+
+	// S20: an external program deleted the file while its Block was EDITING. The notice
+	// offers "save as new file" (recreate `<id>.md` with the in-flight body) or "discard".
+	const deleteNoticeDeps = externalChangeBridge.deleteDeps(
+		async (payload) => {
+			const note = feedStore.notes.find((candidate) => candidate.id === payload.note_id);
+			if (!note) return;
+			try {
+				const outcome = await recreateNote(note.id, note.body, note.tags);
+				feedStore.applyAutoSave(outcome.id, outcome.updated_at);
+			} catch {
+				// silent — best-effort durability; the user chose to leave EDITING
+			} finally {
+				editingNote.setEditing(null, null);
+				focusStore.clear();
+			}
+		},
+		(payload) => {
+			// Discard: drop the note from the feed and abandon the editing buffer.
+			feedStore.applyDelete(payload.note_id);
+			editingNote.setEditing(null, null);
+			focusStore.clear();
+		}
+	);
 
 	$effect(() => {
 		// Track the EDITING note + its current body hash for conflict detection (I-WC2).
@@ -169,9 +195,25 @@
 										note.id === conflict.noteId ? { ...note, body: conflict.localBody } : note
 									)
 								);
-							} else {
-								feedStore.hydrateNotes(feed.notes);
+								return;
 							}
+							const deletion = await externalChangeBridge.notifyExternalDeletion(feed.notes);
+							if (deletion) {
+								// S20 / I-DEL1: the EDITING note is gone from disk. Keep the local snapshot in
+								// the feed so the Block + editor stay mounted while the notice is shown.
+								feedStore.hydrateNotes([
+									...feed.notes,
+									{
+										id: deletion.noteId,
+										body: deletion.localBody,
+										tags: deletion.tags,
+										created_at: deletion.createdAt,
+										updated_at: deletion.updatedAt
+									}
+								]);
+								return;
+							}
+							feedStore.hydrateNotes(feed.notes);
 						} catch {
 							// silent — re-hydration failure preserves current feed
 						}
@@ -393,3 +435,5 @@
 <WidgetUpdateToast />
 
 <WidgetExternalChangeConflict localBody={conflictLocalBody} onClose={() => {}} deps={conflictDeps} />
+
+<WidgetExternalDeleteNotice deps={deleteNoticeDeps} />
