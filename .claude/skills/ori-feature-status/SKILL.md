@@ -1,9 +1,9 @@
 ---
 name: ori-feature-status
-description: slice / page の進捗を一覧 or 個別で要約表示。status.yaml + beads issue 状態 + dirty マーク を統合した俯瞰ビュー
+description: slice / page の進捗を一覧 or 個別で要約表示。status.yaml + beads issue 状態 + dirty マーク を統合した俯瞰ビュー。validation.md ↔ scenario の coverage 表示付き
 ---
 
-ユーザが `/ori-feature-status [slice-id]` を呼んだ際、**slice / page の現在地を at-a-glance で表示**します。`.ori/slices/` と `.ori/pages/` のファイル一覧、`status.yaml`、`bd show` の結果を統合し、見やすい形に整形。
+ユーザが `/ori-feature-status [slice-id]` を呼んだ際、**slice / page の現在地を at-a-glance で表示**します。`.ori/slices/` と `.ori/pages/` のファイル一覧、`status.yaml`、`bd show` の結果を統合し、見やすい形に整形。あわせて **validation.md の scenario section anchor と `.ori/scenarios/` の coverage**（未 scaffold の scaffold 候補）を表示します。
 
 ## 役割
 
@@ -34,9 +34,14 @@ ori status (全 <N> slice / page)
 
 Legend: in progress / done / blocked / ✓ dirty (1 mark) / ✓✓ dirty (≥2)
 
+scenario coverage (validation.md ↔ .ori/scenarios, 1:1):
+  s1-note-created-happy        scaffolded
+  s2-note-list-paginated      candidate (not scaffolded)
+
 Recommended next action:
   - edit-past-note-start: 2 dirty marks. Re-derive via /ori-flow edit-past-note-start
   - capture-auto-save: review pending. /ori-review or continue /ori-flow
+  - s2-note-list-paginated: 未 scaffold の validation section。new-scenario.js で scaffold 可
 ```
 
 ### 個別モード（引数あり）
@@ -88,6 +93,11 @@ Next action:
    bash ./scripts/list-pages.sh
    ```
    - `--dirty` オプションで dirty な slice のみ表示も可能
+   - **scenario coverage**（`.ori/domain/validation.md` が存在する場合）:
+     ```bash
+     node .apm/skills/ori-flow/scripts/new-scenario.js --list-validation
+     ```
+     validation.md の scenario section anchor 一覧と scaffold 済み coverage（未 scaffold = scaffold 候補、anchor 不一致 = 1:1 違反）を取得
 3. **dirty マーク検出**：
    - `status.yaml.dirty[]` の件数
    - 派生元ファイルの hash 不一致を確認
@@ -120,6 +130,8 @@ Next action:
 - **dirty slice / page がある場合**：影響の大きい順に `/ori-flow <id>` で再 derive
 - **review pending の slice がある場合**：`/ori-review <id>` で adversarial レビュー
 - **未着手 slice / page がある場合**：`/ori-flow <id>` で開始
+- **未 scaffold の validation section がある場合**: ユーザ確認の上 `node .apm/skills/ori-flow/scripts/new-scenario.js <id>` で scenario を scaffold → `/ori-flow <id>`（4 phase）
+- **anchor 不一致の scenario がある場合**（1:1 違反）: validation.md に section を追加するか scenario の統合をユーザに提案
 - **proposal がある場合**：`/ori-review-proposals` で人間判断
 - **全てクリーンな場合**：`/ori-distill` で次の DDD phase に進む、または休む
 - **情報源不整合パス**：`/ori-doctor` で詳細診断

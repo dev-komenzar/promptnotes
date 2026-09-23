@@ -5,14 +5,19 @@
 		import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 		import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 		import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
+		import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
+		import { recreateNote } from '$lib/note-capture/slices/recreate-note';
 		import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
 		import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
 		import DraftRegion from './regions/DraftRegion.svelte';
 		import FeedRegion from './regions/FeedRegion.svelte';
 		import ToastRegion from './regions/ToastRegion.svelte';
 		import ToolbarRegion from './regions/ToolbarRegion.svelte';
-		import { editingNote, type EditingNoteState } from './stores/editing-note.svelte';
-		import { feedStore } from './stores/feed.svelte';
+	import { editingNote } from './stores/editing-note.svelte';
+	import { createExternalChangeBridge } from './stores/external-change-bridge';
+	import { hashBody } from './stores/body-hash';
+	import { feedStore } from './stores/feed.svelte';
+		import { focusStore } from './stores/focus.svelte';
 		import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
 		import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
 		import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
@@ -48,8 +53,65 @@
 		sort_preference: { field: 'created_at', direction: 'desc' }
 	};
 
+	// S19: bridge `notes-changed` into the screen-4 conflict dialog store. The dialog itself only
+	// renders while a note is EDITING and the disk body differs (is_stale), per screen-4.md.
+	const externalChangeBridge = createExternalChangeBridge();
+	const conflictDeps = externalChangeBridge.conflictDeps((payload) => {
+		// ApplyExternal: replace the edited note with the disk version and leave EDITING.
+		feedStore.applyBodyEdit(payload.note_id, payload.note_body);
+		editingNote.setEditing(null, null);
+		focusStore.clear();
+	});
+
+	// S20: an external program deleted the file while its Block was EDITING. The notice
+	// offers "save as new file" (recreate `<id>.md` with the in-flight body) or "discard".
+	const deleteNoticeDeps = externalChangeBridge.deleteDeps(
+		async (payload) => {
+			const note = feedStore.notes.find((candidate) => candidate.id === payload.note_id);
+			if (!note) return;
+			try {
+				const outcome = await recreateNote(note.id, note.body, note.tags);
+				feedStore.applyAutoSave(outcome.id, outcome.updated_at);
+			} catch {
+				// silent — best-effort durability; the user chose to leave EDITING
+			} finally {
+				editingNote.setEditing(null, null);
+				focusStore.clear();
+			}
+		},
+		(payload) => {
+			// Discard: drop the note from the feed and abandon the editing buffer.
+			feedStore.applyDelete(payload.note_id);
+			editingNote.setEditing(null, null);
+			focusStore.clear();
+		}
+	);
+
+	$effect(() => {
+		// Track the EDITING note + its current body hash for conflict detection (I-WC2).
+		const noteId = focusStore.activeId;
+		if (focusStore.activeState !== 'EDITING' || noteId === null) {
+			editingNote.setEditing(null, null);
+			return;
+		}
+		const body = feedStore.notes.find((note) => note.id === noteId)?.body;
+		if (body === undefined) return;
+		let cancelled = false;
+		void hashBody(body).then((hash) => {
+			if (cancelled) return;
+			editingNote.setEditing(noteId, hash);
+		});
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	let conflictLocalBody = $derived(externalChangeBridge.currentLocalBody());
+
 		let settingsModalOpen = $state(false);
+		let restartPromptOpen = $state(false);
 		let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
+		let draftRegion: ReturnType<typeof DraftRegion> | undefined;
 
 		const themeSubscriber = createThemeSubscriber({
 		onThemeChanged: (theme) => {
@@ -124,6 +186,33 @@
 					unlisten = await listen('notes-changed', async () => {
 						try {
 							const feed = await listNotesFn();
+							const conflict = await externalChangeBridge.notifyExternalModification(feed.notes);
+							if (conflict) {
+								// S19 / I-WC2: preserve the in-flight local edit for the conflicting note so
+								// the dialog resolves it instead of silently clobbering the editor.
+								feedStore.hydrateNotes(
+									feed.notes.map((note) =>
+										note.id === conflict.noteId ? { ...note, body: conflict.localBody } : note
+									)
+								);
+								return;
+							}
+							const deletion = await externalChangeBridge.notifyExternalDeletion(feed.notes);
+							if (deletion) {
+								// S20 / I-DEL1: the EDITING note is gone from disk. Keep the local snapshot in
+								// the feed so the Block + editor stay mounted while the notice is shown.
+								feedStore.hydrateNotes([
+									...feed.notes,
+									{
+										id: deletion.noteId,
+										body: deletion.localBody,
+										tags: deletion.tags,
+										created_at: deletion.createdAt,
+										updated_at: deletion.updatedAt
+									}
+								]);
+								return;
+							}
 							feedStore.hydrateNotes(feed.notes);
 						} catch {
 							// silent — re-hydration failure preserves current feed
@@ -137,6 +226,28 @@
 				unlisten?.();
 			};
 		});
+
+	$effect(() => {
+		// S11 / I-S4: StorageDirChanged subscriber。storage_dir 変更時は再起動を促すモーダルを表示し、
+		// Feed は旧ディレクトリのまま維持する (domain-events.md#storage-dir-changed-subscribers)。
+		let unlisten: (() => void) | undefined;
+		let disposed = false;
+		(async () => {
+			try {
+				const u = await listen('settings:storage_dir_changed', () => {
+					restartPromptOpen = true;
+				});
+				if (disposed) u();
+				else unlisten = u;
+			} catch {
+				// silent — non-Tauri host (e.g. vitest jsdom)
+			}
+		})();
+		return () => {
+			disposed = true;
+			unlisten?.();
+		};
+	});
 
 	$effect(() => {
 		// currentSettings.theme が変わったら DOM に反映 (I-PM16/17/18)。
@@ -203,17 +314,30 @@
 	}
 
 	function handleSettingsSaved(next: SettingsDto) {
-		// Settings 変更後の即時反映: in-memory state を更新し、新 storage_dir で Feed を再 hydrate する。
-		// Rust 側 list_notes は呼び出し毎に settings.json を読み直すため、frontend が re-invoke するだけで足りる。
+		// S11 / I-S4: storage_dir 変更は即時マイグレーションしない。Feed を新ディレクトリで再 hydrate すると
+		// 旧ディレクトリの Note が消えてしまうため、storage_dir 非変更時のみ再 hydrate する。
+		// 再起動要求は settings:storage_dir_changed subscriber が表示する。
+		const storageDirChanged = next.storage_dir !== currentSettings.storage_dir;
 		currentSettings = { ...next };
-		feedStore.hydrateSort(next.sort_preference);
-		void listNotesFn()
-			.then((feed) => {
-				feedStore.hydrateNotes(feed.notes);
-			})
-			.catch(() => {
-				// silent fallback: feed stays as-is
-			});
+		if (!storageDirChanged) {
+			feedStore.hydrateSort(next.sort_preference);
+			void listNotesFn()
+				.then((feed) => {
+					feedStore.hydrateNotes(feed.notes);
+				})
+				.catch(() => {
+					// silent fallback: feed stays as-is
+				});
+		}
+	}
+
+	function handleRestartNow() {
+		restartPromptOpen = false;
+		if (typeof window !== 'undefined') window.location.reload();
+	}
+
+	function handleRestartLater() {
+		restartPromptOpen = false;
 	}
 
 	function settingsForModal(): SettingsDto {
@@ -237,6 +361,15 @@
 			event.preventDefault();
 			void toastStore.undoLatest();
 		}
+
+		// Cmd+N (macOS) / Ctrl+N (others) — Draft エディタにフォーカスを移動する。
+		// Feed block が EDITING 中でも常に発動する (isEditableTarget ガードは適用しない)。
+		if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'n') {
+			if (event.isComposing) return;
+			event.preventDefault();
+			focusStore.clear();
+			draftRegion?.focusDraft();
+		}
 	}
 </script>
 
@@ -245,10 +378,11 @@
 <div
 	data-testid="page-main"
 	data-settings-modal-open={settingsModalOpen}
+	data-restart-prompt-open={restartPromptOpen}
 	class="flex h-screen min-h-0 w-screen flex-col overflow-hidden bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
 >
 	<ToolbarRegion onOpenSettings={handleOpenSettings} />
-	<DraftRegion />
+	<DraftRegion bind:this={draftRegion} />
 	<FeedRegion />
 	<ToastRegion />
 </div>
@@ -261,9 +395,45 @@
 	/>
 {/if}
 
+{#if restartPromptOpen}
+	<div
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="restart-prompt-title"
+		data-testid="restart-prompt"
+		class="fixed inset-0 z-50 flex items-center justify-center"
+	>
+		<div
+			class="w-[24rem] max-w-[90vw] rounded-lg border border-neutral-200 bg-white p-5 text-neutral-900 shadow-xl dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+		>
+			<h2 id="restart-prompt-title" class="text-base font-semibold">Restart required</h2>
+			<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+				The storage directory changed. Existing notes stay visible until you restart.
+			</p>
+			<div class="mt-4 flex justify-end gap-2">
+				<button
+					type="button"
+					data-testid="restart-prompt-later"
+					class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+					onclick={handleRestartLater}
+				>
+					Later
+				</button>
+				<button
+					type="button"
+					data-testid="restart-prompt-restart"
+					class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+					onclick={handleRestartNow}
+				>
+					Restart now
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <WidgetUpdateToast />
 
-<WidgetExternalChangeConflict
-	localBody=""
-	onClose={() => {}}
-/>
+<WidgetExternalChangeConflict localBody={conflictLocalBody} onClose={() => {}} deps={conflictDeps} />
+
+<WidgetExternalDeleteNotice deps={deleteNoticeDeps} />

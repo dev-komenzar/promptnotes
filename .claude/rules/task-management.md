@@ -23,6 +23,38 @@ bd epic / parent issue        (= 1 PR、bundling 単位)
 - **共通**: session 跨ぎが発生した時点で epic 化を提案 (lazy promote safety net)
 - 上記に該当しなければ default issue (type=task) で十分
 
+## scenario の beads 連携 {#scenario-beads-integration}
+
+scenario 概念の beads 連携規約:
+
+### EpicKind {#epic-kind}
+
+- **EpicKind**: `scenario`
+- **issue 名**: `ori-scenario-<scenario-id>`（例: `ori-scenario-order-flow-e2e`）
+
+### phase issue {#phase-issues}
+
+scenario の 4 phase に対応する beads issue を作成する:
+
+| phase | issue 名 | 説明 |
+|---|---|---|
+| derive | `ori-derive-<scenario-id>` | ドメイン文書から scenario spec を派生 |
+| generate | `ori-generate-<scenario-id>` | テストコード + docker-compose を生成 |
+| review | `ori-review-<scenario-id>` | spec ↔ テストコードの整合性を review |
+| finalize | `ori-finalize-<scenario-id>` | dirty 解除と spec hash 更新 |
+
+### 依存管理 {#dependency-management}
+
+- 参加 slice の beads issue に `bd depends` を自動設定
+- 全 slice 完了後に scenario の `/ori-flow` が unblock
+- 例: `bd dep add ori-scenario-order-flow-e2e ori-create-order`
+
+### dirty 伝播 {#dirty-propagation}
+
+- `/ori-sync` が `.ori/scenarios/` も走査
+- ドメイン文書変更時に scenario を dirty マーク
+- `/ori-finalize` で dirty 解除（review PASS 必須）
+
 ## Lazy promote mechanics (γ rule) {#lazy-promote}
 
 `bd update --type` flag は無いため、既存 issue ID を維持したまま parent-child で「暗黙 epic」を表現する:

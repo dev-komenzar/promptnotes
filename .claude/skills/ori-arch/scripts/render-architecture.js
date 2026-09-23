@@ -15729,16 +15729,54 @@ var CrossSliceSchema = external_exports.object({
   prohibited_direct: external_exports.boolean().default(true),
   via: external_exports.array(external_exports.string()).default([])
 }).passthrough();
+var ScenarioTestRunnerSchema = external_exports.object({
+  runner: external_exports.string(),
+  config_path: external_exports.string().optional(),
+  command: external_exports.string().optional()
+}).passthrough();
+var RunTargetSchema = external_exports.enum(["host", "ios-simulator", "android-emulator"]);
+var ComposeServiceRuntimeSchema = external_exports.object({
+  mode: external_exports.literal("compose-service"),
+  image: external_exports.string().describe("docker image (B\u2032 descriptor\u3001Dockerfile \u306A\u3057)"),
+  install: external_exports.string().optional().describe("install command (e.g. pnpm install)"),
+  build: external_exports.string().optional().describe("build command"),
+  run: external_exports.string().describe("service \u8D77\u52D5 command"),
+  ports: external_exports.array(external_exports.number().int().positive()).default([]).describe("host ports (\u9759\u7684\u5BA3\u8A00\u3002\u540C\u4E00 scenario \u5185\u885D\u7A81\u306F generate \u30A8\u30E9\u30FC)"),
+  healthcheck: external_exports.object({ http: external_exports.string().describe("HTTP \u5F85\u6A5F path (\u4F8B: /health)\u3002default \u306F TCP probe") }).passthrough().optional(),
+  cache_volumes: external_exports.array(external_exports.string()).default([])
+}).passthrough();
+var LocalRuntimeSchema = external_exports.object({
+  mode: external_exports.literal("local"),
+  build: external_exports.string().optional().describe("binary build command (\u4F8B: pnpm tauri build --debug --no-bundle)"),
+  binary: external_exports.string().describe("\u30D3\u30EB\u30C9\u6E08\u307F binary path (build-then-test)"),
+  target: RunTargetSchema.describe("\u5B9F\u884C\u57FA\u76E4"),
+  runner: external_exports.string().describe("UI \u99C6\u52D5 runner (\u4F8B: wdio)\u3002derive \u306E runner chain \u512A\u5148\u30C1\u30A7\u30FC\u30F3 2 \u3067\u4F7F\u7528")
+}).passthrough();
+var AppRuntimeSchema = external_exports.discriminatedUnion("mode", [
+  ComposeServiceRuntimeSchema,
+  LocalRuntimeSchema
+]);
+var AppSchema = external_exports.object({
+  name: external_exports.string(),
+  path: external_exports.string(),
+  runtime: AppRuntimeSchema.optional()
+}).passthrough();
+var WorkspaceSchema = external_exports.object({
+  apps_root: external_exports.string().default("apps"),
+  apps: external_exports.array(AppSchema).min(1)
+}).passthrough();
 var FrontmatterSchema = external_exports.object({
   version: external_exports.literal(1),
   default_root: external_exports.string().optional(),
+  workspace: WorkspaceSchema.optional(),
   root: RootSchema.optional(),
   roots: external_exports.array(RootSchema).optional(),
   cross_root: external_exports.array(CrossRootSchema).optional(),
   layer_sets: external_exports.record(LayerSetSchema),
   slice_internal: external_exports.record(SliceInternalSchema).optional(),
   cross_slice: CrossSliceSchema,
-  page_map_marker: external_exports.string().optional()
+  page_map_marker: external_exports.string().optional(),
+  scenario_test_runner: ScenarioTestRunnerSchema.optional()
 }).passthrough().refine((v2) => v2.root != null || v2.roots != null && v2.roots.length > 0, {
   message: "either `root` (single-root shorthand) or non-empty `roots[]` must be present"
 });
@@ -15755,12 +15793,14 @@ function parseArchitectureSpec(raw) {
   return {
     version: 1,
     default_root: defaultRoot,
+    workspace: fm.workspace,
     roots,
     cross_root: fm.cross_root ?? [],
     layer_sets: fm.layer_sets,
     slice_internal: fm.slice_internal ?? {},
     cross_slice: fm.cross_slice,
     page_map_marker: fm.page_map_marker,
+    scenario_test_runner: fm.scenario_test_runner,
     body: content
   };
 }
@@ -16881,6 +16921,11 @@ Options:
                          Default: derived from --bc by kebab\u2192snake.
   --dest <dir>           Destination directory. Default: current working directory.
   --patterns-dir <dir>   Patterns root. Overrides the skill-bundled default.
+  --scenario-test-runner <name>
+                         Scenario test runner (e.g. playwright, wdio, vitest).
+                         Default: runtime.runner from the rendered template
+                         (local apps), else auto-inferred from stack
+                         (web\u2192playwright, tauri\u2192wdio).
   --force                Overwrite existing .ori/architecture.md.
   -h, --help             Show this help and exit.
 
@@ -16938,6 +16983,9 @@ function parseArgs(argv2) {
       case "--patterns-dir":
         out.patternsDir = take();
         break;
+      case "--scenario-test-runner":
+        out.scenarioTestRunner = take();
+        break;
       case "--force":
         out.force = true;
         break;
@@ -16956,6 +17004,28 @@ function parseArgs(argv2) {
 }
 function kebabToSnake(s2) {
   return s2.replace(/-/g, "_");
+}
+function inferScenarioTestRunner(stack) {
+  const s2 = stack.toLowerCase();
+  if (s2.includes("tauri")) return "wdio";
+  if (s2.includes("next") || s2.includes("nuxt") || s2.includes("remix") || s2.includes("astro")) return "playwright";
+  if (s2.includes("react") || s2.includes("vue") || s2.includes("angular") || s2.includes("svelte")) return "playwright";
+  if (s2.includes("web") || s2 === "typescript" || s2 === "javascript") return "playwright";
+  if (s2.includes("detox")) return "detox";
+  if (s2.includes("appium")) return "appium";
+  if (s2.includes("cypress")) return "cypress";
+  return void 0;
+}
+function extractRuntimeRunner(rendered) {
+  const { data } = parseFrontmatter(rendered);
+  const apps = data?.workspace?.apps;
+  for (const app of apps ?? []) {
+    const runtime = app?.runtime;
+    if (runtime?.mode === "local" && typeof runtime.runner === "string") {
+      return runtime.runner;
+    }
+  }
+  return void 0;
 }
 async function exists(path) {
   try {
@@ -17072,6 +17142,38 @@ function render(tpl, vars) {
   }
   return out;
 }
+function injectScenarioTestRunner(content, runner) {
+  const lines = content.split("\n");
+  const result = [];
+  let inFrontmatter = false;
+  let frontmatterEnd = -1;
+  let injected = false;
+  for (let i2 = 0; i2 < lines.length; i2++) {
+    if (lines[i2] === "---") {
+      if (!inFrontmatter) {
+        inFrontmatter = true;
+        result.push(lines[i2]);
+      } else {
+        if (!injected) {
+          result.push(`scenario_test_runner:`);
+          result.push(`  runner: ${runner}`);
+          injected = true;
+        }
+        result.push(lines[i2]);
+        frontmatterEnd = i2;
+        break;
+      }
+    } else if (inFrontmatter) {
+      result.push(lines[i2]);
+    } else {
+      result.push(lines[i2]);
+    }
+  }
+  for (let i2 = frontmatterEnd + 1; i2 < lines.length; i2++) {
+    result.push(lines[i2]);
+  }
+  return result.join("\n");
+}
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -17094,11 +17196,15 @@ async function main() {
   const bcName = args.bc;
   const bcNameRs = args.bcRs ?? kebabToSnake(bcName);
   const tpl = await readFile(tplPath, "utf8");
-  const rendered = render(tpl, {
+  let rendered = render(tpl, {
     APP_NAME: appName,
     BC_NAME: bcName,
     BC_NAME_RS: bcNameRs
   });
+  const scenarioRunner = args.scenarioTestRunner ?? extractRuntimeRunner(rendered) ?? inferScenarioTestRunner(args.stack);
+  if (scenarioRunner) {
+    rendered = injectScenarioTestRunner(rendered, scenarioRunner);
+  }
   try {
     parseArchitectureSpec(rendered);
   } catch (err) {
@@ -17120,6 +17226,9 @@ Source template: ${relative(dest, tplPath) || tplPath}
   consola.success(`Wrote ${relative(dest, target)}`);
   consola.info(`Pattern: ${args.pattern} / Stack: ${args.stack}`);
   consola.info(`App: ${appName} / BC: ${bcName}${args.stack.includes("tauri") ? ` / BC_RS: ${bcNameRs}` : ""}`);
+  if (scenarioRunner) {
+    consola.info(`Scenario Test Runner: ${scenarioRunner}${args.scenarioTestRunner ? " (user override)" : " (auto-inferred)"}`);
+  }
 }
 await main();
 /*! Bundled license information:

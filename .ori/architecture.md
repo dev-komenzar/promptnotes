@@ -6,6 +6,12 @@ workspace:
   apps:
     - name: promptnotes
       path: apps/promptnotes
+      runtime:
+        mode: local
+        build: bun run build:test
+        binary: apps/promptnotes/src-tauri/target/debug/app
+        target: host
+        runner: wdio
 roots:
   - id: ts
     app: promptnotes
@@ -84,6 +90,16 @@ cross_slice:
 cross_bc:
   via: [apps/promptnotes/src/shared/contracts, apps/promptnotes/src/shared/events]
   same_event_bus: true
+phase_hooks:
+  flow-impl-red-pre:
+    - cmd: cargo run --bin export-types
+      cwd: apps/promptnotes/src-tauri
+      reason: "rebuild specta bindings before red boundary tests"
+  flow-impl-green-post:
+    - cmd: cargo run --bin export-types
+      cwd: apps/promptnotes/src-tauri
+      reason: "resync TS bindings after green impl (Slice DoD rule 4)"
+scenario_test_runner: wdio
 ---
 
 # Architecture (promptnotes — ddd-vsa-hex / typescript-tauri)

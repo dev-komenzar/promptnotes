@@ -9297,7 +9297,7 @@ function pathMatches(derivesValue, changedFile) {
 }
 async function listManifests() {
   const out = [];
-  for (const kind of ["slices", "pages"]) {
+  for (const kind of ["slices", "pages", "scenarios"]) {
     const baseDir = join(root, ".ori", kind);
     if (!await exists(baseDir)) continue;
     const entries = await readdir(baseDir, { withFileTypes: true });
@@ -9309,7 +9309,8 @@ async function listManifests() {
       try {
         const yaml = await readFile(manifestPath, "utf8");
         const manifest = (0, import_yaml.parse)(yaml);
-        out.push({ id: e2.name, kind: kind === "slices" ? "slice" : "page", dir, manifest });
+        const kindType = kind === "slices" ? "slice" : kind === "pages" ? "page" : "scenario";
+        out.push({ id: e2.name, kind: kindType, dir, manifest });
       } catch (err) {
         consola.warn(`failed to parse ${relative(root, manifestPath)}: ${err.message}`);
       }

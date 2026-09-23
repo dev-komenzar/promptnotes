@@ -81,3 +81,26 @@ describe('page:page-main theme wiring', () => {
 		await expect.poll(() => document.documentElement.classList.contains('dark')).toBe(false);
 	});
 });
+
+describe('page:page-main keyboard shortcuts', () => {
+	it('spec#cross-screen-shortcuts — Cmd/Ctrl+N で Draft にフォーカスする', async () => {
+		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
+
+		await expect.element(page.getByTestId('screen-1-draft-body')).toBeInTheDocument();
+
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }));
+
+		await expect
+			.poll(() => {
+				const active = document.activeElement;
+				if (!active) return false;
+				const draftBody = document.querySelector('[data-testid="screen-1-draft-body"]');
+				if (!draftBody) return false;
+				return draftBody.contains(active) && active.classList.contains('cm-content');
+			})
+			.toBe(true);
+
+		// Cmd/Ctrl+N はノートを作成しないことを確認
+		await expect.element(page.getByTestId('screen-1-block')).not.toBeInTheDocument();
+	});
+});

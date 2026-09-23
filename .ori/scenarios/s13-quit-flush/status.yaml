@@ -1,0 +1,16 @@
+scenario_id: s13-quit-flush
+derived_at: 2026-09-19T10:25:11.700Z
+beads:
+  epic: ori-scenario-s13-quit-flush
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+  finalize: closed
+dirty: []

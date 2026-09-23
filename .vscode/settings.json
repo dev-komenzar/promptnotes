@@ -1,0 +1,13 @@
+{
+  // WebdriverIO Test Explorer: 実在する scenario config のみを discovery 対象にする。
+  // 既定の **/*wdio*.conf* は .direnv/flake-inputs/*-source (nix-store 上の古いリポジトリコピー) も
+  // 拾ってしまい、read-only パスには node_modules が無いため tsx 解決に失敗 (Cannot find module 'tsx')
+  // → discovery が完了せず、テスト実行 (親 run) が終わらなくなる。
+  "webdriverio.configFilePattern": [".ori/scenarios/**/wdio.conf.ts"],
+
+  // discovery の走査から .direnv / node_modules を除外する。
+  "search.exclude": {
+    "**/.direnv": true,
+    "**/node_modules": true
+  }
+}

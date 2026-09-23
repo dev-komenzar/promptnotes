@@ -111,6 +111,10 @@
 	onDestroy(() => {
 		view?.destroy();
 	});
+
+	export function focusDraft(): void {
+		view?.focus();
+	}
 </script>
 
 <section

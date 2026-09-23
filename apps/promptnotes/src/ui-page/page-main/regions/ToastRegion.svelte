@@ -21,7 +21,10 @@
 	aria-live="polite"
 	class="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2"
 >
-	<div data-testid="screen-1-toast-stack" class="flex w-full max-w-sm flex-col-reverse gap-2 px-2">
+	<!-- screen-1.md#cross-toast-display: 新しい Toast を上に積む（最新が画面上側）。
+	     store.entries は新しい順（先頭 = 最新）なので flex-col で先頭を上に描画する。
+	     flex-col-reverse だと最新が最下段になり spec 違反（S6 で検出）。 -->
+	<div data-testid="screen-1-toast-stack" class="flex w-full max-w-sm flex-col gap-2 px-2">
 		{#each entries as entry (entry.id)}
 			<div
 				data-testid="screen-1-toast"

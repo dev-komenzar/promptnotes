@@ -1,0 +1,20 @@
+# scenario manifest — SSoT（人間が書く）。new-scenario.js が scaffold する。
+#
+# scenario id は .ori/domain/validation.md の H2 section anchor と 1:1
+# （例: `## Scenario S1: ... {#s1-note-created-happy}` → scenario id = s1-note-created-happy）。
+# rename 禁止。field 仕様の SSoT: instructions/scenario.instructions.md §manifest-schema。
+scenario_id: "s9-idempotent-autosave"
+type: scenario
+derives_from:
+  # 必須: この scenario が anchor する validation section（1:1）
+  - domain/validation.md#s9-idempotent-autosave
+  # 関連 workflow / aggregate / event section
+  - domain/workflows/auto-save-note.md#auto-save-note
+  - domain/aggregates.md#note-aggregate
+  - domain/domain-events.md#note-body-edited
+# ---- optional fields（詳細は scenario.instructions.md §manifest-schema）----
+pages:
+  - page-main
+infrastructure:
+  services:
+    - promptnotes

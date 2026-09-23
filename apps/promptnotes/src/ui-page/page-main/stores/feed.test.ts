@@ -208,6 +208,20 @@ describe('page:page-main feed store', () => {
 		expect(filtered.map((n) => n.id)).toStrictEqual(['a']);
 	});
 
+	it('spec#I-F1/I-F5 — visibleNotes query は NFKC 互換等価で全角 body にも match する', () => {
+		const notes: NoteSummary[] = [
+			makeNote('a', { body: 'GPT を試す' }),
+			makeNote('b', { body: 'ｇｐｔ のメモ' }),
+			makeNote('c', { body: 'unrelated' })
+		];
+		const filtered = applyFeedFilter(
+			notes,
+			{ query: 'gpt', date_range: { kind: 'all' }, tag: null },
+			{ field: 'created_at', direction: 'desc' }
+		);
+		expect(filtered.map((n) => n.id).sort()).toStrictEqual(['a', 'b']);
+	});
+
 	it('spec#I-PM11 — visibleNotes は tag filter を反映する', () => {
 		const notes: NoteSummary[] = [
 			makeNote('a', { tags: ['rust'] }),
@@ -283,6 +297,22 @@ describe('page:page-main feed store', () => {
 
 		expect(store.notes[0].updated_at).toBe('2026-06-26T01:00:00Z');
 		expect(store.notes[0].body).toBe('orig');
+	});
+
+	it('spec#tp-sort-immediate — applyAutoSave は updated_at sort 時に note を最上部へ移動する', () => {
+		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
+		store.hydrateSort({ field: 'updated_at', direction: 'desc' });
+		store.hydrateNotes([
+			makeNote('old', { updated_at: '2026-06-26T00:00:00Z' }),
+			makeNote('new', { updated_at: '2026-06-26T02:00:00Z' }),
+			makeNote('mid', { updated_at: '2026-06-26T01:00:00Z' })
+		]);
+
+		expect(store.visibleNotes.map((n) => n.id)).toEqual(['new', 'mid', 'old']);
+
+		store.applyAutoSave('old', '2026-06-26T03:00:00Z');
+
+		expect(store.visibleNotes.map((n) => n.id)).toEqual(['old', 'new', 'mid']);
 	});
 
 	it('applyBodyEdit は body のみ更新する', () => {

@@ -1,0 +1,65 @@
+slice_id: detect-external-changes
+derived_at: 2026-06-30
+finalized_at: 2026-09-21
+beads:
+  epic: ori-slice-detect-external-changes
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+    - finalize
+phases:
+  derive:
+    status: closed
+    issue: ori-derive-detect-external-changes
+    completed_at: 2026-06-30
+    notes: spec.md (C-DEC1..C-DEC11) を保持。re-derive は C-DEC11 等の slice 固有制約を
+      失うリスクがあるため未実施
+  plan:
+    status: closed
+    issue: ori-plan-detect-external-changes
+    notes: beads phase issue は未 scaffold (本 slice は /ori-flow 未走だった)。本 finalize
+      で status.yaml を新規整備
+  test-red:
+    status: closed
+    issue: ori-test-red-detect-external-changes
+    notes: S16 / S17 / S18 / S21 E2E (既存) + slice unit tests が検知 pipeline を cover。
+      S22 は RED 契約として別 commit で確立済み
+  impl-green:
+    status: closed
+    issue: ori-impl-green-detect-external-changes
+    completed_at: 2026-09-21
+    notes: StorageDirChanged subscriber を実装 → S22 E2E 4 passing。既存 NoteFileCreated/
+      Modified/DeletedExternally の upsert/remove 挙動は不変
+  refactor:
+    status: closed
+    issue: ori-refactor-detect-external-changes
+    notes: start_watcher_for_current_settings() 抽出 + restart_watcher_with_retry()。挙動不変
+  review:
+    status: closed
+    issue: ori-review-detect-external-changes
+    notes: 3 structural gate (slice tests green / clippy / public_entry) PASS。fresh-context
+      ori-reviewer は orchestrator 制約 (ハング回避) で skip
+  finalize:
+    status: closed
+    issue: ori-finalize-detect-external-changes
+    completed_at: 2026-09-21
+    notes: status.yaml 新規作成。spec.md は非改変 (C-DEC11 等を保持)
+dirty: []
+followup:
+  open_questions:
+    - id: oq-watcher-idempotent
+      summary: 起動済み watcher への start_file_watcher 再呼出しの扱い (旧 watcher drop →
+        再起動 / AlreadyRunning)
+      tracking: spec.md#oq-watcher-idempotent
+  deferred_review_findings:
+    - retry (最大 3 回・1 秒間隔) の unit test は AppHandle 依存のため未追加。E2E の観測対象外
+    - watcher 再起動失敗時のユーザー再起動促し UX は S11 の restart-prompt に委譲 (spec.md#out-of-scope)
+  spec_drift:
+    - spec.md の upstream hash が domain docs の現行値と乖離 (derived 2026-06-30)。
+      再 derive は C-DEC11 等の slice 固有制約を失うリスクがあるため保留。将来 /ori-derive
+      を慎重に実施するか /ori-propose で slice 固有制約を domain に明示する

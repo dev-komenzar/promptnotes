@@ -1,21 +1,24 @@
 lockfile_version: '1'
-generated_at: '2026-09-01T09:46:43.339321+00:00'
-apm_version: 0.21.0
+generated_at: '2026-09-11T12:52:30.605107+00:00'
+apm_version: 0.29.0
 dependencies:
 - repo_url: dev-komenzar/ori
+  name: ori
   host: github.com
-  resolved_commit: 5547c6e0a8a2264861b418246b29db8c6261dcd5
+  resolved_commit: c3faebcaac5bd19ca9bd135ed6d31252c3f66a5f
+  version: 0.3.0
   package_type: apm_package
   deployed_files:
   - .claude/agents/ori-reviewer.md
   - .claude/rules/bug-routing.md
-  - .claude/rules/ddd-rust.md
   - .claude/rules/ddd-test.md
   - .claude/rules/ddd-typescript.md
   - .claude/rules/domain-phase.md
   - .claude/rules/feature-manifest.md
   - .claude/rules/feature-spec.md
   - .claude/rules/ori-conventions.md
+  - .claude/rules/scenario-test.md
+  - .claude/rules/scenario.md
   - .claude/rules/task-management.md
   - .claude/rules/ui-test.md
   - .claude/skills/ori-arch
@@ -28,6 +31,7 @@ dependencies:
   - .claude/skills/ori-arch/architecture-md-schema.md
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/ai-notes.md
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md
+  - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/lib.rs
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/mod.rs
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/shared/events.rs
@@ -59,6 +63,7 @@ dependencies:
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/presentation/task-card.ts
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/tests/dod.test.ts
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/tests/task.test.ts
+  - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/contracts/index.ts
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/event.ts
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/index.ts
@@ -74,6 +79,7 @@ dependencies:
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/infrastructure/.gitkeep
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/presentation/task-card.ts
   - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/tests/task.test.ts
+  - .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/test.md
   - .claude/skills/ori-arch/scripts/check.js
   - .claude/skills/ori-arch/scripts/export.js
   - .claude/skills/ori-arch/scripts/render-architecture.js
@@ -147,9 +153,16 @@ dependencies:
   - .claude/skills/ori-flow
   - .claude/skills/ori-flow/SKILL.md
   - .claude/skills/ori-flow/scripts/new-page.js
+  - .claude/skills/ori-flow/scripts/new-scenario.js
   - .claude/skills/ori-flow/scripts/new-slice.js
   - .claude/skills/ori-flow/templates/page-manifest.yaml.tpl
+  - .claude/skills/ori-flow/templates/scenario-manifest.yaml.tpl
   - .claude/skills/ori-flow/templates/slice-manifest.yaml.tpl
+  - .claude/skills/ori-generate
+  - .claude/skills/ori-generate/SKILL.md
+  - .claude/skills/ori-generate/scripts/check-scenario-exists.sh
+  - .claude/skills/ori-generate/scripts/generate-docker-compose.sh
+  - .claude/skills/ori-generate/scripts/infra-catalog.yaml
   - .claude/skills/ori-graph
   - .claude/skills/ori-graph/SKILL.md
   - .claude/skills/ori-impl-green
@@ -190,24 +203,26 @@ dependencies:
   deployed_file_hashes:
     .claude/agents/ori-reviewer.md: sha256:59b412ca81b05a21dc55484d0bfefaeaba014fc1a55477838e89655fe337c459
     .claude/rules/bug-routing.md: sha256:7ab9131c40bba21816205f6ccac59ca83a7431c51d5df7581249ef9370e54420
-    .claude/rules/ddd-rust.md: sha256:576d7f78a8009089213c0db57565b0237414e9bdf4702d2574019373456c621e
-    .claude/rules/ddd-test.md: sha256:f581e45455b83651435e46226ddddccc781e7bcd08631a906be2773b3bd32f96
-    .claude/rules/ddd-typescript.md: sha256:99ed66a56a945701c9939ce1554f6f0d653e9afd3e69ba0bf7540f01b7c3f5a2
+    .claude/rules/ddd-test.md: sha256:7819d90da9346fc3dabec4ae6126e2ea1d22a3d62560a57194c0f3fdbbabe800
+    .claude/rules/ddd-typescript.md: sha256:e113f302f810a5342e1dab13d7a6e0b158b4c46dbbc9062cf9d48cb96f5c1834
     .claude/rules/domain-phase.md: sha256:3ff915ce26f9ae436f907ab8733e85803a6813123cfbed5d9eefc600a08cac54
     .claude/rules/feature-manifest.md: sha256:a297c79f9f3e5e06b0cd5a6991c7859a7020aaaa7a69b43cb076202a50371f9a
     .claude/rules/feature-spec.md: sha256:3b46a931712c927bf5c68d6936ec5240c14106760c5f89a8826d787d0097fd3f
-    .claude/rules/ori-conventions.md: sha256:d8afaa2bf5be5849dc76f56c8533859ed14bb585f4026eb168926d1ce74ad0a0
-    .claude/rules/task-management.md: sha256:ab825d822229c6961e0960252d9df017e3199b9a41e776384f878b1095183dc8
-    .claude/rules/ui-test.md: sha256:548dea5827d4e6b518b54b673b560623a6114d3d8a7f5ef64c56710e01506373
-    .claude/skills/ori-arch/SKILL.md: sha256:f5444808ef0507b082d470dafdb893c8e7e936a0071d406377058c1762671a9a
-    .claude/skills/ori-arch/adapters/eslint/index.js: sha256:1202e76b18a852281500cbaa223093649815e5dc494410d4121663dc5b7206ca
+    .claude/rules/ori-conventions.md: sha256:d0856292b61e0c30b70ad3bc1503452945453e1a67e796e71c7e2f3ba73ba23d
+    .claude/rules/scenario-test.md: sha256:69116389b7b1e8d511b21741b6eb71e806006ac8c2acc0a6b997580f2e08df76
+    .claude/rules/scenario.md: sha256:6c209d1c2236f916bd67666ccb9d3abd88bc531526eb7a82fe34f3b56da37717
+    .claude/rules/task-management.md: sha256:555113758ae4181db7b42bcaf7230117ba9a746e9e5509653d2db57755bbbbfa
+    .claude/rules/ui-test.md: sha256:e643164b0ad615ef282f78724e6056b90d98b52caf1d2740567e89a71dafffb2
+    .claude/skills/ori-arch/SKILL.md: sha256:feb7275782eb95ebc45ea0d0c522eeec2b0c26a6cd281165667b27aba69da720
+    .claude/skills/ori-arch/adapters/eslint/index.js: sha256:4d47a58b682bdfe7817629f74b70b240b178994f39979c42fee65fd29b051c5b
     .claude/skills/ori-arch/adapters/eslint/templates/flat-config.js.tpl: sha256:d07e829ab64e92479bb02f38208d2df4d55bba6a3844f80ee8444df16d4bceeb
-    .claude/skills/ori-arch/adapters/generic/index.js: sha256:62836a5ae2ff06fb403332759549b59a3f21ce33ea6924d6d24d879c50f87c01
-    .claude/skills/ori-arch/adapters/rust/index.js: sha256:cc6b8802cd34c55e91772390940a1e783950dad71b2547d22ab7d1b2f5bd783d
+    .claude/skills/ori-arch/adapters/generic/index.js: sha256:b497a9d6cb4470e457f3dec17410554ea41bea30a891b7cdce0e2ed89c16bc5c
+    .claude/skills/ori-arch/adapters/rust/index.js: sha256:0b54076e19a706cd90439e226ac4b8a8ebda58f82702865f31cbf3918649e0cb
     .claude/skills/ori-arch/adapters/rust/templates/arch_test.rs.tpl: sha256:a83ed1e201cfc974ed9c1bc1b0b0175a4bf6e1f0c101ffa41accebdc2404d717
     .claude/skills/ori-arch/architecture-md-schema.md: sha256:439c64da7dffd0364d8f76b1925aa0cdcf31600316002bb53b6f98e7a89fede9
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/ai-notes.md: sha256:118dab2d15aaed3048c8e223943ca5f87aa5039ed424e085c50ecdbcecbb907a
-    .claude/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md: sha256:65c8632cbe739f8370cc761cf8bf4de575919e0c5665b38d5c31271936787eee
+    .claude/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md: sha256:413750fb326e8f3b01c8fa264b002baa2a74ccdc7d50b578bbf5861e3fa8b62c
+    .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md: sha256:9d886638d752633b718cb558229df12ede20e7a444691b29ee204b024d963b3a
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/lib.rs: sha256:e3536c09bd826f2aca2e70e59777a9510d943b5e13707cfd7de75f7399b720b9
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/mod.rs: sha256:eb453fe38710b9cc16378ad5e8fb691a99cf06af67ad92b68e329a2f11cb499c
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/shared/events.rs: sha256:d2c0fae5e7b98e454f5c4be9d5cd19c6236113d191f894a22d1a72b765f7a973
@@ -262,6 +277,7 @@ dependencies:
     : sha256:99ee285a3f25878b771d453aec11ad666da58708391383ed747421251c0a8379
     ? .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/tests/task.test.ts
     : sha256:16e7b9c970724b5becada34f086782c89cda405cacae6e089334e441cd030c0d
+    .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md: sha256:4ea4d05684769daf76d8b902b2e48e6ca09e4d7373a7040b2abad1f0020049d3
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/contracts/index.ts: sha256:bf83107032dc7a9cb10be7191bbcd5bd8a000b67ac5dbc41e80b4612e3e21d15
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/event.ts: sha256:f51e2b6211e5ff7562a47865df6d301415cb4e4913f827106aa06c579e279565
     .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/index.ts: sha256:30ac4515aaf809810e1a8281fe7155ae5c1aa38ff44fe4bd5f07375c7cdcfa37
@@ -285,11 +301,12 @@ dependencies:
     : sha256:8883d0e99d602e375f0f41c9efca941a3c914d3852d77a61f9ced0899be87e79
     ? .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/tests/task.test.ts
     : sha256:16e7b9c970724b5becada34f086782c89cda405cacae6e089334e441cd030c0d
-    .claude/skills/ori-arch/scripts/check.js: sha256:7082245af1f3a17c4a2b6d2dcdec79f41239ff2359fc795c0a5c999a3491d3d8
-    .claude/skills/ori-arch/scripts/export.js: sha256:8d41f45f99b39ed9e3e98f2449a3c38944972e3ad45e7b046f5805b14d255d36
-    .claude/skills/ori-arch/scripts/render-architecture.js: sha256:fcd153abd7fb3155a9c1748de537798d40bb9cf81dff3a9d1f7dbf9d9438223b
-    .claude/skills/ori-arch/scripts/sync-page-map.js: sha256:e5a5c6c4c0cd7398204ddf1031e93065b2d409bb80b1d29afbd2ee929f8421dc
-    .claude/skills/ori-architect/SKILL.md: sha256:cb98af06c7a1bbf9800ea1214e0d4e08e37eca0580f7a3e5d0832b92c8e34b3c
+    .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/test.md: sha256:8bf8705ea2ac496eb6c0d657160b6bdb4e7fbb4e8dbe1c65f504df7a5549d37b
+    .claude/skills/ori-arch/scripts/check.js: sha256:8d7e5f1b2209b630a4fd8da49897d3d525b8b5abbee00c52db5d63b4e307754e
+    .claude/skills/ori-arch/scripts/export.js: sha256:0114448fb6fd3c90f722eed607b3e3f5ce83ebc758cc68488f7e1c5aa6435d7d
+    .claude/skills/ori-arch/scripts/render-architecture.js: sha256:66f17dddb62664497c38846efc88b7cf17c7dc19157fe9b91a2c39d3e8118aeb
+    .claude/skills/ori-arch/scripts/sync-page-map.js: sha256:90de9d11695faab780dc9491074b7cfc33f7ea9feed76a11aaa0396e09c63d67
+    .claude/skills/ori-architect/SKILL.md: sha256:fd584acb06f6b6da27c84eb607966152a1e2cafdb8dbdb79c1412e3a6d141d73
     .claude/skills/ori-bug/SKILL.md: sha256:9a6309c3c27706b3853f1f45618bc13cfc189ad55899d18c45bcd5aaba18cacb
     .claude/skills/ori-ddd-1-discovery/SKILL.md: sha256:c4d28c3600cbf86db5f3b5c04842f20df46101e237665d2c92cb2d082d205e3b
     .claude/skills/ori-ddd-1-discovery/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
@@ -315,9 +332,9 @@ dependencies:
     .claude/skills/ori-ddd-8-glossary/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
     .claude/skills/ori-ddd-9-workflows/SKILL.md: sha256:fd48086c2da6001dfdf5009552874d76f2843089d318d2428c6785aec70aa3f3
     .claude/skills/ori-ddd-9-workflows/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
-    .claude/skills/ori-derive/SKILL.md: sha256:e3199a6c1d8a2d2fb17bb1dbdd04fc416a82315d8182a6bcfdb2e0ea3fdddcc5
+    .claude/skills/ori-derive/SKILL.md: sha256:0d12da281ec2c4b487741295ceb248128b15e8d405522ef803c0a8f26d844141
     .claude/skills/ori-derive/scripts/check-slice-exists.sh: sha256:16d456368d02dc02dd60339712616a9ac907c6a757225328d3fdef72c37d4e05
-    .claude/skills/ori-derive/scripts/resolve-upstream.sh: sha256:c4693ca20e3795b6c04714cfec4509e21ba6ae825a1309e7a7fb923f2677db30
+    .claude/skills/ori-derive/scripts/resolve-upstream.sh: sha256:b2e77a1c51e06bb585288be3b34cab320335359d07b28154cc5139c2c85a9d24
     .claude/skills/ori-distill/SKILL.md: sha256:666c83df648ba4800be8bf01176a5f0bc46fe4f96915ea34057432d1947b982c
     .claude/skills/ori-distill/scripts/lint-domain.sh: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
     .claude/skills/ori-doctor/SKILL.md: sha256:bbf40b4972e7cbfddb5e94a898b726d2ff3f2aede4d24fdb9cb9414e94550f1f
@@ -328,21 +345,27 @@ dependencies:
     .claude/skills/ori-doctor/scripts/check-hash-consistency.sh: sha256:b9b47e7b8e1128081f1fc51bfe1b15c8331efd23250ac5e8901d32926898151f
     .claude/skills/ori-doctor/scripts/check-proposals.sh: sha256:41858b7ad5870c64864e1f077d348c5e1755fc6d1776e50d9d66b85cfcc91fe7
     .claude/skills/ori-doctor/scripts/check-slice-schema.sh: sha256:3ef5dbdbc5e41dc05970c2af7fd354fc26760a8adc85dac2e7b014c1872cb0cc
-    .claude/skills/ori-doctor/scripts/lint.js: sha256:f1fb9c95fa34ea201e7360ec90ec55e9339e2de7245c169dd64d6eb1f283b4b0
+    .claude/skills/ori-doctor/scripts/lint.js: sha256:47700b5037393e578a611d6f3714fe45d0a2ee79d7ad322c88a25037de51c10e
     .claude/skills/ori-doctor/scripts/run-checks.sh: sha256:2c1c7ddea05e43a8b94efe0f274871483bb397e94c66c5fb6ca1b0e0dd360f4d
-    .claude/skills/ori-feature-status/SKILL.md: sha256:6c724373e1d0fb39d9f3138d6ebdbde50c6456b767b9c253842da8415ee7d624
+    .claude/skills/ori-feature-status/SKILL.md: sha256:2bb7c71a4a65751e1941f7c7201ea759ccc3c1df13356487609f520710e5e7df
     .claude/skills/ori-feature-status/scripts/list-pages.sh: sha256:f027e1b572c365ed6329b7e38eda95f86f5df51c44432edc45dc952573067ca8
     .claude/skills/ori-feature-status/scripts/list-slices.sh: sha256:2d0d4c723f398a03f0f534d84be174924aade96043b57ffa6342a1aa144b46ce
     .claude/skills/ori-finalize/SKILL.md: sha256:41b6c026e61b37b4328a3d70cbeb99fb6951bccaa88882e0b8c578e268b41c3a
     .claude/skills/ori-finalize/scripts/clear-dirty.sh: sha256:7aad96caa246d91024f56d8e66fb52031e08e245da47ad90e76b55d5d4cbf45d
     .claude/skills/ori-finalize/scripts/update-hash.sh: sha256:64f6639bd66abe3271ee956f8c180ffaab3468d74dd552bf3761c91b6d7aa69c
-    .claude/skills/ori-flow/SKILL.md: sha256:52beb0ae61bc2da70c8face002a287e47b27d867c644cd2169b1ed85c1ce6811
+    .claude/skills/ori-flow/SKILL.md: sha256:d0214193e340bf94edd13274649fff9cb1387c5b1da7467828b1e06d7bbe0cf4
     .claude/skills/ori-flow/scripts/new-page.js: sha256:154787555116740b036e820d7fb8baf4d0bb4344339b6de2d77ac0ae68431de2
+    .claude/skills/ori-flow/scripts/new-scenario.js: sha256:4a36d0d97f544068f5d242b4c4bd293126d3b471655132998112ceb07754870a
     .claude/skills/ori-flow/scripts/new-slice.js: sha256:a2007bb8835f4e4f2572fa57c51bab8377ee1a1091d617404dab6123db78b990
     .claude/skills/ori-flow/templates/page-manifest.yaml.tpl: sha256:d755252ecb59b793cc0b06cccf66c1653e8c214eedb5d39a177bb70ff26c4077
+    .claude/skills/ori-flow/templates/scenario-manifest.yaml.tpl: sha256:3c9a9ba4996a96cfbb14104de1816a8f38d83242050e99c12f9b94e576467ae5
     .claude/skills/ori-flow/templates/slice-manifest.yaml.tpl: sha256:65c6b09200073a6210a293510b666025be5e80f99f11129ae65cf0bb050458f7
+    .claude/skills/ori-generate/SKILL.md: sha256:5ceaa9e9ee6a465c4bbe32ddaa39a6fefef7a1542296720c86562a00208df37c
+    .claude/skills/ori-generate/scripts/check-scenario-exists.sh: sha256:bfd79258e240035a385761ba713d25e10239ffb54dea2be3e3d303edc9d48f29
+    .claude/skills/ori-generate/scripts/generate-docker-compose.sh: sha256:1957f8c9696b34d2fced26b352f417f86a49321f6e14b7e007603eb1788eafeb
+    .claude/skills/ori-generate/scripts/infra-catalog.yaml: sha256:2705341f43809114d4a98ed81d925df143746227604c1d149e00e5541f091fee
     .claude/skills/ori-graph/SKILL.md: sha256:57905b17f7881e069ed372a7b8e2a3d5022a6a8bbf78b7699450fa92768877bd
-    .claude/skills/ori-impl-green/SKILL.md: sha256:ed57cf6df6649cec391977cf93603445e0a0b5ff137ad5dfb611c976eb7978f8
+    .claude/skills/ori-impl-green/SKILL.md: sha256:63949cdec2e881bc0ce8898e5a9f7bd36a3216cfc9f144abfbc4295e5ce23bf1
     .claude/skills/ori-init/SKILL.md: sha256:fc384aa9b9a37f47c25055e51ffc901a7ce4563357890d79f4f606220b466860
     .claude/skills/ori-init/scripts/create-skeleton.sh: sha256:362d655a207c53aeaf84b1d0fbf600e4953e0c3332313151e2412c849d58795d
     .claude/skills/ori-init/scripts/install-tauri-scaffold.sh: sha256:ed8c47bfa4b72197779d2f43237b94a56055c535d1dd4c555df7f0225883068f
@@ -357,14 +380,1734 @@ dependencies:
     .claude/skills/ori-model/SKILL.md: sha256:b18617535ab579d3c1fa981e09c0e9ff2d42b0cd3e0044df536156884d4c9c99
     .claude/skills/ori-model/scripts/show-config.sh: sha256:3598537da80a64788f748121ec16766938d835b3431b98d3199843b124db1193
     .claude/skills/ori-model/scripts/show.js: sha256:cbea2a4dec3d7c22d2903e13c39e415a742e937b653b6175f10259b5b55d2bba
-    .claude/skills/ori-plan/SKILL.md: sha256:b19b66bee8062039e953aba30a6686843381c01d7340b57c724f652f1627e408
+    .claude/skills/ori-plan/SKILL.md: sha256:d567d8096e8e9f5734abecceaa040a987603dca69a8fe2fffe565f3b5d7f2289
     .claude/skills/ori-propose/SKILL.md: sha256:81203ef5a1e9443188e93bf190a4933d70f71197919c447a2e2960355095d2fe
     .claude/skills/ori-refactor/SKILL.md: sha256:54e1f6efc7ef5acadd74fdf9c87a860b9e2d4a48a58927ca1637691bec2a158f
     .claude/skills/ori-review-proposals/SKILL.md: sha256:c2ecb44e4c2da218bf1b416c4cd676da92acd2a83922a6a393390aa87072cdc0
     .claude/skills/ori-review-proposals/scripts/list.js: sha256:b688b9690dbee1d7d962f04fe0d7ec55b22008ca1e4e6ece3d8a6d5f0adccd3f
-    .claude/skills/ori-review/SKILL.md: sha256:5e283650d9491b94fd316c011d70f06c4ec14dba7cbc8620b169de571e114319
+    .claude/skills/ori-review/SKILL.md: sha256:bd97b3345b4af4cd76a0d60d28bb3bfc32883477a92344350e2de87cceaadf03
     .claude/skills/ori-sync/SKILL.md: sha256:564758bcd2ddb3c64147145646a5b0595957413e9ccef8b92cdd0c0b81d3d231
-    .claude/skills/ori-sync/scripts/sync.js: sha256:c21ba203e66a3d3fdfe825b44d87995b635fbcdbc1bc400268686dc07219b639
-    .claude/skills/ori-test-red/SKILL.md: sha256:139f248e022b83e9cdf5afea169c1dd86ebb9018577e3fcab062699994a922b6
-  content_hash: sha256:7afa2e50e5bc7b37c425ef74f09b3a602a76579482be13cb9f63336bbe73c52a
+    .claude/skills/ori-sync/scripts/sync.js: sha256:db5a05fe609e5f1488b62703464fa6596ff5bb9188858075088b130e2010b16c
+    .claude/skills/ori-test-red/SKILL.md: sha256:7d82a398c06bef2071f9857761e82225a61b7effad268699aa4f1edbef0a677f
+  content_hash: sha256:b2b9ce8706a3b8b7be89db1ea8916ceca44ba3d606fbeb135736d268e31261a3
   declared_license: MIT
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/agents/ori-reviewer.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:59b412ca81b05a21dc55484d0bfefaeaba014fc1a55477838e89655fe337c459
+- kind: project-relative
+  target: claude
+  value: .claude/rules/bug-routing.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:7ab9131c40bba21816205f6ccac59ca83a7431c51d5df7581249ef9370e54420
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ddd-test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:7819d90da9346fc3dabec4ae6126e2ea1d22a3d62560a57194c0f3fdbbabe800
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ddd-typescript.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e113f302f810a5342e1dab13d7a6e0b158b4c46dbbc9062cf9d48cb96f5c1834
+- kind: project-relative
+  target: claude
+  value: .claude/rules/domain-phase.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:3ff915ce26f9ae436f907ab8733e85803a6813123cfbed5d9eefc600a08cac54
+- kind: project-relative
+  target: claude
+  value: .claude/rules/feature-manifest.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a297c79f9f3e5e06b0cd5a6991c7859a7020aaaa7a69b43cb076202a50371f9a
+- kind: project-relative
+  target: claude
+  value: .claude/rules/feature-spec.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:3b46a931712c927bf5c68d6936ec5240c14106760c5f89a8826d787d0097fd3f
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ori-conventions.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d0856292b61e0c30b70ad3bc1503452945453e1a67e796e71c7e2f3ba73ba23d
+- kind: project-relative
+  target: claude
+  value: .claude/rules/scenario-test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:69116389b7b1e8d511b21741b6eb71e806006ac8c2acc0a6b997580f2e08df76
+- kind: project-relative
+  target: claude
+  value: .claude/rules/scenario.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:6c209d1c2236f916bd67666ccb9d3abd88bc531526eb7a82fe34f3b56da37717
+- kind: project-relative
+  target: claude
+  value: .claude/rules/task-management.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:555113758ae4181db7b42bcaf7230117ba9a746e9e5509653d2db57755bbbbfa
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ui-test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e643164b0ad615ef282f78724e6056b90d98b52caf1d2740567e89a71dafffb2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:feb7275782eb95ebc45ea0d0c522eeec2b0c26a6cd281165667b27aba69da720
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/adapters/eslint/index.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:4d47a58b682bdfe7817629f74b70b240b178994f39979c42fee65fd29b051c5b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/adapters/eslint/templates/flat-config.js.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d07e829ab64e92479bb02f38208d2df4d55bba6a3844f80ee8444df16d4bceeb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/adapters/generic/index.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b497a9d6cb4470e457f3dec17410554ea41bea30a891b7cdce0e2ed89c16bc5c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/adapters/rust/index.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0b54076e19a706cd90439e226ac4b8a8ebda58f82702865f31cbf3918649e0cb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/adapters/rust/templates/arch_test.rs.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a83ed1e201cfc974ed9c1bc1b0b0175a4bf6e1f0c101ffa41accebdc2404d717
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/architecture-md-schema.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:439c64da7dffd0364d8f76b1925aa0cdcf31600316002bb53b6f98e7a89fede9
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/ai-notes.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:118dab2d15aaed3048c8e223943ca5f87aa5039ed424e085c50ecdbcecbb907a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:413750fb326e8f3b01c8fa264b002baa2a74ccdc7d50b578bbf5861e3fa8b62c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:9d886638d752633b718cb558229df12ede20e7a444691b29ee204b024d963b3a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/lib.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e3536c09bd826f2aca2e70e59777a9510d943b5e13707cfd7de75f7399b720b9
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/mod.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:eb453fe38710b9cc16378ad5e8fb691a99cf06af67ad92b68e329a2f11cb499c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/shared/events.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d2c0fae5e7b98e454f5c4be9d5cd19c6236113d191f894a22d1a72b765f7a973
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/shared/mod.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:4590971edcf306e1a1e69fbb85570a44bb736dee64dd2cf72498d30bcb4efd68
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/shared/result.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b92403d0b8a08cfd23edeb33cb8ab2e1326dde73f2b7c0ca767923a936038033
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/application.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f01f6f7e1f3e8356fd28a862f3aea9bd3721ee02a4d8888a8872f29b0e79665b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/commands.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:efaa145415fa6ad1c30241890e120808376420fb3fea7e2de0099f60b66e4e36
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/domain.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:07c0f76d59679fea5998b6126c66f051ee337420f69ce030d0e8f581add7671f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/infrastructure.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:93c7b0feda0e26c9a950215a966874ed503e74ea08e0a525a7ec8050297c916e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/mod.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e9b6f273b788321cdc7aa251d148cd8ca0a4514ae1eff3c0280709b604457c32
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/mod.rs
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:869ccbefd8a5c08878e0ef4c1553f9c2b046965177bbcdbc3dea93d9ccfa37d5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/contracts/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:bf83107032dc7a9cb10be7191bbcd5bd8a000b67ac5dbc41e80b4612e3e21d15
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/events/event.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f51e2b6211e5ff7562a47865df6d301415cb4e4913f827106aa06c579e279565
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/events/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:30ac4515aaf809810e1a8281fe7155ae5c1aa38ff44fe4bd5f07375c7cdcfa37
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:cc03ae6511d1d95537d3194017c3c7b534e507ca879c0c563157fee446fc68a0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/ipc/bindings.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:5732de4b33fe4bdd81cf24c1c332612dda84400232f0eec5e4891033ea85438e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/ipc/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:c692848d992f0da9d65a07db5e69531eb2bdab9a6711c7d9467b6dbfa575bb9f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/test-fixtures/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:6fc6ec210279220be9c1991401018005608d9adc55cb7c42cc025ac59c26bf0b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/test-fixtures/setupProductionBuilder.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:ce68f436ac7567650407a4c3470c6dba9418c0a0eaf9859b59622c81fe6624ad
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/types/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:575b7ba887e777b0f881295841f69544e41741b34147b17e7759de96be2c779f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/shared/types/result.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:5c9520e8e9218b4c0a00549b10a6e397324838beee1557ef527b50f4db0f91a7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/application/complete-task.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b63089ce027ead74a587996c9c6b25524b27d8a9cba3243bbaae4e4f2b26e16b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/domain/events.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a3e7e301bd74041e4071ecbb00228c5705527fdbd56e7436bdde0c01688d9394
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/domain/task-id.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:8fc16b786d2b97b22bc08334fcb231d46fec04430bcd8dfb0b4803349acc28df
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/domain/task-title.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0be8ccce89092465c4a533e70804dba7f34fb4b05dbd206231a235d21453dd35
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/domain/task.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:53e8ae848f7f2c1e46a397d90a9a4cea02318c34986d2773d7d036b0a9c3921b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0ea295860e7b11a88a1fda8e299e3886ae2df4e727ea825ed8883c0aff45cf4d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/infrastructure/.gitkeep
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/presentation/task-card.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:82333ef96c48bcff4cb477273a30a3cd67d2a4cfd30d328afbe4229b52a0e905
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/tests/dod.test.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:99ee285a3f25878b771d453aec11ad666da58708391383ed747421251c0a8379
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/slices/complete-task/tests/task.test.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:16e7b9c970724b5becada34f086782c89cda405cacae6e089334e441cd030c0d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:4ea4d05684769daf76d8b902b2e48e6ca09e4d7373a7040b2abad1f0020049d3
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/contracts/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:bf83107032dc7a9cb10be7191bbcd5bd8a000b67ac5dbc41e80b4612e3e21d15
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/event.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f51e2b6211e5ff7562a47865df6d301415cb4e4913f827106aa06c579e279565
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/events/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:30ac4515aaf809810e1a8281fe7155ae5c1aa38ff44fe4bd5f07375c7cdcfa37
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:cc03ae6511d1d95537d3194017c3c7b534e507ca879c0c563157fee446fc68a0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/types/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:575b7ba887e777b0f881295841f69544e41741b34147b17e7759de96be2c779f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/shared/types/result.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:5c9520e8e9218b4c0a00549b10a6e397324838beee1557ef527b50f4db0f91a7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/application/complete-task.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:00a90c13c4c1d1fd9c20088d67f772242e36a72b5f638d14cf8e691d12c43754
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/domain/events.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a3e7e301bd74041e4071ecbb00228c5705527fdbd56e7436bdde0c01688d9394
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/domain/task-id.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:8fc16b786d2b97b22bc08334fcb231d46fec04430bcd8dfb0b4803349acc28df
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/domain/task-title.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0be8ccce89092465c4a533e70804dba7f34fb4b05dbd206231a235d21453dd35
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/domain/task.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:53e8ae848f7f2c1e46a397d90a9a4cea02318c34986d2773d7d036b0a9c3921b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/index.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0ea295860e7b11a88a1fda8e299e3886ae2df4e727ea825ed8883c0aff45cf4d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/infrastructure/.gitkeep
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/presentation/task-card.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:8883d0e99d602e375f0f41c9efca941a3c914d3852d77a61f9ced0899be87e79
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/tests/task.test.ts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:16e7b9c970724b5becada34f086782c89cda405cacae6e089334e441cd030c0d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/test.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:8bf8705ea2ac496eb6c0d657160b6bdb4e7fbb4e8dbe1c65f504df7a5549d37b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/scripts/check.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:8d7e5f1b2209b630a4fd8da49897d3d525b8b5abbee00c52db5d63b4e307754e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/scripts/export.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0114448fb6fd3c90f722eed607b3e3f5ce83ebc758cc68488f7e1c5aa6435d7d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/scripts/render-architecture.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:66f17dddb62664497c38846efc88b7cf17c7dc19157fe9b91a2c39d3e8118aeb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-arch/scripts/sync-page-map.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:90de9d11695faab780dc9491074b7cfc33f7ea9feed76a11aaa0396e09c63d67
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-architect
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-architect/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:fd584acb06f6b6da27c84eb607966152a1e2cafdb8dbdb79c1412e3a6d141d73
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-bug
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-bug/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:9a6309c3c27706b3853f1f45618bc13cfc189ad55899d18c45bcd5aaba18cacb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-1-discovery
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-1-discovery/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:c4d28c3600cbf86db5f3b5c04842f20df46101e237665d2c92cb2d082d205e3b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-1-discovery/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-10-types
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-10-types/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:ebf8f9183b098c8f5a40d64866bb2ee0a74b1a820049107e405f03c4ce6e9bfe
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-10-types/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11a-ui-fields
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11a-ui-fields/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f71fe7ca25f365074092683ed2982496635e63dfeb151d2a8f3236011032ab41
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11a-ui-fields/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11b-ui-grouping
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11b-ui-grouping/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2b6b795e21f9d55ad6acffacabc13153187896d0b63508f5fb1d9bfc7f5a9f40
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-11b-ui-grouping/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-2-event-storming
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-2-event-storming/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b3d52c2f005d8963d1bd8104d0a08a548d2f8028cb79ce15c262752d431da06f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-2-event-storming/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-3-bounded-contexts
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-3-bounded-contexts/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2414946c2075b9a9cd7652c2d8c3f8ffa78659472ccf42b193709e95189da7df
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-3-bounded-contexts/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-4-context-map
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-4-context-map/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d7b74db733be328b241efdc4c47ece573961e05154e5079fc353dc66922b4a13
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-4-context-map/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-5-aggregates
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-5-aggregates/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:96904c31d0899135ddeeaff5db34949a3d1b834aaf4196243c224dfeed0ae3f9
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-5-aggregates/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-6-domain-events
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-6-domain-events/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:ca9e9dff89511e5374a37afb16c9fa8548bda7da26f404e510852ede04f035f0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-6-domain-events/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-7-validation
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-7-validation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b06061a7e5948ee9a795100bb5b6f477a64cd9d5398e9ae43219aea668aea354
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-7-validation/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-8-glossary
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-8-glossary/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:c99fc11ae6ff0b24e412ad027c5e9d6f80be6d83fbb3d0fe8bd77573273e326c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-8-glossary/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-9-workflows
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-9-workflows/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:fd48086c2da6001dfdf5009552874d76f2843089d318d2428c6785aec70aa3f3
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-ddd-9-workflows/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-derive
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-derive/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:0d12da281ec2c4b487741295ceb248128b15e8d405522ef803c0a8f26d844141
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-derive/scripts/check-slice-exists.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:16d456368d02dc02dd60339712616a9ac907c6a757225328d3fdef72c37d4e05
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-derive/scripts/resolve-upstream.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b2e77a1c51e06bb585288be3b34cab320335359d07b28154cc5139c2c85a9d24
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-distill
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-distill/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:666c83df648ba4800be8bf01176a5f0bc46fe4f96915ea34057432d1947b982c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-distill/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:377d58ee2fc9c8bd2420a91e7a4a88c8e23ed3a5eb20f282c25fd7fe7c42ddf5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:bbf40b4972e7cbfddb5e94a898b726d2ff3f2aede4d24fdb9cb9414e94550f1f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-cross-ref.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:6ed431bc214f7b6f4afcf8be05bc9c3e0febd18fdddb894c396cce8da135dbfb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-dirty-integrity.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:73c0d43ed9be342455223eed37308acfbf62cfad322f1a48a68181abacb92a96
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-dod-sweep.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f459daf9f7dfacaaf356836ad8c5d34ac5797710d92a4ac935e780a1b659fe05
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-domain-schema.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d5b974793951739fdfbc7dfc0afb93320d14492dc396e6959979b51e4981c943
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-hash-consistency.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b9b47e7b8e1128081f1fc51bfe1b15c8331efd23250ac5e8901d32926898151f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-proposals.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:41858b7ad5870c64864e1f077d348c5e1755fc6d1776e50d9d66b85cfcc91fe7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/check-slice-schema.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:3ef5dbdbc5e41dc05970c2af7fd354fc26760a8adc85dac2e7b014c1872cb0cc
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/lint.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:47700b5037393e578a611d6f3714fe45d0a2ee79d7ad322c88a25037de51c10e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-doctor/scripts/run-checks.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2c1c7ddea05e43a8b94efe0f274871483bb397e94c66c5fb6ca1b0e0dd360f4d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-feature-status
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-feature-status/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2bb7c71a4a65751e1941f7c7201ea759ccc3c1df13356487609f520710e5e7df
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-feature-status/scripts/list-pages.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f027e1b572c365ed6329b7e38eda95f86f5df51c44432edc45dc952573067ca8
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-feature-status/scripts/list-slices.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2d0d4c723f398a03f0f534d84be174924aade96043b57ffa6342a1aa144b46ce
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-finalize
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-finalize/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:41b6c026e61b37b4328a3d70cbeb99fb6951bccaa88882e0b8c578e268b41c3a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-finalize/scripts/clear-dirty.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:7aad96caa246d91024f56d8e66fb52031e08e245da47ad90e76b55d5d4cbf45d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-finalize/scripts/update-hash.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:64f6639bd66abe3271ee956f8c180ffaab3468d74dd552bf3761c91b6d7aa69c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d0214193e340bf94edd13274649fff9cb1387c5b1da7467828b1e06d7bbe0cf4
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/scripts/new-page.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:154787555116740b036e820d7fb8baf4d0bb4344339b6de2d77ac0ae68431de2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/scripts/new-scenario.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:4a36d0d97f544068f5d242b4c4bd293126d3b471655132998112ceb07754870a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/scripts/new-slice.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a2007bb8835f4e4f2572fa57c51bab8377ee1a1091d617404dab6123db78b990
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/templates/page-manifest.yaml.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d755252ecb59b793cc0b06cccf66c1653e8c214eedb5d39a177bb70ff26c4077
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/templates/scenario-manifest.yaml.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:3c9a9ba4996a96cfbb14104de1816a8f38d83242050e99c12f9b94e576467ae5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-flow/templates/slice-manifest.yaml.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:65c6b09200073a6210a293510b666025be5e80f99f11129ae65cf0bb050458f7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-generate
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-generate/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:5ceaa9e9ee6a465c4bbe32ddaa39a6fefef7a1542296720c86562a00208df37c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-generate/scripts/check-scenario-exists.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:bfd79258e240035a385761ba713d25e10239ffb54dea2be3e3d303edc9d48f29
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-generate/scripts/generate-docker-compose.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:1957f8c9696b34d2fced26b352f417f86a49321f6e14b7e007603eb1788eafeb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-generate/scripts/infra-catalog.yaml
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:2705341f43809114d4a98ed81d925df143746227604c1d149e00e5541f091fee
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-graph
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-graph/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:57905b17f7881e069ed372a7b8e2a3d5022a6a8bbf78b7699450fa92768877bd
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-impl-green
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-impl-green/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:63949cdec2e881bc0ce8898e5a9f7bd36a3216cfc9f144abfbc4295e5ce23bf1
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:fc384aa9b9a37f47c25055e51ffc901a7ce4563357890d79f4f606220b466860
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/create-skeleton.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:362d655a207c53aeaf84b1d0fbf600e4953e0c3332313151e2412c849d58795d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/install-tauri-scaffold.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:ed8c47bfa4b72197779d2f43237b94a56055c535d1dd4c555df7f0225883068f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/config.yaml
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:7b2ddd1e343a8a18e0d39cb905a903d9593c041eb8d11505c23afca4c8a88801
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/domain-scaffold.md.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:843fd90f8f240c68c0ecad406f93552554b1f7447b5379cee753c6816ee6a10a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/tauri-stack/apm-scripts/specta-build.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d0012103a6dd3b487b73f0c86023fbe796ebf1a8907a39f6d817ca8b315d68bf
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/tauri-stack/bc-shared/ipc/.gitkeep
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:ce4a9c95e67ba65e2a40368a9879bc8ad8260d614b47d9d13d620440c95ffdbe
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/tauri-stack/bc-shared/test-fixtures/setupProductionBuilder.ts.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:f55d9b199540c6743b8ef8feb7b2713c096fd98624520f2e1bc7456b8d802a6b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-init/scripts/templates/tauri-stack/src-tauri/src/bin/export-types.rs.tpl
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:4754956690bcee918946515ae9e7fa9be235b1413fa19d2a63e7691e491d8022
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-migrate
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-migrate/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:e8f5e215b73424304f6a1ad55ddf7e6eb61d3f9924b88b03b15585ff8f881414
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-migrate/scripts/lint-domain.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:a0515498bf540e279851cf2216ddc1ed3570152944d9bd321ad8340d98f3a552
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-model
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-model/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b18617535ab579d3c1fa981e09c0e9ff2d42b0cd3e0044df536156884d4c9c99
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-model/scripts/show-config.sh
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:3598537da80a64788f748121ec16766938d835b3431b98d3199843b124db1193
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-model/scripts/show.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:cbea2a4dec3d7c22d2903e13c39e415a742e937b653b6175f10259b5b55d2bba
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-plan
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-plan/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:d567d8096e8e9f5734abecceaa040a987603dca69a8fe2fffe565f3b5d7f2289
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-propose
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-propose/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:81203ef5a1e9443188e93bf190a4933d70f71197919c447a2e2960355095d2fe
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-refactor
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-refactor/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:54e1f6efc7ef5acadd74fdf9c87a860b9e2d4a48a58927ca1637691bec2a158f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-review
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-review-proposals
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-review-proposals/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:c2ecb44e4c2da218bf1b416c4cd676da92acd2a83922a6a393390aa87072cdc0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-review-proposals/scripts/list.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:b688b9690dbee1d7d962f04fe0d7ec55b22008ca1e4e6ece3d8a6d5f0adccd3f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:bd97b3345b4af4cd76a0d60d28bb3bfc32883477a92344350e2de87cceaadf03
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-sync
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-sync/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:564758bcd2ddb3c64147145646a5b0595957413e9ccef8b92cdd0c0b81d3d231
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-sync/scripts/sync.js
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:db5a05fe609e5f1488b62703464fa6596ff5bb9188858075088b130e2010b16c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-test-red
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ori-test-red/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dev-komenzar/ori
+  active_owner: dev-komenzar/ori
+  content_hash: sha256:7d82a398c06bef2071f9857761e82225a61b7effad268699aa4f1edbef0a677f

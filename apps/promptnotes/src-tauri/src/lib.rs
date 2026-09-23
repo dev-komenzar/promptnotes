@@ -7,25 +7,32 @@ pub mod user_preferences;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build());
+    #[cfg(debug_assertions)]
+    let builder = builder
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .level(log::LevelFilter::Info)
+                .build(),
+        )
+        .plugin(tauri_plugin_wdio::init());
+    builder
         .manage(Arc::new(note_feed::shared::adapters::InMemoryNoteFeedState::new()))
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),
         ))
+        // S22 / C-DEC11: `StorageDirChanged` の Infrastructure 層 subscriber。
+        // cross-BC 配線のため composition root で登録する (この slice の
+        // commands.rs module doc / .ori/scenarios/s22.../notes.md に理由を記録)。
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            note_feed::slices::detect_external_changes::commands::
+                register_storage_dir_changed_subscriber(app.handle().clone());
             Ok(())
         })
         // S13 (.ori/domain/validation.md#s13-quit-flush) の連続 Flush は
@@ -44,6 +51,7 @@ pub fn run() {
             note_capture::slices::remove_tag::commands::remove_tag,
             note_capture::slices::delete_note::commands::delete_note,
             note_capture::slices::restore_deleted_note::commands::restore_deleted_note,
+            note_capture::slices::recreate_note::commands::recreate_note,
             note_feed::slices::update_feed_filter::commands::update_feed_filter,
             note_feed::slices::change_sort_order::commands::change_sort_order,
             note_feed::slices::list_feed::commands::list_notes,

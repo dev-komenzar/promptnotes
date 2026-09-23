@@ -1,22 +1,25 @@
 ---
 name: ori-review
-description: /ori-flow phase 6。3 つの structural gate (boundary test green / arch lint pass / public_entry 整合性) を機械実行し、すべて pass した時のみ fresh-context reviewer agent を spawn して spec 乖離のみ意味的に check する薄いゲート。Slice DoD は test contract で構造強制されるため独立 checklist を持たない
+description: /ori-flow phase 6 (slice/page) または phase 3 (scenario)。slice/page の場合は 3 つの structural gate を機械実行し、すべて pass した時のみ fresh-context reviewer agent を spawn して spec 乖離のみ意味的に check する薄いゲート。scenario の場合は scenario spec とテストコードの整合性を review する
 ---
 
-ユーザが `/ori-review <slice-id>` を呼ぶ、または `/ori-flow` 内部から phase 6 として起動した際に、**3 つの structural gate を Bash で実行 → すべて pass なら fresh-context で `ori-reviewer` agent を spawn → verdict と差し戻しを捌く薄いラッパー**として動作します。**スキル本体はメイン session で動き、Bash で gate を回し、reviewer は Task agent で起動**します。
+ユーザが `/ori-review <id>` を呼ぶ、または `/ori-flow` 内部から phase 6 (slice/page) または phase 3 (scenario) として起動した際に、**slice/page の場合は 3 つの structural gate を Bash で実行 → すべて pass なら fresh-context で `ori-reviewer` agent を spawn → verdict と差し戻しを捌く薄いラッパー**として動作します。**scenario の場合は scenario spec とテストコードの整合性を review** します。**スキル本体はメイン session で動き、Bash で gate を回し、reviewer は Task agent で起動**します。
 
 ## 引数
 
-- `slice-id`：対象 slice の id
+- `id`：対象 slice / page / scenario の id
 
 ## 役割
 
-- **3 gate ランナー**：boundary test / arch lint / public_entry の 3 check を Bash で実行
+- **3 gate ランナー**（slice/page のみ）：boundary test / arch lint / public_entry の 3 check を Bash で実行
+- **scenario reviewer**（scenario のみ）：scenario spec とテストコードの整合性を review
 - **semantic reviewer ディスパッチャー**：3 gate pass 後に reviewer agent を fresh context で spawn (spec ↔ impl 乖離のみ意味的判定)
 - **single-pass 強制装置**：往復は **最大 1 回**。無限ループに陥らないためのガード
-- **patch ディスパッチャー**：指摘内容に応じて適切な phase（test-red / impl-green / refactor / propose）に差し戻す
+- **patch ディスパッチャー**：指摘内容に応じて適切な phase（test-red / impl-green / refactor / propose / generate）に差し戻す
 
 ## 入力 / 出力
+
+### slice/page の場合
 
 - 入力：
   - `.ori/slices/<id>/spec.md`
@@ -28,6 +31,20 @@ description: /ori-flow phase 6。3 つの structural gate (boundary test green /
   - 関連ドメイン文書：`manifest.derives_from`
 - 出力：
   - `.ori/slices/<id>/review.md` — 3 gate の log + reviewer agent の semantic 指摘
+  - 必要なら beads issue の再 open（差し戻し先 phase）
+
+### scenario の場合
+
+- 入力：
+  - `.ori/scenarios/<id>/spec.md`
+  - `.ori/scenarios/<id>/manifest.yaml`
+  - `.ori/scenarios/<id>/validation.md`（Gherkin 形式の検証シナリオ）
+  - `.ori/scenarios/<id>/tests/`（テストコード）
+  - `.ori/scenarios/<id>/playwright.config.ts` / `wdio.conf.ts`（runner config。vitest は config なし）
+  - `.ori/scenarios/<id>/docker-compose.yml`（compose-service 系参加時のみ。参加者ゼロなら不在も正常）
+  - `.ori/architecture.md`（`workspace.apps[].runtime` / `scenario_test_runner` — 整合確認用）
+- 出力：
+  - `.ori/scenarios/<id>/review.md` — reviewer agent の semantic 指摘
   - 必要なら beads issue の再 open（差し戻し先 phase）
 
 ## 3 structural gate (= ori-review が直接 check する全て)
@@ -62,7 +79,15 @@ Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definit
 
 ## 手順
 
-1. **前提確認**：
+1. **前提確認と type 判定**：
+   - manifest.yaml を読み、`type` フィールドを確認
+   - `type: scenario` の場合 → §「scenario workflow」へ進む
+   - `type: slice` または `type: page` の場合 → §「slice/page workflow」へ進む
+   - `type` フィールドが存在しない場合 → エラーで停止し、ユーザに確認を求める
+
+### slice/page workflow
+
+2. **前提確認**：
    - phase 5（refactor）完了が望ましいが、緊急時は phase 4 直後でも可
    - manifest.yaml / `.ori/config.yaml` / `.ori/architecture.md` から `<app>` `<bc>` `<source_root>` `<stack>` を resolve (`/ori-impl-green` と同じ手順)
 2. **gate (a) boundary test green**：
@@ -116,6 +141,73 @@ Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definit
    - `.ori/slices/<id>/review.md` を commit
    - `bd close ori-review-<slice-id> --reason="3 gates pass + reviewer PASS; <N> findings addressed in <N> patches"`
 
+### scenario workflow
+
+2. **前提確認**：
+   - phase 2（generate）完了が必須
+   - manifest.yaml / spec.md / validation.md / テストコードの存在を確認
+   - runner config を確認: spec.md の `runner:` 記録に従い `playwright.config.ts` / `wdio.conf.ts` が存在すること（vitest は config なしが正常）
+   - docker-compose.yml: `infrastructure.services` に compose-service 系参加があるのに compose が不在、または逆（参加ゼロなのに存在）なら `/ori-generate` 差し戻し
+3. **テストコードの構文チェック**：
+   ```bash
+   # TypeScript の場合
+   npx tsc --noEmit .ori/scenarios/<id>/tests/*.spec.ts .ori/scenarios/<id>/*.config.ts
+   ```
+   - 構文エラー → `/ori-generate` に差し戻し (verdict=NEEDS_FIX、reason="test code syntax error")。手順 7 へ
+4. **docker-compose.yml の構文チェック**（compose-service 系参加時のみ。不在なら skip）：
+   ```bash
+   docker compose -f .ori/scenarios/<id>/docker-compose.yml config -q
+   ```
+   - 構文エラー → `/ori-generate` に差し戻し (verdict=NEEDS_FIX、reason="docker-compose syntax error")。手順 7 へ
+5. **`ori-reviewer` agent を fresh context で spawn**：
+   - `ori-reviewer` の agent 指示を Read し、その全指示を Task agent のプロンプトに含める
+   - reviewer に渡す入力: `.ori/scenarios/<id>/{spec.md,manifest.yaml,validation.md}`、`.ori/scenarios/<id>/tests/`、runner config、`.ori/scenarios/<id>/docker-compose.yml`（あれば）、`.ori/architecture.md`
+   - reviewer に **明示**: **scenario spec ↔ テストコードの整合性 / validation.md の Gherkin シナリオ ↔ テストケースの対応** に加え、**mode 別 checklist（下記）** を判定すること
+   - 総合判定（PASS / NEEDS_FIX / REJECT）を要求する
+
+   **mode 別 checklist（spec ↔ config ↔ compose 整合）**:
+   - **共通**:
+     - spec.md の `runner:` 記録 ↔ テストコードの import（playwright / wdio / vitest）が一致するか
+     - テストコード内に service の起動・停止・healthcheck 待機が**無い**こと（lifecycle は runner config が所有 — `scenario-test.instructions.md`）
+   - **compose-service 系 app 参加時**:
+     - manifest `infrastructure.services` ↔ docker-compose.yml の services が一致（過不足なし）か
+     - runtime block の `ports` ↔ compose の ports ↔ runner config の待機 port が一致するか
+     - app service に `environment` の接続 env が反映され、`TBD` マーカーが残っていないか（残っていれば人間判断待ち）
+   - **local 系 app（tauri 等）参加時**:
+     - local app が docker-compose.yml に**含まれていない**こと
+     - wdio.conf.ts の `tauri:options.application` が runtime block の `binary` と一致するか（build-then-test）
+     - `@wdio/tauri-service` が services に含まれるか
+   - **infra 参加時**:
+     - infra の healthcheck（TCP probe の image ファミリ別翻訳）が compose に存在するか
+     - `runtime.healthcheck: {http: /health}` 宣告のある app のみ HTTP 待機になっているか
+6. **reviewer の出力を受け取る**：
+   - `.ori/scenarios/<id>/review.md` に書き込まれる
+   - 形式 (簡素):
+     ```markdown
+     ## Findings
+     - **HIGH** spec.md#scenario-steps: ステップ 3 がテストコードで未検証
+     - **LOW** docker-compose.yml: Redis の healthcheck が未設定
+     ```
+7. **指摘の処理 (verdict logic — 維持)**：
+   - **指摘ゼロ** → verdict=PASS。`bd close ori-review-<scenario-id>` で完了
+   - **指摘あり**：severity と内容から差し戻し先を決定（**最大 1 回**）：
+      | 指摘の性質 | 差し戻し先 | verdict |
+      |----------|-----------|---------|
+      | テストコードの不備 | `/ori-generate`（テストコード再生成） | NEEDS_FIX |
+      | runner config の不備 | `/ori-generate`（runner config 再生成） | NEEDS_FIX |
+      | docker-compose の不備 | `/ori-generate`（docker-compose 再生成） | NEEDS_FIX |
+      | spec 自体が誤り | `/ori-propose`（domain 修正提案） | REJECT |
+   - REJECT は人間判断必須 → `bd human` flag を立てて停止
+8. **差し戻し後の再 review**：
+   - patch 完了後、**1 回だけ** 手順 2 〜 6 を再実行
+   - **2 周目で再度指摘が出た場合は停止**し human flag：
+     ```bash
+     bd human ori-review-<scenario-id> --reason="review loop reached 2nd pass; needs human arbitration"
+     ```
+9. **完了**：
+   - `.ori/scenarios/<id>/review.md` を commit
+   - `bd close ori-review-<scenario-id> --reason="reviewer PASS; <N> findings addressed in <N> patches"`
+
 ## single-pass 強制
 
 - 「gate → reviewer → patch → gate → reviewer」の往復は**最大 1 回**
@@ -123,6 +215,8 @@ Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definit
 - Pass 2 で新規指摘が出たら強制停止 → human
 
 ## 出力テンプレート
+
+### slice/page の場合
 
 ```markdown
 # Review: capture-auto-save {#review-capture-auto-save}
@@ -153,19 +247,52 @@ Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definit
 （必要時のみ）
 ```
 
+### scenario の場合
+
+```markdown
+# Review: test-scenario {#review-test-scenario}
+
+## Pass 1 {#pass-1}
+
+### Syntax checks
+
+- test code: PASS (`npx tsc --noEmit .ori/scenarios/test-scenario/tests/*.test.ts`)
+- docker-compose: PASS (`docker-compose -f .ori/scenarios/test-scenario/docker-compose.yml config`)
+
+### Semantic findings (reviewer: claude-opus-4-7, capability=reasoning, fresh context)
+
+- **HIGH** spec.md#scenario-steps:
+  - ステップ 7「Redisに接続する」がテストコードで未検証
+  - 推奨: テストコードに Redis 接続テストを追加
+- **LOW** docker-compose.yml:
+  - Redis の healthcheck が未設定
+  - 推奨: healthcheck を追加してサービス起動を待つ
+
+### Disposition
+
+- HIGH 指摘 → `/ori-generate` に差し戻し (verdict=NEEDS_FIX、テストコード再生成)
+- LOW 指摘 → `/ori-generate` で docker-compose 修正 (verdict=NEEDS_FIX)
+
+## Pass 2 {#pass-2}
+
+（必要時のみ）
+```
+
 ## 注意
 
-- **独立 DoD checklist を持たない**: drift 源回避のため、DoD rule 1-4 を 1 個ずつ check しない。3 gate (test green / arch lint / public_entry) で構造的にカバーされる前提
-- **3 gate fail 時は reviewer を spawn しない**: gate fail = 機械的な violation なので意味的 review にコストをかけない (gate を直して再実行)
-- **reviewer の責務は spec ↔ impl 乖離のみ**: 層配置 / arch lint / DoD enforcement は spawn 前に既に終わっている
+- **独立 DoD checklist を持たない** (slice/page): drift 源回避のため、DoD rule 1-4 を 1 個ずつ check しない。3 gate (test green / arch lint / public_entry) で構造的にカバーされる前提
+- **3 gate fail 時は reviewer を spawn しない** (slice/page): gate fail = 機械的な violation なので意味的 review にコストをかけない (gate を直して再実行)
+- **reviewer の責務は spec ↔ impl 乖離のみ** (slice/page): 層配置 / arch lint / DoD enforcement は spawn 前に既に終わっている
+- **reviewer の責務は spec ↔ テストコード整合性のみ** (scenario): docker-compose の構文チェックは spawn 前に既に終わっている
 - **スキル本体はメイン session**：reviewer は Task agent で spawn する
 - **single-pass 厳守**：3 周目に入ったら必ず human に上げる（無限ループ防止）
 - **review.md は派生ファイルではない**：人間が読むための監査ログ。design.md §5 の `ori:` frontmatter は不要
 
 ## 次のアクション
 
-phase 6 完了後、`/ori-flow` 内部なら自動的に phase 7 へ。単独呼び出しの場合：
+phase 6 (slice/page) または phase 3 (scenario) 完了後、`/ori-flow` 内部なら自動的に次 phase へ。単独呼び出しの場合：
 
-- **メインパス**：`/ori-finalize <slice-id>` — phase 7。dirty 解除と必要に応じた proposal sync
-- **差し戻しパス**：指摘の内容に応じて `/ori-test-red` / `/ori-impl-green` / `/ori-refactor` / `/ori-propose`
+- **slice/page のメインパス**：`/ori-finalize <slice-id>` — phase 7。dirty 解除と必要に応じた proposal sync
+- **scenario のメインパス**：`/ori-finalize <scenario-id>` — phase 4。dirty 解除と spec hash 更新
+- **差し戻しパス**：指摘の内容に応じて `/ori-test-red` / `/ori-impl-green` / `/ori-refactor` / `/ori-propose` / `/ori-generate`
 - **停止パス**：Pass 2 でも指摘が残った場合は human 判断待ち（`bd human` で flag 済み）

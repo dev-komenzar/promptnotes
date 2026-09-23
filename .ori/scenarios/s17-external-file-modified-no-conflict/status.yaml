@@ -1,0 +1,16 @@
+scenario_id: s17-external-file-modified-no-conflict
+derived_at: 2026-09-21T05:04:35.975Z
+beads:
+  epic: ori-scenario-s17-external-file-modified-no-conflict
+  current_phase: finalize
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive: closed
+  generate: closed
+  review: closed
+  finalize: closed
+dirty: []

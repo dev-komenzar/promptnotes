@@ -112,7 +112,6 @@ bd epic / parent issue        (= 1 PR、bundling 単位)
 | [feature-manifest.md](.claude/rules/feature-manifest.md) | `.ori/features/*/manifest.yaml` | manifest 必須フィールド、rename 禁止、derives_from 指定 |
 | [feature-spec.md](.claude/rules/feature-spec.md) | `.ori/features/*/spec.md` | 派生文書のため直接編集禁止、`/ori-sync --force` で proposal 生成 |
 | [ddd-typescript.md](.claude/rules/ddd-typescript.md) | `apps/*/src/**/*.ts` | TS DDD モジュール構造、BC 別 layout、VSA 命名 |
-| [ddd-rust.md](.claude/rules/ddd-rust.md) | `src/**/*.rs` | Rust VO newtype pattern、thiserror、Tauri command 規約 |
 | [ddd-test.md](.claude/rules/ddd-test.md) | `**/*.{spec,test}.{ts,tsx}` | vitest、`describe('feature:<id>')`、spec.md セクション参照、fast-check |
 | [ui-test.md](.claude/rules/ui-test.md) | `**/*.{spec,test}.tsx` 等 | UI selector 規約、getByRole/getByLabelText 第一推奨 |
 
@@ -203,7 +202,7 @@ Tauri v2 desktop app。frontend は SvelteKit (static adapter、SSR 無し)、ba
 
 ## Conventions & Patterns
 
-- DDD / VSA (Value-Oriented SE) パターン。BC 別 module layout は [.claude/rules/ddd-typescript.md](.claude/rules/ddd-typescript.md) / [.claude/rules/ddd-rust.md](.claude/rules/ddd-rust.md) 参照
+- DDD / VSA (Value-Oriented SE) パターン。BC 別 module layout は [.claude/rules/ddd-typescript.md](.claude/rules/ddd-typescript.md) 参照（Rust 規約は ori の [pattern stacks/rust/test.md](.claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md) を正典とする）
 - Test 規約は [.claude/rules/ddd-test.md](.claude/rules/ddd-test.md) / [.claude/rules/ui-test.md](.claude/rules/ui-test.md) 参照
 - VO の Smart Constructor は proptest / fast-check で fuzz
 - Mock は adapter 境界のみ。domain 純粋コードは実物使用

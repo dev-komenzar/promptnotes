@@ -12,6 +12,7 @@ use std::path::PathBuf;
 
 use tauri::{AppHandle, Manager, Runtime};
 
+use crate::user_preferences::shared::test_support::storage_dir_override;
 use crate::user_preferences::shared::types::StorageDir;
 use crate::user_preferences::slices::load_settings::application::LoadSettingsUseCase;
 use crate::user_preferences::slices::load_settings::domain::LoadSettingsCommand;
@@ -43,6 +44,9 @@ fn resolve_default_storage_dir<R: Runtime>(app: &AppHandle<R>) -> StorageDir {
 /// I-S3 default) when the file is missing or malformed — the same behavior
 /// the load-settings slice gives the rest of the app.
 pub fn resolve_storage_dir<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Some(test_dir) = storage_dir_override() {
+        return test_dir.as_path().to_path_buf();
+    }
     let config_path = resolve_config_path(app);
     let default_storage_dir = resolve_default_storage_dir(app);
     let loader = LoadSettingsUseCase::new(StdFileSystem, FixedOsDirs::new(default_storage_dir));
