@@ -22,3 +22,9 @@ if command -v bd >/dev/null 2>&1; then
   if [ $_bd_exit -ne 0 ]; then exit $_bd_exit; fi
 fi
 # --- END BEADS INTEGRATION v1.0.3 ---
+
+# --- promptnotes: beads -> GitHub issues 差分 push (detached, never blocks push) ---
+# 前回同期以降に更新された issue のみ。log は .beads/github-sync.log
+if [ -x .beads/github-push-diff.sh ]; then
+  nohup .beads/github-push-diff.sh >.beads/github-sync.log 2>&1 </dev/null &
+fi
