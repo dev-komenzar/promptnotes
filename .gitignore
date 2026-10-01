@@ -23,3 +23,7 @@ apps/promptnotes/.omo/run-continuation/
 # but plaintext private keys must NEVER be committed
 secrets/**/*.key
 secrets/**/*.pub
+
+# oh-my-claudecode runtime state (skills/ は project-scoped skill として commit 可)
+**/.omc/*
+!**/.omc/skills/
