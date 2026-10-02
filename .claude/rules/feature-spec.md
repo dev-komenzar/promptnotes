@@ -1,12 +1,22 @@
 ---
 paths:
-  - ".ori/features/*/spec.md"
+  - ".ori/slices/*/spec.md"
+  - ".ori/pages/*/spec.md"
 ---
 
 - **このファイルは派生文書**: `manifest.yaml` の `derives_from` が source
-- **直接編集を原則禁止**:
-  1. spec を変えたい場合は **派生元（domain doc）を編集** → `/ori-sync` で spec.md を再生成
-  2. どうしてもここで編集する場合は **`/ori-sync --force <path>`** を実行。ori が `.ori/proposals/` に上流提案を自動生成する
+- **直接編集を原則禁止**: spec を変えたい場合は **派生元（domain doc）を編集** するのが正道
+- **現状の手順（ori tooling は MVP stub）**: `/ori-sync` (`sync.js`) は検知・伝播が未実装で、
+  `/ori-sync --force` による proposal 自動生成も無い。実際は次の手動手順で行う:
+  1. domain doc を編集（上流提案が必要なら `/ori-propose` → `/ori-review-proposals`）
+  2. spec.md を手動で再整理（`/ori-derive` 相当）
+  3. spec.md frontmatter の `coherence.hash` を現在値に更新:
+     `sha256sum .ori/<path>.md | cut -c1-12`（ファイル全体のハッシュ。key は `domain/x.md#.*`）、
+     あわせて `last_derived` を更新
+  4. `status.yaml` の `dirty` / `followup` を手動メンテ（dirty 解除は `/ori-finalize` 経由）
+  - hash の drift 確認: spec の `coherence.hash` と `sha256sum` 結果を突き合わせる。
+    domain 側の変更が追記のみで spec 本文に影響しないことを diff で確認してから値だけ更新する
+  - ori 側が実装されたらこの節を更新する
 - **構成（必須）**: `## 概要 {#overview}`, `## 入出力 {#io}`, `## 不変条件 {#invariants}`,
   `## 境界契約 {#boundary-contract}`, `## テスト観点 {#test-points}`, `## 実装ノート {#impl-notes}`
 - **glossary 参照**: 用語は `[Note](#note)` 形式で glossary 内アンカーへ
