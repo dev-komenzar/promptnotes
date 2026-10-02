@@ -133,6 +133,8 @@ Nix flake で toolchain を固定。`nix develop` または `direnv allow` (`.en
 nix develop          # OR: direnv allow して cd
 ```
 
+devShell は **前提**。外で素の `cargo test` を走らせると `libdbus-sys` (tao 経由) 等の build script が system library 不足で失敗する。devShell 外の手順は `docs/build.md` §2.3 参照。
+
 ### Frontend (SvelteKit + Vite + Vitest)
 
 package manager は **bun** (`bun.lock`)。コマンドは `apps/promptnotes/` 配下で実行。

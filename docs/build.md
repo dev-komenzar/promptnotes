@@ -79,6 +79,28 @@ bun install
 bun run tauri build --bundles dmg
 ```
 
+### 2.3 Nix devShell 外の Linux (非推奨)
+
+**本プロジェクトの前提は Nix devShell (`nix develop` / `direnv allow`)** であり、Linux の system library はすべて `flake.nix` の `linuxDeps` で供給される。
+devShell を使わずに素の `cargo test` / `cargo build` / `bun run tauri build` を実行すると、system 側に dev package が無い場合 build script が失敗する。
+代表例は `tao → dbus → libdbus-sys` の build script が pkg-config で `dbus-1` を見つけられず落ちるケース (Tauri 全体の依存であり updater 固有ではない)。
+
+devShell を使えない環境では、Tauri v2 prerequisites に加えて以下を system に入れる (CI `.github/workflows/build-appimage.yml` と同じ構成):
+
+```bash
+# Ubuntu / Debian
+sudo apt-get install -y \
+  libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libssl-dev \
+  libayatana-appindicator3-dev libdbus-1-dev pkg-config patchelf
+
+# Fedora
+sudo dnf install -y \
+  webkit2gtk4.1-devel gtk3-devel librsvg2-devel openssl-devel \
+  libappindicator-gtk3-devel dbus-devel pkgconf-pkg-config
+```
+
+Rust toolchain は `rust-toolchain.toml` の版を rustup で、frontend は bun を別途 install する。
+
 ---
 
 ## 3. Tauri updater keypair 管理
