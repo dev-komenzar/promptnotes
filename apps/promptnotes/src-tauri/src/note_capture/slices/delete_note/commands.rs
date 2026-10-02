@@ -5,6 +5,8 @@
 //!   - `FsTrashService` (in-app `<storage_dir>/trash/` adapter) for I-DN2
 //!   - `InMemoryUndoStack` as a process-wide `tauri::State` so the
 //!     follow-up restore wiring observes the same push (I-N7).
+//!   - `TauriEventBus` to surface `NoteDeletedToTrash` as the Tauri event
+//!     `note:deleted_to_trash` (I-DN5).
 //!
 //! Error mapping follows spec.md#io-errors: `InvalidNoteId` is surfaced at
 //! the boundary (mirrors restore-deleted-note's MED-4 fix) so the frontend
@@ -17,10 +19,10 @@ use time::OffsetDateTime;
 use super::application::DeleteNoteUseCase;
 use super::domain::{DeleteNoteCommand, DeleteNoteError};
 use super::ports::{TrashErrorKind, UndoStack};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
 use crate::note_capture::shared::adapters::trash_service::FsTrashService;
 use crate::note_capture::shared::adapters::undo_stack::InMemoryUndoStack;
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{DeletedNote, NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -30,11 +32,6 @@ impl Clock for SystemClock {
     fn now(&self) -> Timestamp {
         Timestamp::from_offset_datetime(OffsetDateTime::now_utc())
     }
-}
-
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {}
 }
 
 /// Bridges the `tauri::State<InMemoryUndoStack>` (which only yields `&T`)
@@ -123,7 +120,7 @@ pub async fn delete_note<R: Runtime>(
         trash,
         UndoStackRef(undo.inner()),
         SystemClock,
-        NoOpBus,
+        TauriEventBus::new(app),
     );
 
     uc.execute(DeleteNoteCommand { note_id: parsed })

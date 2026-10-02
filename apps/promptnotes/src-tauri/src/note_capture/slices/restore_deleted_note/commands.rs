@@ -6,6 +6,8 @@
 //!   - `FsNoteRepository` for writing the restored note back
 //!   - `FsTrashService` (in-app `<storage_dir>/trash/` adapter)
 //!   - `InMemoryUndoStack` shared via `tauri::State`
+//!   - `TauriEventBus` to surface `NoteRestoredFromTrash` as the Tauri event
+//!     `note:restored_from_trash` (I-RDN6)
 
 use serde::Serialize;
 use tauri::{AppHandle, Runtime, State};
@@ -13,10 +15,10 @@ use time::OffsetDateTime;
 
 use super::application::RestoreDeletedNoteUseCase;
 use super::domain::{RestoreDeletedNoteCommand, RestoreDeletedNoteError};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
 use crate::note_capture::shared::adapters::trash_service::FsTrashService;
 use crate::note_capture::shared::adapters::undo_stack::InMemoryUndoStack;
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{DeletedNote, NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -27,11 +29,6 @@ impl Clock for SystemClock {
     fn now(&self) -> Timestamp {
         Timestamp::from_offset_datetime(OffsetDateTime::now_utc())
     }
-}
-
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {}
 }
 
 /// Bridges the `tauri::State<InMemoryUndoStack>` (which only yields `&T`)
@@ -123,7 +120,7 @@ pub async fn restore_deleted_note<R: Runtime>(
         FsTrashService::new(storage_dir),
         UndoStackRef(undo.inner()),
         SystemClock,
-        NoOpBus,
+        TauriEventBus::new(app),
     );
 
     let cmd = RestoreDeletedNoteCommand { note_id: parsed };
