@@ -85,6 +85,8 @@ bun install
 bun run dev
 ```
 
+Nix devShell の利用が前提。devShell 外で build / test する場合は system に `libdbus-1-dev` 等が必要 ([docs/build.md §2.3](./docs/build.md#23-nix-devshell-外の-linux-非推奨))。
+
 ビルド・テスト・リリース手順は [docs/build.md](./docs/build.md)。
 
 ### 技術スタック

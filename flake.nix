@@ -28,6 +28,9 @@
           openssl
           librsvg
           libayatana-appindicator
+          # tao (Tauri の windowing) → dbus → libdbus-sys の build script が
+          # pkg-config で dbus-1 を要求する。webkitgtk 経由の推移依存に頼らず明示する。
+          dbus
           xdotool
           glib
           gsettings-desktop-schemas
