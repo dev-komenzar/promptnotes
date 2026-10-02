@@ -1,14 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-10-02
   hash:
     domain/workflows/restore-deleted-note.md#.*: e32a07cd279b
-    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/aggregates.md#.*: 56f7a54a8ab2
     domain/bounded-contexts.md#.*: 7ebfcda8743b
-    domain/domain-events.md#.*: 8abdfac78084
-    domain/validation.md#.*: 31244b277867
-    domain/validation.md#.*: 5294b0c32f1b
+    domain/domain-events.md#.*: 71db66eafe03
+    domain/validation.md#.*: 4a02c17cc025
 ori:
   schema:
     propagation_level: file
