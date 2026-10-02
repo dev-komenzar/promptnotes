@@ -67,16 +67,6 @@ impl SettingsRepository for FakeRepo {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl SettingsRepository for RcRepo {
-    fn load(&self) -> Settings {
-        self.0.load()
-    }
-    fn save(&self, s: &Settings) -> io::Result<()> {
-        self.0.save(s)
-    }
-}
-
 /// publish 履歴を保持する fake。
 struct FakeBus {
     published: RefCell<Vec<SettingsEvent>>,
@@ -104,13 +94,6 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: SettingsEvent) {
-        self.0.publish(e)
-    }
-}
-
 fn config_path() -> PathBuf {
     // settings.json は storage_dir とは独立した OS config dir に置かれる前提 (I-S2)。
     PathBuf::from("/tmp/promptnotes-test-config/settings.json")
@@ -125,7 +108,7 @@ fn initial_settings() -> Settings {
 }
 
 type Rig = (
-    UpdateSettingsUseCase<RcRepo, RcBus>,
+    UpdateSettingsUseCase<Rc<FakeRepo>, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
 );
@@ -133,7 +116,7 @@ type Rig = (
 fn rig() -> Rig {
     let repo = Rc::new(FakeRepo::new(initial_settings()));
     let bus = Rc::new(FakeBus::new());
-    let uc = UpdateSettingsUseCase::new(RcRepo(repo.clone()), RcBus(bus.clone()), config_path());
+    let uc = UpdateSettingsUseCase::new(repo.clone(), bus.clone(), config_path());
     (uc, repo, bus)
 }
 
@@ -349,8 +332,11 @@ fn tp_s11_1_storage_dir_change_persists_and_emits() {
 /// type-level に固定する。
 #[test]
 fn tp_s11_2_use_case_has_no_note_repository_dependency() {
-    let _: fn(RcRepo, RcBus, PathBuf) -> UpdateSettingsUseCase<RcRepo, RcBus> =
-        UpdateSettingsUseCase::new;
+    let _: fn(
+        Rc<FakeRepo>,
+        Rc<FakeBus>,
+        PathBuf,
+    ) -> UpdateSettingsUseCase<Rc<FakeRepo>, Rc<FakeBus>> = UpdateSettingsUseCase::new;
 }
 
 // ===== TP-E*: InvalidPath =====

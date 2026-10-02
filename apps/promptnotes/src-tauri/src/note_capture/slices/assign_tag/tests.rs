@@ -103,19 +103,6 @@ impl NoteRepository for FakeRepo {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl NoteRepository for RcRepo {
-    fn write(&self, n: &Note) -> io::Result<()> {
-        self.0.write(n)
-    }
-    fn storage_dir(&self) -> &Path {
-        self.0.storage_dir()
-    }
-    fn load_by_id(&self, id: &NoteId) -> io::Result<Option<Note>> {
-        self.0.load_by_id(id)
-    }
-}
-
 #[derive(Default)]
 struct FakeBus {
     events: RefCell<Vec<DomainEvent>>,
@@ -137,15 +124,8 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: DomainEvent) {
-        self.0.publish(e);
-    }
-}
-
 type Rig = (
-    AssignTagUseCase<RcRepo, FixedClock, RcBus>,
+    AssignTagUseCase<Rc<FakeRepo>, FixedClock, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
 );
@@ -153,11 +133,7 @@ type Rig = (
 fn rig(now: OffsetDateTime) -> Rig {
     let repo = Rc::new(FakeRepo::new());
     let bus = Rc::new(FakeBus::new());
-    let uc = AssignTagUseCase::new(
-        RcRepo(repo.clone()),
-        FixedClock::new(now),
-        RcBus(bus.clone()),
-    );
+    let uc = AssignTagUseCase::new(repo.clone(), FixedClock::new(now), bus.clone());
     (uc, repo, bus)
 }
 

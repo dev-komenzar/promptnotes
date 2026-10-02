@@ -96,39 +96,18 @@ impl EventBus for FakeBus {
 // while also moving an impl into the use case. Without an adapter the fake
 // would be moved away and writes/events would be unobservable.
 
-struct RcRepo(Rc<FakeRepo>);
-impl NoteRepository for RcRepo {
-    fn write(&self, n: &Note) -> io::Result<()> {
-        self.0.write(n)
-    }
-    fn storage_dir(&self) -> &Path {
-        self.0.storage_dir()
-    }
-}
-
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: DomainEvent) {
-        self.0.publish(e);
-    }
-}
-
 type Rig = (
-    CreateNoteUseCase<RcRepo, FixedClock, RcBus>,
+    CreateNoteUseCase<Rc<FakeRepo>, FixedClock, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
 );
 
 /// Build an observable use case: caller keeps `Rc<FakeRepo>` / `Rc<FakeBus>`
-/// for post-call assertions, the use case owns a thin `RcRepo` / `RcBus`.
+/// for post-call assertions, the use case owns a thin `Rc<FakeRepo>` / `Rc<FakeBus>`.
 fn rig(now: OffsetDateTime) -> Rig {
     let repo = Rc::new(FakeRepo::new());
     let bus = Rc::new(FakeBus::new());
-    let uc = CreateNoteUseCase::new(
-        RcRepo(repo.clone()),
-        FixedClock::new(now),
-        RcBus(bus.clone()),
-    );
+    let uc = CreateNoteUseCase::new(repo.clone(), FixedClock::new(now), bus.clone());
     (uc, repo, bus)
 }
 

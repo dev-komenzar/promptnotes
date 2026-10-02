@@ -48,13 +48,6 @@ impl UpdaterPort for FakeUpdater {
     }
 }
 
-struct RcUpdater(Rc<FakeUpdater>);
-impl UpdaterPort for RcUpdater {
-    fn fetch_latest_release(&self) -> Result<RawRelease, UpdateError> {
-        self.0.fetch_latest_release()
-    }
-}
-
 /// `EventBus` の test double。publish 履歴を保持。
 struct FakeBus {
     published: RefCell<Vec<NewVersionDetected>>,
@@ -82,13 +75,6 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: NewVersionDetected) {
-        self.0.publish(e)
-    }
-}
-
 fn current_version() -> Version {
     Version::from_str("0.3.1").expect("0.3.1 is valid semver")
 }
@@ -102,7 +88,7 @@ fn raw(version: &str, url: &str, notes: &str) -> RawRelease {
 }
 
 type Rig = (
-    CheckForUpdatesUseCase<RcUpdater, RcBus>,
+    CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
     Rc<FakeUpdater>,
     Rc<FakeBus>,
 );
@@ -110,7 +96,7 @@ type Rig = (
 fn rig(updater_response: Result<RawRelease, UpdateError>) -> Rig {
     let updater = Rc::new(FakeUpdater::with_response(updater_response));
     let bus = Rc::new(FakeBus::new());
-    let uc = CheckForUpdatesUseCase::new(RcUpdater(updater.clone()), RcBus(bus.clone()));
+    let uc = CheckForUpdatesUseCase::new(updater.clone(), bus.clone());
     (uc, updater, bus)
 }
 
@@ -275,8 +261,10 @@ fn tp_s14_2_network_error_publishes_no_event() {
 fn tp_s14_3_execute_returns_update_channel_not_result() {
     // 関数ポインタとして束縛できれば戻り型が compile-time に固定される。
     // Result<UpdateChannel, _> では型不一致でこの test が落ちる。
-    let _: fn(&CheckForUpdatesUseCase<RcUpdater, RcBus>, CheckForUpdatesCommand) -> UpdateChannel =
-        CheckForUpdatesUseCase::execute;
+    let _: fn(
+        &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
+        CheckForUpdatesCommand,
+    ) -> UpdateChannel = CheckForUpdatesUseCase::execute;
 }
 
 /// spec.md#tp-s14 TP-S14-4 — ParseError も silent
@@ -441,6 +429,8 @@ fn tp_i3_none_release_implies_no_event() {
 /// TP-S14-3 と物理的に同じ確認だが、spec の別 perspective なので個別に書く。
 #[test]
 fn tp_t1_execute_signature_has_no_result() {
-    let _: fn(&CheckForUpdatesUseCase<RcUpdater, RcBus>, CheckForUpdatesCommand) -> UpdateChannel =
-        CheckForUpdatesUseCase::execute;
+    let _: fn(
+        &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
+        CheckForUpdatesCommand,
+    ) -> UpdateChannel = CheckForUpdatesUseCase::execute;
 }

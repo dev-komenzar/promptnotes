@@ -41,3 +41,33 @@ pub trait SettingsRepository {
 pub trait EventBus {
     fn publish(&self, event: SettingsEvent);
 }
+
+impl<T: FileSystem + ?Sized> FileSystem for std::rc::Rc<T> {
+    fn try_read(&self, path: &Path) -> Option<String> {
+        (**self).try_read(path)
+    }
+    fn ensure_dir(&self, path: &Path) -> io::Result<()> {
+        (**self).ensure_dir(path)
+    }
+}
+
+impl<T: OsDirs + ?Sized> OsDirs for std::rc::Rc<T> {
+    fn default_storage_dir(&self) -> StorageDir {
+        (**self).default_storage_dir()
+    }
+}
+
+impl<T: SettingsRepository + ?Sized> SettingsRepository for std::rc::Rc<T> {
+    fn load(&self) -> Settings {
+        (**self).load()
+    }
+    fn save(&self, settings: &Settings) -> io::Result<()> {
+        (**self).save(settings)
+    }
+}
+
+impl<T: EventBus + ?Sized> EventBus for std::rc::Rc<T> {
+    fn publish(&self, event: SettingsEvent) {
+        (**self).publish(event)
+    }
+}

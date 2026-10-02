@@ -75,16 +75,6 @@ impl FileSystem for FakeFileSystem {
     }
 }
 
-struct RcFs(Rc<FakeFileSystem>);
-impl FileSystem for RcFs {
-    fn try_read(&self, p: &Path) -> Option<String> {
-        self.0.try_read(p)
-    }
-    fn ensure_dir(&self, p: &Path) -> io::Result<()> {
-        self.0.ensure_dir(p)
-    }
-}
-
 /// OS 慣習 default を返す fake。呼び出し回数を観測できる。
 struct FakeOsDirs {
     default_path: PathBuf,
@@ -112,20 +102,13 @@ impl OsDirs for FakeOsDirs {
     }
 }
 
-struct RcOs(Rc<FakeOsDirs>);
-impl OsDirs for RcOs {
-    fn default_storage_dir(&self) -> StorageDir {
-        self.0.default_storage_dir()
-    }
-}
-
 fn config_path() -> PathBuf {
     // settings.json は storage_dir と独立した OS config dir に置かれる前提 (I-S2)。
     PathBuf::from("/tmp/promptnotes-test-config/settings.json")
 }
 
 type Rig = (
-    LoadSettingsUseCase<RcFs, RcOs>,
+    LoadSettingsUseCase<Rc<FakeFileSystem>, Rc<FakeOsDirs>>,
     Rc<FakeFileSystem>,
     Rc<FakeOsDirs>,
 );
@@ -136,7 +119,7 @@ fn rig(content: Option<&str>) -> Rig {
         None => FakeFileSystem::new(),
     });
     let dirs = Rc::new(FakeOsDirs::new());
-    let uc = LoadSettingsUseCase::new(RcFs(fs.clone()), RcOs(dirs.clone()));
+    let uc = LoadSettingsUseCase::new(fs.clone(), dirs.clone());
     (uc, fs, dirs)
 }
 
@@ -193,7 +176,10 @@ fn tp_h2_happy_path_calls_ensure_dir_once() {
 /// LoadSettingsUseCase::new は `(FileSystem, OsDirs)` の 2 引数のみで構築できる必要がある。
 #[test]
 fn tp_h3_use_case_constructor_takes_no_event_bus() {
-    let _: fn(RcFs, RcOs) -> LoadSettingsUseCase<RcFs, RcOs> = LoadSettingsUseCase::new;
+    let _: fn(
+        Rc<FakeFileSystem>,
+        Rc<FakeOsDirs>,
+    ) -> LoadSettingsUseCase<Rc<FakeFileSystem>, Rc<FakeOsDirs>> = LoadSettingsUseCase::new;
 }
 
 // ===== TP-A*: settings.json 不在 =====
@@ -524,8 +510,10 @@ fn tp_i4_idempotent_no_double_ensure_dir_on_second_run() {
 fn tp_as1_execute_returns_settings_not_result_or_option() {
     // 関数ポインタ型として束縛できれば、戻り値が `Settings` 1 個であることが
     // compile-time に保証される。Result<Settings, _> / Option<Settings> では型不一致。
-    let _: fn(&LoadSettingsUseCase<RcFs, RcOs>, LoadSettingsCommand) -> Settings =
-        LoadSettingsUseCase::execute;
+    let _: fn(
+        &LoadSettingsUseCase<Rc<FakeFileSystem>, Rc<FakeOsDirs>>,
+        LoadSettingsCommand,
+    ) -> Settings = LoadSettingsUseCase::execute;
 }
 
 /// spec.md#tp-api-shape TP-AS2 — 任意失敗注入時も戻り値は常に有効な Settings (C-LS1 network test)
