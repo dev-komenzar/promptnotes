@@ -27,12 +27,13 @@ struct RemoveTagCommand {
 
 ## Errors {#errors}
 
-- `NoteNotFound { id: NoteId }`
-- `PersistError { path: PathBuf, cause: io::Error }`
+- `NoteNotFound { id: NoteId }` — load_by_id が `Ok(None)` を返した場合
+- `LoadError { path: PathBuf, source: io::Error }` — load_by_id の read I/O 失敗 / 既存 `.md` ファイルの parse 失敗
+- `PersistError { path: PathBuf, source: io::Error }` — `NoteRepository::write` の I/O 失敗 (write 経路専用)
 
 ## Steps {#steps}
 
-1. `loadNote: NoteId → Result<Note, NoteNotFound>`
+1. `loadNote: NoteId → Result<Note, NoteNotFound | LoadError>`
 2. `applyRemove: (Note, &str) → (Note, TagDiff)`
    - `Note::remove_tag(tag_name)` で TagSet 更新
    - `TagDiff = Unchanged | Removed(Tag)`
@@ -52,3 +53,5 @@ struct RemoveTagCommand {
 
 - `tag_name` は UI（タグチップの × ボタン）から既に正規化済みで来る前提
 - 不正な tag_name が来ても「存在しないので no-op」となり安全
+- read 失敗 (`LoadError`) と write 失敗 (`PersistError`) は意味的に異なる経路として error variant を分離する (auto-save-note / assign-tag workflow と同形)
+- 本 errors 形は Note Capture BC の write-side 3 slice (auto-save-note / assign-tag / remove-tag) で共有される「read/write I/O 意味分離」契約を反映している
