@@ -3,7 +3,7 @@ target: domain/workflows/remove-tag.md#errors
 by: slices/remove-tag
 reason: remove-tag slice の Pass 2 review で、Note Capture BC の write 系 3 slice (auto-save-note / assign-tag / remove-tag) が同型の `LoadError` variant を持つ pattern が確立されたため、upstream workflow#errors (現 2 variant) に `LoadError` を追記して derived spec と整合させる
 created: 2026-06-29
-status: pending
+status: accepted
 followup_of: 2026-06-25-auto-save-note-workflows-auto-save-note-errors.md
 ---
 

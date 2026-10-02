@@ -1,9 +1,9 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-10-02
   hash:
-    domain/workflows/remove-tag.md#.*: 7a61f8005f29
+    domain/workflows/remove-tag.md#.*: b27eb7d105b1
     domain/aggregates.md#.*: 82947dbfd3f6
     domain/bounded-contexts.md#.*: 7ebfcda8743b
     domain/domain-events.md#.*: 8abdfac78084
@@ -201,7 +201,7 @@ assign-tag slice と並列構造:
 
 - 理由: Note Capture BC の write 系 slice (`auto-save-note` / `assign-tag`) が同型に LoadError を持ち、read I/O failure と write I/O failure を意味分離する設計が BC 全体で一貫
 - 検討: domain workflow#errors に LoadError 追記の proposal を出すか、または slice-level の "impl detail variant" として spec 内 I-RT8 のみで説明留めるか
-- 現状: 後者 (spec 内説明) で運用。BC 内 3 slice 共通 pattern として確立してから domain proposal にする案
+- 解決済み (2026-10-02, ori-r72): 3 slice で pattern 確立済のため proposal `2026-06-29-remove-tag-workflows-remove-tag-errors.md` を accept し、`domain/workflows/remove-tag.md#errors` を 3 variant 化した
 
 ### oq-remove-tag-now-injection {#oq-remove-tag-now-injection}
 
