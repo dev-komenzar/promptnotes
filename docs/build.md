@@ -343,7 +343,7 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json  (macOS 用; 
 
 1. version bump (`apps/promptnotes/package.json` と `apps/promptnotes/src-tauri/Cargo.toml`)
 2. `git tag vX.Y.Z` & push
-3. Linux CI をトリガー: tag を push すると `.github/workflows/build-appimage.yml` が起動し、AppImage / .deb / .rpm / .AppImage.sig / latest.json (Linux 分) を draft Release に自動アップロード
+3. Linux CI をトリガー: tag を push すると `.github/workflows/build-appimage.yml` が起動し、[tauri-action](https://github.com/tauri-apps/tauri-action) が AppImage / .deb / .rpm とそれぞれの `.sig`、latest.json (Linux 分) を draft Release に自動アップロード。既存タグを再ビルドする場合は `gh workflow run build-appimage.yml --ref main -f tag=vX.Y.Z`
 4. macOS ローカルビルド: mac サブ機で `bun run tauri build --bundles dmg` を実行し、.dmg / .app.tar.gz / .app.tar.gz.sig / latest.json (macOS 分) を同一の draft Release にアップロード
 5. latest.json を統合: [4.4](#44-latestjson-merge-protocol) の手順に従い、Linux CI と macOS の `latest.json` をマージして --clobber でアップロード
 6. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
@@ -418,7 +418,7 @@ gh release upload "v${VERSION}" \
 
 ##### latest.json のアップロードと統合
 
-`createUpdaterArtifacts: true` を設定している場合、Tauri build が `latest.json` を生成する。これをリリースにアップロードすることで in-app updater が更新を検出できる。
+`createUpdaterArtifacts: true` を設定している場合、Tauri build は各 bundle の updater 用署名 (`.sig`) を生成する。**`latest.json` は `tauri build` では生成されず**、[tauri-action](https://github.com/tauri-apps/tauri-action) が `.sig` から組み立てて Release にアップロードする。これをリリースにアップロードすることで in-app updater が更新を検出できる。
 
 Linux CI と macOS ローカルビルドは**それぞれ独立して `latest.json` を生成**し、自動統合されない。両方のビルドが完了した後、[4.4](#44-latestjson-merge-protocol) の手順に従ってマージしてからアップロードする。
 
@@ -486,7 +486,7 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 ### 4.4 latest.json merge protocol
 
-Linux CI (`.github/workflows/build-appimage.yml`) と macOS ローカルビルドは**それぞれ独立して動作し、各 platform 用の `latest.json` を別々に生成する**。Tauri の updater ツールチェーンは platform 間で `latest.json` を自動統合しない。そのため、両方のビルドが完了した後、人手で 2 つの `latest.json` をマージする必要がある。
+Linux CI (`.github/workflows/build-appimage.yml`) と macOS ローカルビルドは**それぞれ独立して動作する**。tauri-action は Release に既存の `latest.json` があれば platforms をマージするが、macOS ローカルビルド (`tauri build`) は tauri-action を経由しないため、この自動マージは効かない。そのため、両方のビルドが完了した後、人手で 2 つの `latest.json` をマージする必要がある。
 
 **上書きの危険**: 後からビルドした方の `latest.json` をそのままアップロードすると、先にアップロードした platform の署名が失われる。in-app updater がその platform で動作しなくなる。
 
