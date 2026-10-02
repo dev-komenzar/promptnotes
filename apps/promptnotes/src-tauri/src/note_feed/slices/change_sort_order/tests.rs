@@ -65,16 +65,6 @@ impl SettingsRepository for FakeRepo {
     }
 }
 
-struct RcRepo(Rc<FakeRepo>);
-impl SettingsRepository for RcRepo {
-    fn load(&self) -> Settings {
-        self.0.load()
-    }
-    fn save(&self, s: &Settings) -> io::Result<()> {
-        self.0.save(s)
-    }
-}
-
 struct FakeBus {
     published: RefCell<Vec<SettingsEvent>>,
 }
@@ -99,13 +89,6 @@ impl EventBus for FakeBus {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: SettingsEvent) {
-        self.0.publish(e)
-    }
-}
-
 fn config_path() -> PathBuf {
     PathBuf::from("/tmp/promptnotes-test-config/settings.json")
 }
@@ -119,7 +102,7 @@ fn initial_settings_with(sort: SortOrder) -> Settings {
 }
 
 type Rig = (
-    ChangeSortOrderUseCase<RcRepo, RcBus>,
+    ChangeSortOrderUseCase<Rc<FakeRepo>, Rc<FakeBus>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
 );
@@ -127,7 +110,7 @@ type Rig = (
 fn rig_with_current_sort(current_sort: SortOrder) -> Rig {
     let repo = Rc::new(FakeRepo::new(initial_settings_with(current_sort)));
     let bus = Rc::new(FakeBus::new());
-    let uc = ChangeSortOrderUseCase::new(RcRepo(repo.clone()), RcBus(bus.clone()), config_path());
+    let uc = ChangeSortOrderUseCase::new(repo.clone(), bus.clone(), config_path());
     (uc, repo, bus)
 }
 
@@ -353,7 +336,7 @@ fn tp_a2_event_payload_matches_saved_value() {
 #[test]
 fn tp_cs1_execute_takes_note_feed_and_command_returning_result() {
     type ExecuteFn = fn(
-        &ChangeSortOrderUseCase<RcRepo, RcBus>,
+        &ChangeSortOrderUseCase<Rc<FakeRepo>, Rc<FakeBus>>,
         NoteFeed,
         ChangeSortOrderCommand,
     ) -> Result<NoteFeed, ChangeSortOrderError>;

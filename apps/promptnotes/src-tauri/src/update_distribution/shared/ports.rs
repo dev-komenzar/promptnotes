@@ -22,3 +22,15 @@ pub trait UpdaterPort {
 pub trait EventBus {
     fn publish(&self, event: NewVersionDetected);
 }
+
+impl<T: UpdaterPort + ?Sized> UpdaterPort for std::rc::Rc<T> {
+    fn fetch_latest_release(&self) -> Result<RawRelease, UpdateError> {
+        (**self).fetch_latest_release()
+    }
+}
+
+impl<T: EventBus + ?Sized> EventBus for std::rc::Rc<T> {
+    fn publish(&self, event: NewVersionDetected) {
+        (**self).publish(event)
+    }
+}
