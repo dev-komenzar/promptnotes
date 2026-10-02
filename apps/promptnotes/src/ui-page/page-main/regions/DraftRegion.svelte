@@ -6,6 +6,7 @@
 	import { draftStore } from '../stores/draft.svelte';
 	import { feedStore } from '../stores/feed.svelte';
 	import { toastStore } from '../stores/toasts.svelte';
+	import { submitShortcutHint } from '../submit-shortcut-hint';
 
 	type Props = {
 		store?: typeof draftStore;
@@ -19,6 +20,7 @@
 	let suppressNextChange = false;
 	let tagInputDraft = $state('');
 	let tagError = $state<string | null>(null);
+	const shortcutHint = submitShortcutHint(navigator.platform);
 
 	async function runSubmit(): Promise<boolean> {
 		// タグ入力欄に未確定のテキストがあれば先にコミットする
@@ -151,16 +153,17 @@
 				<p class="text-[10px] text-red-500" data-testid="screen-1-draft-tag-error">{tagError}</p>
 			{/if}
 		</div>
-		<div class="flex items-start gap-2">
-			<div
-				bind:this={host}
-				data-testid="screen-1-draft-body"
-				class="min-h-[3rem] flex-1 rounded border border-neutral-200 bg-white px-2 py-1 text-sm focus-within:border-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
-			></div>
+		<div
+			bind:this={host}
+			data-testid="screen-1-draft-body"
+			class="min-h-[3rem] rounded border border-neutral-200 bg-white px-2 py-1 text-sm focus-within:border-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
+		></div>
+		<div class="flex items-center justify-end gap-2">
+			<span aria-hidden="true" class="text-[10px] text-neutral-400">{shortcutHint}</span>
 			<button
 				type="button"
 				data-testid="screen-1-draft-submit"
-				class="shrink-0 self-stretch rounded-md bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+				class="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
 				aria-label="Add new note (Cmd+Enter)"
 				disabled={store.submitting}
 				onclick={handleButtonClick}
