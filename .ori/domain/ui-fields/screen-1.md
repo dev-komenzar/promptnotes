@@ -55,6 +55,12 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 | `{#screen-1-draft-tag-remove}` | タグ削除 | (action) | - | × icon on chip | クリックで下書きタグから削除 |
 | `{#screen-1-draft-submit}` | ＋追加 | (action) | - | button | クリックで `Cmd+Enter` と同等 |
 
+**Draft 本文の高さ** (Block の「全文表示」規約は Draft には適用しない):
+
+- [draft-body](#fields-draft) は内容に応じて伸縮するが、最大高さは **viewport の 70%** (`70vh`)
+- 最大高さを超える内容は **本文エディタ内でスクロール**する（Draft region 全体やページ全体はスクロールさせない）。カーソル位置は常にエディタ内の可視範囲に追従する
+- viewport が低く Draft が収まらない場合は **Draft を Feed より優先**する: Feed は見えなくなってもよいが、タグ行と [＋追加](#fields-draft) の行は常に viewport 内に表示され、本文エディタのみが縮む
+
 ### Block region (各 Note 1 ブロック) {#fields-block}
 
 各 Block は `IDLE | FOCUSED | EDITING` の state machine を持つ（spec 準拠）。

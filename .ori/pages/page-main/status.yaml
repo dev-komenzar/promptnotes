@@ -1,5 +1,5 @@
 page_id: page-main
-derived_at: 2026-06-30
+derived_at: 2026-10-02
 beads:
   epic: ori-page-page-main
   current_phase: done
@@ -50,4 +50,4 @@ phases:
     completed_at: 2026-06-29
     notes: dirty cleared; 2 follow-up issues created
 dirty: []
-finalized_at: 2026-06-30
+finalized_at: 2026-10-02
