@@ -76,7 +76,7 @@ xcode-select --install
 # mac release build
 cd apps/promptnotes
 bun install
-bun run tauri build --bundles dmg
+bun run tauri build --bundles app,dmg
 ```
 
 ### 2.3 Nix devShell 外の Linux (非推奨)
@@ -192,7 +192,7 @@ Tauri の updater 署名は環境変数で渡す。`TAURI_SIGNING_PRIVATE_KEY` �
 ```bash
 # updater 署名用の秘密鍵を復号
 mkdir -p ~/.tauri
-sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' | tr -d '\n' > ~/.tauri/promptnotes.key
 chmod 600 ~/.tauri/promptnotes.key
 
 # 環境変数を設定 (パスフレーズは pass から取得)
@@ -218,7 +218,7 @@ export BW_SESSION="$(bw unlock --raw)"
 
 # 4. updater 署名用の秘密鍵を sops で復号
 mkdir -p ~/.tauri
-sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' | tr -d '\n' > ~/.tauri/promptnotes.key
 chmod 600 ~/.tauri/promptnotes.key
 
 # 5. Bitwarden からパスフレーズを取得
@@ -236,7 +236,7 @@ echo "pass: ${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:0:4}..."
 cd apps/promptnotes
 nix develop
 bun install
-bun run tauri build --bundles dmg
+bun run tauri build --bundles app,dmg
 ```
 
 > **環境変数のスコープ**: `export` は現在のシェルセッションのみ有効。`nix develop` の内側と外側で環境変数が分離される場合があるため、`nix develop` に入ってから `export` する方が確実。ターミナルを閉じると消えるので、ビルド終了後はターミナルを閉じることで誤った残存を防げる。
@@ -264,7 +264,7 @@ bun run tauri build --bundles dmg
 ```bash
 # updater 署名用の秘密鍵を復号
 mkdir -p ~/.tauri
-sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' | tr -d '\n' > ~/.tauri/promptnotes.key
 chmod 600 ~/.tauri/promptnotes.key
 
 # 環境変数を設定 (パスフレーズは pass から取得)
@@ -314,7 +314,7 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(bw get item "$ITEM_ID" --session "$
 
 # updater 署名用の秘密鍵を sops で復号
 mkdir -p ~/.tauri
-sops --decrypt secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' > ~/.tauri/promptnotes.key
+sops --decrypt ../../secrets/tauri/updater.key.sops.yaml | sed 's/^data: //' | tr -d '\n' > ~/.tauri/promptnotes.key
 chmod 600 ~/.tauri/promptnotes.key
 
 # 秘密鍵のパスを指定
@@ -323,29 +323,35 @@ export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/promptnotes.key"
 # nix develop の内側に入ってからビルド
 nix develop
 bun install
-bun run tauri build --bundles dmg
-# OR if you want explicit app bundle without dmg:
-# bun run tauri build --bundles app
+bun run tauri build --bundles app,dmg
 ```
 
-`createUpdaterArtifacts: true` により、Tauri は `.dmg` に加えて updater 用アーティファクトも自動生成する。
+`--bundles` には **必ず `app` を含める**。updater 用アーティファクト (`.app.tar.gz` / `.sig`) は `app` bundle からしか作られず、`dmg` だけだと `The bundler was configured to create updater artifacts but no updater-enabled targets were built` と警告が出て生成されない (中間の `.app` も削除される)。
 
 成果物:
 
 ```
-apps/promptnotes/src-tauri/target/release/bundle/macos/*.dmg
-apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz
-apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
-apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json  (macOS 用; Linux CI のと統合必須)
+apps/promptnotes/src-tauri/target/release/bundle/dmg/*.dmg
+apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz
+apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz.sig
 ```
+
+`latest.json` は `tauri build` では生成されない。macOS 分は [4.4](#44-latestjson-merge-protocol) の手順で CI が作った `latest.json` に追記する。
+
+> **`failed to decode base64 key: Invalid symbol 10`**: 鍵ファイル末尾に改行 (LF = 10) が残っている。復号時に `| tr -d '\n'` を通して作り直すこと。
 
 ### 4.3 release の一連の流れ
 
-1. version bump (`apps/promptnotes/package.json` と `apps/promptnotes/src-tauri/Cargo.toml`)
+1. version bump: 以下をすべて更新して PR を出し、main にマージする
+   - `apps/promptnotes/package.json` (と `package-lock.json` の root)
+   - `apps/promptnotes/src-tauri/tauri.conf.json` (CI と updater が参照する version)
+   - `apps/promptnotes/src-tauri/Cargo.toml` と `Cargo.lock` (`cargo update -p app`)
+   - `flake.nix` (`packages.default` の `version`)
+   - `.ori/scenarios/s14-update-check-failure/tests/*.spec.ts` (`current_version` の期待値)
 2. `git tag vX.Y.Z` & push
 3. Linux CI をトリガー: tag を push すると `.github/workflows/build-appimage.yml` が起動し、[tauri-action](https://github.com/tauri-apps/tauri-action) が AppImage / .deb / .rpm とそれぞれの `.sig`、latest.json (Linux 分) を draft Release に自動アップロード。既存タグを再ビルドする場合は `gh workflow run build-appimage.yml --ref main -f tag=vX.Y.Z`
-4. macOS ローカルビルド: mac サブ機で `bun run tauri build --bundles dmg` を実行し、.dmg / .app.tar.gz / .app.tar.gz.sig / latest.json (macOS 分) を同一の draft Release にアップロード
-5. latest.json を統合: [4.4](#44-latestjson-merge-protocol) の手順に従い、Linux CI と macOS の `latest.json` をマージして --clobber でアップロード
+4. macOS ローカルビルド: mac サブ機で tag を checkout し [4.2](#42-macos-build-mac-サブ機) の手順で `bun run tauri build --bundles app,dmg` を実行。.dmg / .app.tar.gz / .app.tar.gz.sig を同一の draft Release にアップロード
+5. latest.json に macOS 分を追記: [4.4](#44-latestjson-merge-protocol) の手順に従い、CI が作った `latest.json` に `darwin-aarch64` を追加して上書きアップロード
 6. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
 7. publish
 
@@ -355,79 +361,46 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json  (macOS 用; 
 Tauri の updater は GitHub Releases を配信元にする想定。
 updater の署名検証は Developer ID / notarization と独立なので、Apple Developer Program 不参加でも Tauri updater は問題なく機能する。
 
-Linux の updater はバンドル形式 (AppImage / .deb / .rpm) を自動検出し、`latest.json` の対応キー (`linux-x86_64` / `linux-x86_64-deb` / `linux-x86_64-rpm`) から適切なアセットをダウンロードする。
+Linux の updater はバンドル形式 (AppImage / .deb / .rpm) を自動検出し、`latest.json` の対応キー (`linux-x86_64-appimage` / `linux-x86_64-deb` / `linux-x86_64-rpm`、無ければ `linux-x86_64`) から適切なアセットをダウンロードする。
 AppImage は root 不要でファイル置換。.deb/.rpm は `dpkg -i` / `rpm -U` を実行するためユーザに sudo パスワードを要求する。
 
 #### GitHub Releases へのアップロード手順
 
 ##### Linux 成果物のアップロード
 
-```bash
-VERSION="0.2.0"  # package.json / Cargo.toml と一致させる
+CI (tauri-action) が draft Release の作成と、AppImage / .deb / .rpm・各 `.sig`・`latest.json` のアップロードまで行う。手動アップロードは不要。
 
-# draft release を作成 (まだ公開しない)
-gh release create "v${VERSION}" \
-  --title "PromptNotes v${VERSION}" \
-  --notes "リリースノートをここに記述" \
-  --draft
-
-# AppImage
-gh release upload "v${VERSION}" \
-  apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage \
-  apps/promptnotes/src-tauri/target/release/bundle/appimage/*.AppImage.sig
-
-# .deb
-gh release upload "v${VERSION}" \
-  apps/promptnotes/src-tauri/target/release/bundle/deb/*.deb
-
-# .rpm
-gh release upload "v${VERSION}" \
-  apps/promptnotes/src-tauri/target/release/bundle/rpm/*.rpm
-```
-
-> `.sig` ファイルは updater の署名検証に必須。`.deb` / `.rpm` はパッケージマネージャ経由の更新に使われる（個別の `.sig` は不要）。
+`latest.json` のダウンロード URL は `https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>` 形式になる (tauri-action の仕様)。updater は `Accept: application/octet-stream` を付けて取得するため、Release 公開後はこの URL で本体を取得できる (draft 中は 404)。
 
 ##### macOS 成果物のアップロード
 
 ```bash
-VERSION="0.2.0"
+cd apps/promptnotes
+VERSION="X.Y.Z"
+B=src-tauri/target/release/bundle
 
-# .dmg をアップロード
 gh release upload "v${VERSION}" \
-  apps/promptnotes/src-tauri/target/release/bundle/dmg/*.dmg
+  $B/dmg/*.dmg \
+  $B/macos/*.app.tar.gz \
+  $B/macos/*.app.tar.gz.sig
 ```
 
-> **`.app.tar.gz` と `.sig` について**:
->
-> macOS 向けには 2 種類の成果物が必要:
->
-> | 成果物 | 用途 | 生成条件 |
-> |---|---|---|
-> | `.dmg` | ユーザが GitHub Releases から手動ダウンロードしてインストール | 常に生成 |
-> | `.app.tar.gz` + `.sig` | Tauri in-app updater が自動更新に使う | `createUpdaterArtifacts: true` 時のみ |
->
-> `.app.tar.gz` は `.app` バンドルを tar+gzip でアーカイブしたもの。Tauri の updater プラグインは起動時に `latest.json` を取得し、新バージョンがあれば `.app.tar.gz` をダウンロード → `.sig` で署名検証 → アプリを差し替える。`.sig` は minisign 形式の電子署名で、ダウンロードしたバイナリが改ざんされていないことを保証する。
->
-> `.dmg` だけアップロードしても in-app updater は動作しない。必ず `.app.tar.gz` と `.sig` もアップロードすること。生成先は `apps/promptnotes/src-tauri/target/release/bundle/macos/`。
->
-> ```bash
-> gh release upload "v${VERSION}" \
->   apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz \
->   apps/promptnotes/src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
-> ```
+macOS 向けには 2 種類の成果物が必要:
 
-##### latest.json のアップロードと統合
+| 成果物 | 用途 | 生成条件 |
+|---|---|---|
+| `.dmg` | ユーザが GitHub Releases から手動ダウンロードしてインストール | `--bundles` に `dmg` |
+| `.app.tar.gz` + `.sig` | Tauri in-app updater が自動更新に使う | `createUpdaterArtifacts: true` かつ `--bundles` に `app` |
 
-`createUpdaterArtifacts: true` を設定している場合、Tauri build は各 bundle の updater 用署名 (`.sig`) を生成する。**`latest.json` は `tauri build` では生成されず**、[tauri-action](https://github.com/tauri-apps/tauri-action) が `.sig` から組み立てて Release にアップロードする。これをリリースにアップロードすることで in-app updater が更新を検出できる。
+`.app.tar.gz` は `.app` バンドルを tar+gzip でアーカイブしたもの。Tauri の updater プラグインは起動時に `latest.json` を取得し、新バージョンがあれば `.app.tar.gz` をダウンロード → `.sig` で署名検証 → アプリを差し替える。`.sig` は minisign 形式の電子署名で、ダウンロードしたバイナリが改ざんされていないことを保証する。`.dmg` だけアップロードしても in-app updater は動作しない。
 
-Linux CI と macOS ローカルビルドは**それぞれ独立して `latest.json` を生成**し、自動統合されない。両方のビルドが完了した後、[4.4](#44-latestjson-merge-protocol) の手順に従ってマージしてからアップロードする。
+> zsh は glob が 0 件だとコマンド全体を実行しない (`no matches found`)。`.app.tar.gz` が無い場合は `--bundles` に `app` が入っているか確認する。
 
-```bash
-# latest.json の生成場所を確認 (macOS)
-ls apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json
-```
+##### latest.json
 
-> **重要**: 後からビルドした方の `latest.json` をそのままアップロードすると、先にアップロードした platform の署名が失われる。必ずマージしてからアップロードすること。
+`createUpdaterArtifacts: true` を設定している場合、Tauri build は各 bundle の updater 用署名 (`.sig`) を生成する。**`latest.json` は `tauri build` では生成されず**、[tauri-action](https://github.com/tauri-apps/tauri-action) が `.sig` から組み立てて Release にアップロードする。in-app updater は `releases/latest/download/latest.json` を取得して更新を検出する。
+
+macOS ローカルビルドは tauri-action を経由しないため、macOS 分は [4.4](#44-latestjson-merge-protocol) の手順で CI の `latest.json` に追記する。
 
 ##### リリースの公開
 
@@ -486,50 +459,42 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 ### 4.4 latest.json merge protocol
 
-Linux CI (`.github/workflows/build-appimage.yml`) と macOS ローカルビルドは**それぞれ独立して動作する**。tauri-action は Release に既存の `latest.json` があれば platforms をマージするが、macOS ローカルビルド (`tauri build`) は tauri-action を経由しないため、この自動マージは効かない。そのため、両方のビルドが完了した後、人手で 2 つの `latest.json` をマージする必要がある。
+CI (tauri-action) は Linux 分の `latest.json` を draft Release に置く。macOS ローカルビルド (`tauri build`) は `latest.json` を生成しないため、CI の `latest.json` に `darwin-aarch64` エントリを追記して上書きする。
 
-**上書きの危険**: 後からビルドした方の `latest.json` をそのままアップロードすると、先にアップロードした platform の署名が失われる。in-app updater がその platform で動作しなくなる。
+エントリの形式は `{"signature": "<.sig ファイルの中身>", "url": "<ダウンロード URL>"}`。signature はパスや URL ではなく **ファイルの中身** を入れる。
 
-#### マージ手順
+#### 追記手順
 
-1. Linux CI の draft Release から `latest.json` をダウンロード:
-   ```bash
-   VERSION="0.2.0"
-   gh release download "v${VERSION}" --pattern latest.json --dir /tmp/merge-latest
-   cp /tmp/merge-latest/latest.json /tmp/merge-latest/linux.json
-   ```
+[macOS 成果物のアップロード](#macos-成果物のアップロード) を済ませた後、同じディレクトリ (`apps/promptnotes`) で実行する:
 
-2. Linux のキーのみ抽出:
-   ```bash
-   jq '{platforms: { "linux-x86_64": .platforms."linux-x86_64", "linux-x86_64-deb": .platforms."linux-x86_64-deb", "linux-x86_64-rpm": .platforms."linux-x86_64-rpm" }}' \
-     /tmp/merge-latest/linux.json > /tmp/merge-latest/linux-only.json
-   ```
+```bash
+VERSION="X.Y.Z"
+B=src-tauri/target/release/bundle
+W=$(mktemp -d)
 
-3. macOS ローカルビルドで生成された `latest.json` を確認:
-   ```bash
-   ls apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json
-   # Darwin のキーのみ抽出
-   jq '{platforms: { "darwin-aarch64": .platforms."darwin-aarch64" }}' \
-     apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json \
-     > /tmp/merge-latest/mac-only.json
-   ```
+# 1. CI が作った latest.json を取得
+gh release download "v${VERSION}" -p latest.json -D "$W"
 
-4. 両方を統合:
-   ```bash
-   jq -s '.[0].platforms * .[1].platforms | {version: ("v'"${VERSION}"'"), notes: "", platforms: .}' \
-     /tmp/merge-latest/linux-only.json \
-     /tmp/merge-latest/mac-only.json \
-     > /tmp/merge-latest/merged-latest.json
-   ```
+# 2. darwin-aarch64 を追記 (Linux のエントリはそのまま残る)
+TARBALL=$(basename $B/macos/*.app.tar.gz)
+jq --arg sig "$(cat $B/macos/$TARBALL.sig)" \
+   --arg url "https://github.com/dev-komenzar/promptnotes/releases/download/v${VERSION}/${TARBALL}" \
+   '.platforms["darwin-aarch64"] = {signature: $sig, url: $url}' \
+   "$W/latest.json" > "$W/merged.json"
 
-   > **スキーマの確認**: Tauri が生成する実際の `latest.json` の構造は `cat apps/promptnotes/src-tauri/target/release/bundle/macos/latest.json` で確認できる。スキーマが異なる場合は上記 `jq` コマンドを実際の構造に合わせて調整すること。
+# 3. 確認: linux-x86_64 / -appimage / -deb / -rpm と darwin-aarch64 があること
+jq '.platforms | keys' "$W/merged.json"
 
-5. 統合した `latest.json` を draft Release に上書きアップロード:
-   ```bash
-   gh release upload "v${VERSION}" --clobber /tmp/merge-latest/merged-latest.json#latest.json
-   ```
+# 4. ファイル名を latest.json にしてから上書きアップロード
+mkdir -p "$W/up" && cp -f "$W/merged.json" "$W/up/latest.json"
+gh release upload "v${VERSION}" --clobber "$W/up/latest.json"
+```
 
-このマージ手順は **draft Release を公開する前に必ず実行すること**。公開後に `latest.json` を差し替えても、既にチェックしたクライアントは古い `latest.json` をキャッシュしている可能性がある。
+> **`file#name` 記法は使わない**: `gh release upload ... merged.json#latest.json` の `#` 以降は表示ラベルで、アセットのファイル名は `merged.json` のままになる。updater はファイル名 `latest.json` で取得するため、必ずファイル自体を `latest.json` にしてアップロードする。誤って上げた場合は `gh release delete-asset "v${VERSION}" merged.json -y` で削除する。
+
+**上書きの危険**: macOS の `tauri build` 出力などから作った `latest.json` をそのまま `--clobber` すると、Linux の platforms が失われ、in-app updater が Linux で動作しなくなる。必ず CI の `latest.json` に追記する形で作ること。
+
+この手順は **draft Release を公開する前に必ず実行すること**。公開後に `latest.json` を差し替えても、既にチェックしたクライアントは古い `latest.json` をキャッシュしている可能性がある。
 
 ---
 
@@ -553,7 +518,7 @@ Linux CI (`.github/workflows/build-appimage.yml`) と macOS ローカルビル�
 
 その場合は:
 
-- macOS build は GitHub Actions の **有料 mac runner** ($0.08/min) をスポット利用
+- macOS build は GitHub Actions の mac runner で tauri-action を使う (public repo の標準 runner は無料。tauri-action が既存の `latest.json` に platforms をマージするため 4.4 の手作業も不要になる)
 - private secret は GitHub Actions Secrets に移し、nix-sops repo は個人用として分離維持
 
 ### 5.3 配布戦略
