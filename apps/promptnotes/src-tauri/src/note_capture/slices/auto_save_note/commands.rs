@@ -10,8 +10,8 @@ use time::OffsetDateTime;
 
 use super::application::AutoSaveNoteUseCase;
 use super::domain::{AutoSaveError, AutoSaveNoteCommand};
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -53,12 +53,6 @@ fn fixed_now_override() -> Option<Timestamp> {
     }
 }
 
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {
-        // The Note Feed BC will subscribe here once it lands.
-    }
-}
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
@@ -104,7 +98,7 @@ pub async fn auto_save_note<R: Runtime>(
     new_body: String,
 ) -> Result<AutoSaveOutcome, AutoSaveErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = AutoSaveNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, NoOpBus);
+    let uc = AutoSaveNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
 
     // NoteId is currently a thin newtype with no validating constructor,
     // so a parse-failure path does not exist at this boundary; the upstream

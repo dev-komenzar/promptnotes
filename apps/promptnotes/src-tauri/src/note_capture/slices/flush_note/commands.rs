@@ -10,8 +10,8 @@ use time::OffsetDateTime;
 
 use super::application::FlushNoteUseCase;
 use super::domain::{FlushError, FlushNoteCommand, FlushTrigger};
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, DebounceTimer, EventBus};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
+use crate::note_capture::shared::ports::{Clock, DebounceTimer};
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -23,12 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {
-        // The Note Feed BC will subscribe here once it lands.
-    }
-}
 
 /// Cancellation is owned by the UI-side timer; the backend command is the
 /// trailing edge that just records "we flushed for this id". `NoOpDebounceTimer`
@@ -116,7 +110,7 @@ pub async fn flush_note<R: Runtime>(
     let uc = FlushNoteUseCase::new(
         FsNoteRepository::new(storage_dir),
         SystemClock,
-        NoOpBus,
+        TauriEventBus::new(app),
         NoOpDebounceTimer,
     );
 

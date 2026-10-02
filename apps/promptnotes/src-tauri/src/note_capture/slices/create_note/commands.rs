@@ -12,8 +12,8 @@ use time::OffsetDateTime;
 use super::application::CreateNoteUseCase;
 use super::domain::{CreateNoteCommand, CreateNoteError};
 use super::infrastructure::FsNoteRepository;
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::Timestamp;
 
@@ -24,13 +24,6 @@ impl Clock for SystemClock {
     }
 }
 
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {
-        // The event bus is not wired to a subscriber surface yet. Once the
-        // Note Feed BC arrives it will subscribe here.
-    }
-}
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
@@ -72,7 +65,7 @@ pub async fn create_note<R: Runtime>(
     raw_tags: Vec<String>,
 ) -> Result<CreateNoteOutcome, CreateNoteErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = CreateNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, NoOpBus);
+    let uc = CreateNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
 
     match uc.execute(CreateNoteCommand { raw_body, raw_tags }) {
         Ok(Some(note)) => Ok(CreateNoteOutcome::Created {
