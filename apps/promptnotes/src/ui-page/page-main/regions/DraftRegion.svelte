@@ -20,7 +20,7 @@
 	let suppressNextChange = false;
 	let tagInputDraft = $state('');
 	let tagError = $state<string | null>(null);
-	const shortcutHint = submitShortcutHint(navigator.userAgent);
+	const shortcutHint = submitShortcutHint(navigator.platform);
 
 	async function runSubmit(): Promise<boolean> {
 		// タグ入力欄に未確定のテキストがあれば先にコミットする

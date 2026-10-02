@@ -21,7 +21,7 @@ describe('component:DraftRegion add button footer', () => {
 		const store = makeFakeStore();
 		const { container } = render(DraftRegion, { store: store as never });
 
-		const hint = submitShortcutHint(navigator.userAgent);
+		const hint = submitShortcutHint(navigator.platform);
 		const el = Array.from(container.querySelectorAll('[aria-hidden="true"]')).find(
 			(n) => n.textContent?.trim() === hint
 		);
