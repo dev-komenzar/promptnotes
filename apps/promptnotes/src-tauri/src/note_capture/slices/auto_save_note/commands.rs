@@ -53,7 +53,6 @@ fn fixed_now_override() -> Option<Timestamp> {
     }
 }
 
-
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum AutoSaveOutcome {
@@ -98,7 +97,11 @@ pub async fn auto_save_note<R: Runtime>(
     new_body: String,
 ) -> Result<AutoSaveOutcome, AutoSaveErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = AutoSaveNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
+    let uc = AutoSaveNoteUseCase::new(
+        FsNoteRepository::new(storage_dir),
+        SystemClock,
+        TauriEventBus::new(app),
+    );
 
     // NoteId is currently a thin newtype with no validating constructor,
     // so a parse-failure path does not exist at this boundary; the upstream

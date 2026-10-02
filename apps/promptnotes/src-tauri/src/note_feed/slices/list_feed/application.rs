@@ -37,8 +37,6 @@ impl<R: NoteRepository> ListFeedUseCase<R> {
 /// Pure read projection extracted from a hydrated `NoteFeed`.
 /// `visible_notes()` no longer takes `now` — uses `OffsetDateTime::now_utc()` internally
 /// (aggregates.md 改訂により `now` パラメータ削除)。
-pub fn visible_notes_snapshot(
-    feed: &NoteFeed,
-) -> Vec<crate::note_capture::shared::types::Note> {
+pub fn visible_notes_snapshot(feed: &NoteFeed) -> Vec<crate::note_capture::shared::types::Note> {
     feed.visible_notes().into_iter().cloned().collect()
 }

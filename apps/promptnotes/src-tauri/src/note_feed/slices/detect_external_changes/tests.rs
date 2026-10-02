@@ -8,9 +8,9 @@ use std::time::Duration;
 
 use time::OffsetDateTime;
 
+use crate::note_capture::shared::events::DomainEvent;
 use crate::note_capture::shared::ports::NoteRepository;
 use crate::note_capture::shared::types::{BodyHash, Note, NoteBody, NoteId, TagSet, Timestamp};
-use crate::note_capture::shared::events::DomainEvent;
 use crate::note_feed::slices::detect_external_changes::application::DetectExternalChangesUseCase;
 use crate::note_feed::slices::detect_external_changes::domain::{
     DetectExternalChangesCommand, DetectExternalChangesError, RawFileEvent, WatcherHandle,
@@ -171,19 +171,13 @@ fn resolve_note_id_parses_valid_timestamp_filename() {
 #[test]
 fn resolve_note_id_rejects_non_numeric_stem() {
     let path = PathBuf::from("/tmp/notes/README.md");
-    assert_eq!(
-        DetectExternalChangesUseCase::resolve_note_id(&path),
-        None
-    );
+    assert_eq!(DetectExternalChangesUseCase::resolve_note_id(&path), None);
 }
 
 #[test]
 fn resolve_note_id_rejects_wrong_length() {
     let path = PathBuf::from("/tmp/notes/123.md");
-    assert_eq!(
-        DetectExternalChangesUseCase::resolve_note_id(&path),
-        None
-    );
+    assert_eq!(DetectExternalChangesUseCase::resolve_note_id(&path), None);
 }
 
 // ---------------------------------------------------------------------------
@@ -204,19 +198,24 @@ impl crate::note_capture::shared::ports::EventBus for FakeEventBus {
 
 struct FakeNoteRepo;
 impl NoteRepository for FakeNoteRepo {
-    fn write(&self, _note: &Note) -> io::Result<()> { Ok(()) }
-    fn storage_dir(&self) -> &Path { Path::new("/fake") }
-    fn load_by_id(&self, _id: &NoteId) -> io::Result<Option<Note>> { Ok(None) }
-    fn list_all(&self) -> io::Result<Vec<Note>> { Ok(Vec::new()) }
+    fn write(&self, _note: &Note) -> io::Result<()> {
+        Ok(())
+    }
+    fn storage_dir(&self) -> &Path {
+        Path::new("/fake")
+    }
+    fn load_by_id(&self, _id: &NoteId) -> io::Result<Option<Note>> {
+        Ok(None)
+    }
+    fn list_all(&self) -> io::Result<Vec<Note>> {
+        Ok(Vec::new())
+    }
 }
 
 #[test]
 fn start_watcher_succeeds_with_temp_dir() {
     let tmp = tempfile::tempdir().expect("tempdir");
-    let uc = DetectExternalChangesUseCase::new(
-        Arc::new(FakeClock),
-        Arc::new(FakeEventBus),
-    );
+    let uc = DetectExternalChangesUseCase::new(Arc::new(FakeClock), Arc::new(FakeEventBus));
     let note_repo: Arc<dyn NoteRepository + Send + Sync> = Arc::new(FakeNoteRepo);
     let cmd = DetectExternalChangesCommand {
         storage_dir: StorageDir::try_from(tmp.path().to_path_buf()).unwrap(),
@@ -227,10 +226,7 @@ fn start_watcher_succeeds_with_temp_dir() {
 
 #[test]
 fn start_watcher_fails_on_nonexistent_dir() {
-    let uc = DetectExternalChangesUseCase::new(
-        Arc::new(FakeClock),
-        Arc::new(FakeEventBus),
-    );
+    let uc = DetectExternalChangesUseCase::new(Arc::new(FakeClock), Arc::new(FakeEventBus));
     let note_repo: Arc<dyn NoteRepository + Send + Sync> = Arc::new(FakeNoteRepo);
     let cmd = DetectExternalChangesCommand {
         storage_dir: StorageDir::try_from(PathBuf::from("/nonexistent/dir/path")).unwrap(),
@@ -251,7 +247,9 @@ struct SpyingEventBus {
 
 impl SpyingEventBus {
     fn new() -> Self {
-        Self { events: Mutex::new(Vec::new()) }
+        Self {
+            events: Mutex::new(Vec::new()),
+        }
     }
 
     fn published_events(&self) -> Vec<DomainEvent> {
@@ -310,12 +308,12 @@ impl NoteRepository for FileSystemNoteRepo {
 // Reuse the parse logic from FsNoteRepository
 fn parse_via_fs_repo(raw: &str) -> io::Result<Note> {
     // Simplified parse for testing — mirrors FsNoteRepository logic
-    let rest = raw.strip_prefix("---\n").ok_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidData, "missing opening delimiter")
-    })?;
-    let (frontmatter, body) = rest.split_once("\n---\n").ok_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidData, "missing closing delimiter")
-    })?;
+    let rest = raw
+        .strip_prefix("---\n")
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing opening delimiter"))?;
+    let (frontmatter, body) = rest
+        .split_once("\n---\n")
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing closing delimiter"))?;
 
     let mut created_at: Option<Timestamp> = None;
     let mut updated_at: Option<Timestamp> = None;
@@ -331,15 +329,18 @@ fn parse_via_fs_repo(raw: &str) -> io::Result<Note> {
         }
     }
 
-    let created_at = created_at.ok_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidData, "missing createdAt")
-    })?;
+    let created_at = created_at
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing createdAt"))?;
     let updated_at = updated_at.unwrap_or(created_at);
-    let note_body = NoteBody::new(body.to_string()).map_err(|e| {
-        io::Error::new(io::ErrorKind::InvalidData, format!("body: {e}"))
-    })?;
+    let note_body = NoteBody::new(body.to_string())
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("body: {e}")))?;
 
-    Ok(Note::from_persisted(note_body, TagSet::empty(), created_at, updated_at))
+    Ok(Note::from_persisted(
+        note_body,
+        TagSet::empty(),
+        created_at,
+        updated_at,
+    ))
 }
 
 #[test]
@@ -348,13 +349,14 @@ fn watcher_emits_note_file_created_externally() {
 
     // Pre-create a valid .md file in the watched directory
     let note_path = tmp.path().join("20250630120000.md");
-    std::fs::write(&note_path, "---\ncreatedAt: 20250630120000\nupdatedAt: 20250630120000\ntags: []\n---\nhello world").unwrap();
+    std::fs::write(
+        &note_path,
+        "---\ncreatedAt: 20250630120000\nupdatedAt: 20250630120000\ntags: []\n---\nhello world",
+    )
+    .unwrap();
 
     let event_bus = Arc::new(SpyingEventBus::new());
-    let uc = DetectExternalChangesUseCase::new(
-        Arc::new(FakeClock),
-        event_bus.clone(),
-    );
+    let uc = DetectExternalChangesUseCase::new(Arc::new(FakeClock), event_bus.clone());
     let note_repo: Arc<dyn NoteRepository + Send + Sync> =
         Arc::new(FileSystemNoteRepo::new(tmp.path().to_path_buf()));
 
@@ -366,14 +368,23 @@ fn watcher_emits_note_file_created_externally() {
 
     // Create a new .md file to trigger the watcher
     let new_path = tmp.path().join("20250630130000.md");
-    std::fs::write(&new_path, "---\ncreatedAt: 20250630130000\nupdatedAt: 20250630130000\ntags: []\n---\nnew note").unwrap();
+    std::fs::write(
+        &new_path,
+        "---\ncreatedAt: 20250630130000\nupdatedAt: 20250630130000\ntags: []\n---\nnew note",
+    )
+    .unwrap();
 
     // Wait for the watcher to detect and debounce
     std::thread::sleep(Duration::from_millis(800));
 
     let events = event_bus.published_events();
-    let created = events.iter().find(|e| matches!(e, DomainEvent::NoteFileCreatedExternally { .. }));
-    assert!(created.is_some(), "expected NoteFileCreatedExternally event, got: {events:?}");
+    let created = events
+        .iter()
+        .find(|e| matches!(e, DomainEvent::NoteFileCreatedExternally { .. }));
+    assert!(
+        created.is_some(),
+        "expected NoteFileCreatedExternally event, got: {events:?}"
+    );
 
     if let Some(DomainEvent::NoteFileCreatedExternally { note_id, note, .. }) = created {
         assert_eq!(note_id.as_str(), "20250630130000");

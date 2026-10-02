@@ -99,8 +99,8 @@ pub fn start_watcher_for_current_settings<R: Runtime>(
     feed_state: &Arc<InMemoryNoteFeedState>,
 ) -> Result<(), String> {
     let storage_dir_path = storage::resolve_storage_dir(app);
-    let storage_dir = StorageDir::try_from(storage_dir_path)
-        .map_err(|e| format!("invalid storage dir: {e}"))?;
+    let storage_dir =
+        StorageDir::try_from(storage_dir_path).map_err(|e| format!("invalid storage dir: {e}"))?;
 
     let watch_dir = storage_dir.as_path().to_path_buf();
     let note_repo: Arc<dyn NoteRepository + Send + Sync> =
@@ -115,19 +115,17 @@ pub fn start_watcher_for_current_settings<R: Runtime>(
     {
         let feed_state = Arc::clone(feed_state);
         let app_handle = app.clone();
-        event_bus.subscribe(Box::new(move |event: DomainEvent| {
-            match &event {
-                DomainEvent::NoteFileCreatedExternally { note, .. }
-                | DomainEvent::NoteFileModifiedExternally { note, .. } => {
-                    feed_state.upsert_one(note.clone());
-                    let _ = app_handle.emit("notes-changed", ());
-                }
-                DomainEvent::NoteFileDeletedExternally { note_id, .. } => {
-                    feed_state.remove_one(note_id);
-                    let _ = app_handle.emit("notes-changed", ());
-                }
-                _ => {}
+        event_bus.subscribe(Box::new(move |event: DomainEvent| match &event {
+            DomainEvent::NoteFileCreatedExternally { note, .. }
+            | DomainEvent::NoteFileModifiedExternally { note, .. } => {
+                feed_state.upsert_one(note.clone());
+                let _ = app_handle.emit("notes-changed", ());
             }
+            DomainEvent::NoteFileDeletedExternally { note_id, .. } => {
+                feed_state.remove_one(note_id);
+                let _ = app_handle.emit("notes-changed", ());
+            }
+            _ => {}
         }));
     }
 

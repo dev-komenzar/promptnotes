@@ -24,7 +24,6 @@ impl Clock for SystemClock {
     }
 }
 
-
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum CreateNoteOutcome {
@@ -65,7 +64,11 @@ pub async fn create_note<R: Runtime>(
     raw_tags: Vec<String>,
 ) -> Result<CreateNoteOutcome, CreateNoteErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = CreateNoteUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
+    let uc = CreateNoteUseCase::new(
+        FsNoteRepository::new(storage_dir),
+        SystemClock,
+        TauriEventBus::new(app),
+    );
 
     match uc.execute(CreateNoteCommand { raw_body, raw_tags }) {
         Ok(Some(note)) => Ok(CreateNoteOutcome::Created {

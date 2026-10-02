@@ -23,7 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-
 /// Cancellation is owned by the UI-side timer; the backend command is the
 /// trailing edge that just records "we flushed for this id". `NoOpDebounceTimer`
 /// keeps the pipeline honest (C-FL1 still runs) without coupling Rust to

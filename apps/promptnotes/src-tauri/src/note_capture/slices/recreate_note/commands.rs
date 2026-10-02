@@ -37,20 +37,10 @@ pub enum RecreateNoteOutcome {
 #[derive(Debug, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum RecreateNoteErrorDto {
-    InvalidNoteId {
-        raw: String,
-    },
-    InvalidBody {
-        reason: String,
-    },
-    InvalidTag {
-        raw: String,
-        reason: String,
-    },
-    PersistError {
-        path: String,
-        reason: String,
-    },
+    InvalidNoteId { raw: String },
+    InvalidBody { reason: String },
+    InvalidTag { raw: String, reason: String },
+    PersistError { path: String, reason: String },
 }
 
 impl From<RecreateNoteError> for RecreateNoteErrorDto {

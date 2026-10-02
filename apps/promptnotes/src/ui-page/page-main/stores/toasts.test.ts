@@ -167,7 +167,9 @@ describe('page:page-main toast store', () => {
 		const store = createToastStore({ restoreFn: vi.fn(), timeoutMs: 5000 });
 		const longBody = 'a'.repeat(50);
 		store.push(makeNote('a', { body: `\n\n${longBody}\nnext line` }));
-		expect((store.entries[0] as Extract<ToastEntry, { kind: 'deleted' }>).preview).toBe('a'.repeat(40) + '…');
+		expect((store.entries[0] as Extract<ToastEntry, { kind: 'deleted' }>).preview).toBe(
+			'a'.repeat(40) + '…'
+		);
 	});
 
 	it('空 body は (空) として preview される', () => {

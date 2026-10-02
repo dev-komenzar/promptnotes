@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use super::types::{Note, NoteId, TagSet, Timestamp};
 use super::types::BodyHash;
+use super::types::{Note, NoteId, TagSet, Timestamp};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DomainEvent {
