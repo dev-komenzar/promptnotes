@@ -28,6 +28,7 @@ description: ori プロジェクトの健康診断。.ori/ を歩き schema / st
 ### 2. 派生文書の hash 一致
 
 - `.ori/slices/*/status.yaml` の `upstream_hash` と現在の domain section ハッシュを比較
+- > **本リポジトリの注記**: `status.yaml` に `upstream_hash` は存在しない。実際の hash は `spec.md` frontmatter の `coherence.hash`（`domain/x.md#.*` → `sha256sum <file> | cut -c1-12`、ファイル全体）。この値と現在のファイルを突き合わせること
 - 不一致なら **dirty 残存** として報告
 
 ### 3. Dirty integrity (unauthorized clear detection)

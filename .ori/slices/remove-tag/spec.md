@@ -4,9 +4,9 @@ coherence:
   last_derived: 2026-10-02
   hash:
     domain/workflows/remove-tag.md#.*: b27eb7d105b1
-    domain/aggregates.md#.*: 82947dbfd3f6
+    domain/aggregates.md#.*: 56f7a54a8ab2
     domain/bounded-contexts.md#.*: 7ebfcda8743b
-    domain/domain-events.md#.*: 8abdfac78084
+    domain/domain-events.md#.*: 71db66eafe03
 ori:
   schema:
     propagation_level: file
