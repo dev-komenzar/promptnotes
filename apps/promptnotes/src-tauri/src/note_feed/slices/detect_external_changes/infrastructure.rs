@@ -45,9 +45,7 @@ impl FsWatcher {
             },
             Config::default(),
         )
-        .map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::Other, format!("notify init: {e}"))
-        })?;
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("notify init: {e}")))?;
 
         watcher
             .watch(watch_dir, RecursiveMode::NonRecursive)

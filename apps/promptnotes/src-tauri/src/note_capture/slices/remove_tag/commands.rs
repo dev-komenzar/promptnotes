@@ -23,7 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum RemoveTagOutcome {
@@ -68,7 +67,11 @@ pub async fn remove_tag<R: Runtime>(
     tag_name: String,
 ) -> Result<RemoveTagOutcome, RemoveTagErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = RemoveTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
+    let uc = RemoveTagUseCase::new(
+        FsNoteRepository::new(storage_dir),
+        SystemClock,
+        TauriEventBus::new(app),
+    );
 
     let cmd = RemoveTagCommand {
         note_id: parse_note_id(&note_id),

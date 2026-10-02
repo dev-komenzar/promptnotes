@@ -139,7 +139,9 @@ describe('widget:widget-external-delete-notice store', () => {
 	});
 
 	it('is silent when subscribeFn rejects', async () => {
-		const failingSubscribe: NonNullable<ExternalDeleteNoticeStoreDeps['subscribeFn']> = async () => {
+		const failingSubscribe: NonNullable<
+			ExternalDeleteNoticeStoreDeps['subscribeFn']
+		> = async () => {
 			throw new Error('subscribe failed');
 		};
 		const store = makeStore({ subscribeFn: failingSubscribe });

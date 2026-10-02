@@ -20,10 +20,7 @@ pub struct WatcherHandle {
 }
 
 impl WatcherHandle {
-    pub fn new(
-        stop_tx: std::sync::mpsc::Sender<()>,
-        thread: std::thread::JoinHandle<()>,
-    ) -> Self {
+    pub fn new(stop_tx: std::sync::mpsc::Sender<()>, thread: std::thread::JoinHandle<()>) -> Self {
         Self {
             stop_tx: Some(stop_tx),
             thread: Some(thread),

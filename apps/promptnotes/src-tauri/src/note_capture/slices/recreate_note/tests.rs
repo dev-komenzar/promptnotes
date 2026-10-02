@@ -109,7 +109,10 @@ fn recreates_file_at_original_id_preserving_created_at() {
 
     // Persisted exactly once, with the same id.
     assert_eq!(repo.write_count(), 1);
-    assert_eq!(repo.last().expect("a write").id().as_str(), "20260620120000");
+    assert_eq!(
+        repo.last().expect("a write").id().as_str(),
+        "20260620120000"
+    );
 }
 
 #[test]

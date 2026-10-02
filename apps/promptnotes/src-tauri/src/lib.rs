@@ -22,7 +22,9 @@ pub fn run() {
         )
         .plugin(tauri_plugin_wdio::init());
     builder
-        .manage(Arc::new(note_feed::shared::adapters::InMemoryNoteFeedState::new()))
+        .manage(Arc::new(
+            note_feed::shared::adapters::InMemoryNoteFeedState::new(),
+        ))
         .manage(note_capture::shared::adapters::undo_stack::InMemoryUndoStack::new())
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),

@@ -23,7 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum AssignTagOutcome {
@@ -73,7 +72,11 @@ pub async fn assign_tag<R: Runtime>(
     raw_tag: String,
 ) -> Result<AssignTagOutcome, AssignTagErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = AssignTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
+    let uc = AssignTagUseCase::new(
+        FsNoteRepository::new(storage_dir),
+        SystemClock,
+        TauriEventBus::new(app),
+    );
 
     // NoteId has no validating constructor yet (spec.md#oq-invalid-note-id-reuse);
     // round-trip through Timestamp parsing as in auto-save-note.

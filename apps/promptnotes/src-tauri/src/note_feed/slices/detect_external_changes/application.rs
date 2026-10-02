@@ -45,73 +45,71 @@ impl DetectExternalChangesUseCase {
         let handle = thread::spawn(move || {
             let mut fs_watcher = fs_watcher;
             let rx = fs_watcher.take_receiver();
-            FsWatcher::run_event_loop(rx, stop_rx, move |raw| {
-                match raw {
-                    RawFileEvent::Created(path) => {
-                        if let Some(note_id_str) = Self::resolve_note_id(&path) {
-                            let note_id = NoteId::new(note_id_str);
-                            match note_repo.load_by_id(&note_id) {
-                                Ok(Some(note)) => {
-                                    event_bus.publish(DomainEvent::NoteFileCreatedExternally {
-                                        note_id: note.id().clone(),
-                                        note,
-                                        file_path: path,
-                                        detected_at: clock.now(),
-                                    });
-                                }
-                                Ok(None) => {
-                                    log::warn!(
-                                        "detect-external-changes: created file not loadable: {:?}",
-                                        path
-                                    );
-                                }
-                                Err(e) => {
-                                    log::warn!(
-                                        "detect-external-changes: load_by_id failed for {:?}: {e}",
-                                        path
-                                    );
-                                }
+            FsWatcher::run_event_loop(rx, stop_rx, move |raw| match raw {
+                RawFileEvent::Created(path) => {
+                    if let Some(note_id_str) = Self::resolve_note_id(&path) {
+                        let note_id = NoteId::new(note_id_str);
+                        match note_repo.load_by_id(&note_id) {
+                            Ok(Some(note)) => {
+                                event_bus.publish(DomainEvent::NoteFileCreatedExternally {
+                                    note_id: note.id().clone(),
+                                    note,
+                                    file_path: path,
+                                    detected_at: clock.now(),
+                                });
+                            }
+                            Ok(None) => {
+                                log::warn!(
+                                    "detect-external-changes: created file not loadable: {:?}",
+                                    path
+                                );
+                            }
+                            Err(e) => {
+                                log::warn!(
+                                    "detect-external-changes: load_by_id failed for {:?}: {e}",
+                                    path
+                                );
                             }
                         }
                     }
-                    RawFileEvent::Modified(path) => {
-                        if let Some(note_id_str) = Self::resolve_note_id(&path) {
-                            let note_id = NoteId::new(note_id_str);
-                            match note_repo.load_by_id(&note_id) {
-                                Ok(Some(note)) => {
-                                    let disk_body_hash = note.body_hash().clone();
-                                    event_bus.publish(DomainEvent::NoteFileModifiedExternally {
-                                        note_id: note.id().clone(),
-                                        disk_body_hash,
-                                        note,
-                                        file_path: path,
-                                        detected_at: clock.now(),
-                                    });
-                                }
-                                Ok(None) => {
-                                    log::warn!(
-                                        "detect-external-changes: modified file not loadable: {:?}",
-                                        path
-                                    );
-                                }
-                                Err(e) => {
-                                    log::warn!(
-                                        "detect-external-changes: load_by_id failed for {:?}: {e}",
-                                        path
-                                    );
-                                }
+                }
+                RawFileEvent::Modified(path) => {
+                    if let Some(note_id_str) = Self::resolve_note_id(&path) {
+                        let note_id = NoteId::new(note_id_str);
+                        match note_repo.load_by_id(&note_id) {
+                            Ok(Some(note)) => {
+                                let disk_body_hash = note.body_hash().clone();
+                                event_bus.publish(DomainEvent::NoteFileModifiedExternally {
+                                    note_id: note.id().clone(),
+                                    disk_body_hash,
+                                    note,
+                                    file_path: path,
+                                    detected_at: clock.now(),
+                                });
+                            }
+                            Ok(None) => {
+                                log::warn!(
+                                    "detect-external-changes: modified file not loadable: {:?}",
+                                    path
+                                );
+                            }
+                            Err(e) => {
+                                log::warn!(
+                                    "detect-external-changes: load_by_id failed for {:?}: {e}",
+                                    path
+                                );
                             }
                         }
                     }
-                    RawFileEvent::Deleted(path) => {
-                        if let Some(note_id_str) = Self::resolve_note_id(&path) {
-                            let note_id = NoteId::new(note_id_str);
-                            event_bus.publish(DomainEvent::NoteFileDeletedExternally {
-                                note_id,
-                                file_path: path,
-                                detected_at: clock.now(),
-                            });
-                        }
+                }
+                RawFileEvent::Deleted(path) => {
+                    if let Some(note_id_str) = Self::resolve_note_id(&path) {
+                        let note_id = NoteId::new(note_id_str);
+                        event_bus.publish(DomainEvent::NoteFileDeletedExternally {
+                            note_id,
+                            file_path: path,
+                            detected_at: clock.now(),
+                        });
                     }
                 }
             });

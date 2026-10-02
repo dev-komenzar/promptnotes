@@ -1,27 +1,27 @@
 <script lang="ts">
-		import { getCurrentWindow } from '@tauri-apps/api/window';
-		import { listen } from '@tauri-apps/api/event';
-		import { listNotes } from '$lib/note-feed/slices/list-feed';
-		import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
-		import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
-		import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
-		import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
-		import { recreateNote } from '$lib/note-capture/slices/recreate-note';
-		import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
-		import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
-		import DraftRegion from './regions/DraftRegion.svelte';
-		import FeedRegion from './regions/FeedRegion.svelte';
-		import ToastRegion from './regions/ToastRegion.svelte';
-		import ToolbarRegion from './regions/ToolbarRegion.svelte';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { listen } from '@tauri-apps/api/event';
+	import { listNotes } from '$lib/note-feed/slices/list-feed';
+	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
+	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
+	import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
+	import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
+	import { recreateNote } from '$lib/note-capture/slices/recreate-note';
+	import WidgetSettingsModal from '../../ui-widget/settings-modal/WidgetSettingsModal.svelte';
+	import WidgetUpdateToast from '../../ui-widget/update-toast/WidgetUpdateToast.svelte';
+	import DraftRegion from './regions/DraftRegion.svelte';
+	import FeedRegion from './regions/FeedRegion.svelte';
+	import ToastRegion from './regions/ToastRegion.svelte';
+	import ToolbarRegion from './regions/ToolbarRegion.svelte';
 	import { editingNote } from './stores/editing-note.svelte';
 	import { createExternalChangeBridge } from './stores/external-change-bridge';
 	import { hashBody } from './stores/body-hash';
 	import { feedStore } from './stores/feed.svelte';
-		import { focusStore } from './stores/focus.svelte';
-		import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
-		import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
-		import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
-		import { toastStore } from './stores/toasts.svelte';
+	import { focusStore } from './stores/focus.svelte';
+	import { pendingFlushRegistry, type PendingFlushRegistry } from './stores/pending-flush.svelte';
+	import { createSortPreferenceSubscriber } from './stores/sort-preference-subscriber.svelte';
+	import { createThemeSubscriber } from './stores/theme-subscriber.svelte';
+	import { toastStore } from './stores/toasts.svelte';
 
 	type CloseRequestedEvent = { preventDefault: () => void };
 	type QuitWindow = {
@@ -108,12 +108,12 @@
 
 	let conflictLocalBody = $derived(externalChangeBridge.currentLocalBody());
 
-		let settingsModalOpen = $state(false);
-		let restartPromptOpen = $state(false);
-		let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
-		let draftRegion: ReturnType<typeof DraftRegion> | undefined;
+	let settingsModalOpen = $state(false);
+	let restartPromptOpen = $state(false);
+	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
+	let draftRegion: ReturnType<typeof DraftRegion> | undefined;
 
-		const themeSubscriber = createThemeSubscriber({
+	const themeSubscriber = createThemeSubscriber({
 		onThemeChanged: (theme) => {
 			// theme_changed event で currentSettings.theme を更新 (SSoT)。
 			// 下の $effect が currentSettings.theme に reactive に反応して setTheme → DOM 反映する。
@@ -155,77 +155,79 @@
 		return () => subscriber.stop();
 	});
 
-		$effect(() => {
-			void themeSubscriber.start();
-			return () => themeSubscriber.stop();
-		});
+	$effect(() => {
+		void themeSubscriber.start();
+		return () => themeSubscriber.stop();
+	});
 
-		$effect(() => {
-			// Start file watcher for external change detection (Syncthing support).
-			let cancelled = false;
-			(async () => {
-				try {
-					const { invoke } = await import('@tauri-apps/api/core');
-					if (cancelled) return;
-					await invoke('start_file_watcher').catch(() => {});
-				} catch {
-					// silent — non-Tauri host (e.g. vitest jsdom)
-				}
-			})();
-			return () => { cancelled = true; };
-		});
+	$effect(() => {
+		// Start file watcher for external change detection (Syncthing support).
+		let cancelled = false;
+		(async () => {
+			try {
+				const { invoke } = await import('@tauri-apps/api/core');
+				if (cancelled) return;
+				await invoke('start_file_watcher').catch(() => {});
+			} catch {
+				// silent — non-Tauri host (e.g. vitest jsdom)
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	});
 
-		$effect(() => {
-			// Subscribe to external file change events emitted by the watcher.
-			// When Syncthing (or any external program) creates/modifies/deletes .md files,
-			// the Rust watcher publishes domain events → subscriber updates NoteFeed
-			// and emits 'notes-changed' → frontend re-fetches the feed.
-			let unlisten: (() => void) | undefined;
-			(async () => {
-				try {
-					unlisten = await listen('notes-changed', async () => {
-						try {
-							const feed = await listNotesFn();
-							const conflict = await externalChangeBridge.notifyExternalModification(feed.notes);
-							if (conflict) {
-								// S19 / I-WC2: preserve the in-flight local edit for the conflicting note so
-								// the dialog resolves it instead of silently clobbering the editor.
-								feedStore.hydrateNotes(
-									feed.notes.map((note) =>
-										note.id === conflict.noteId ? { ...note, body: conflict.localBody } : note
-									)
-								);
-								return;
-							}
-							const deletion = await externalChangeBridge.notifyExternalDeletion(feed.notes);
-							if (deletion) {
-								// S20 / I-DEL1: the EDITING note is gone from disk. Keep the local snapshot in
-								// the feed so the Block + editor stay mounted while the notice is shown.
-								feedStore.hydrateNotes([
-									...feed.notes,
-									{
-										id: deletion.noteId,
-										body: deletion.localBody,
-										tags: deletion.tags,
-										created_at: deletion.createdAt,
-										updated_at: deletion.updatedAt
-									}
-								]);
-								return;
-							}
-							feedStore.hydrateNotes(feed.notes);
-						} catch {
-							// silent — re-hydration failure preserves current feed
+	$effect(() => {
+		// Subscribe to external file change events emitted by the watcher.
+		// When Syncthing (or any external program) creates/modifies/deletes .md files,
+		// the Rust watcher publishes domain events → subscriber updates NoteFeed
+		// and emits 'notes-changed' → frontend re-fetches the feed.
+		let unlisten: (() => void) | undefined;
+		(async () => {
+			try {
+				unlisten = await listen('notes-changed', async () => {
+					try {
+						const feed = await listNotesFn();
+						const conflict = await externalChangeBridge.notifyExternalModification(feed.notes);
+						if (conflict) {
+							// S19 / I-WC2: preserve the in-flight local edit for the conflicting note so
+							// the dialog resolves it instead of silently clobbering the editor.
+							feedStore.hydrateNotes(
+								feed.notes.map((note) =>
+									note.id === conflict.noteId ? { ...note, body: conflict.localBody } : note
+								)
+							);
+							return;
 						}
-					});
-				} catch {
-					// silent — non-Tauri host
-				}
-			})();
-			return () => {
-				unlisten?.();
-			};
-		});
+						const deletion = await externalChangeBridge.notifyExternalDeletion(feed.notes);
+						if (deletion) {
+							// S20 / I-DEL1: the EDITING note is gone from disk. Keep the local snapshot in
+							// the feed so the Block + editor stay mounted while the notice is shown.
+							feedStore.hydrateNotes([
+								...feed.notes,
+								{
+									id: deletion.noteId,
+									body: deletion.localBody,
+									tags: deletion.tags,
+									created_at: deletion.createdAt,
+									updated_at: deletion.updatedAt
+								}
+							]);
+							return;
+						}
+						feedStore.hydrateNotes(feed.notes);
+					} catch {
+						// silent — re-hydration failure preserves current feed
+					}
+				});
+			} catch {
+				// silent — non-Tauri host
+			}
+		})();
+		return () => {
+			unlisten?.();
+		};
+	});
 
 	$effect(() => {
 		// S11 / I-S4: StorageDirChanged subscriber。storage_dir 変更時は再起動を促すモーダルを表示し、
@@ -364,7 +366,12 @@
 
 		// Cmd+N (macOS) / Ctrl+N (others) — Draft エディタにフォーカスを移動する。
 		// Feed block が EDITING 中でも常に発動する (isEditableTarget ガードは適用しない)。
-		if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'n') {
+		if (
+			(event.metaKey || event.ctrlKey) &&
+			!event.shiftKey &&
+			!event.altKey &&
+			event.key.toLowerCase() === 'n'
+		) {
 			if (event.isComposing) return;
 			event.preventDefault();
 			focusStore.clear();
@@ -434,6 +441,10 @@
 
 <WidgetUpdateToast />
 
-<WidgetExternalChangeConflict localBody={conflictLocalBody} onClose={() => {}} deps={conflictDeps} />
+<WidgetExternalChangeConflict
+	localBody={conflictLocalBody}
+	onClose={() => {}}
+	deps={conflictDeps}
+/>
 
 <WidgetExternalDeleteNotice deps={deleteNoticeDeps} />
