@@ -61,7 +61,7 @@ describe('scenario:s14-update-check-failure', () => {
     const res = await checkForUpdates();
 
     // Then: Result を露出せず (C-CFU1)、失敗は latest_release=null に正規化される (S14 / I-U2)。
-    expect(res.current_version).toBe('0.2.1');
+    expect(res.current_version).toBe('0.2.2');
     expect(res.latest_release).toBeNull();
   });
 
@@ -91,6 +91,6 @@ describe('scenario:s14-update-check-failure', () => {
     const toast = await $('[data-testid="widget-update-toast"]');
     await toast.waitForExist({ timeout: 10000 });
     expect(await $('[data-testid="screen-3-latest-version"]').getText()).toBe('9.9.9');
-    expect(await $('[data-testid="screen-3-current-version"]').getText()).toContain('0.2.1');
+    expect(await $('[data-testid="screen-3-current-version"]').getText()).toContain('0.2.2');
   });
 });

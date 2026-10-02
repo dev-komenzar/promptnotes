@@ -155,7 +155,7 @@
         # pure sandbox で network access 不要 (sandbox = relaxed も不要)。
         promptnotesPackage = pkgs.stdenv.mkDerivation {
           pname = "promptnotes";
-          version = "0.2.1";
+          version = "0.2.2";
           src = ./.;
 
           nativeBuildInputs = with pkgs; [
