@@ -10,8 +10,8 @@ use time::OffsetDateTime;
 
 use super::application::RemoveTagUseCase;
 use super::domain::{RemoveTagCommand, RemoveTagError};
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -23,12 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {
-        // The Note Feed BC will subscribe here once it lands.
-    }
-}
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
@@ -74,7 +68,7 @@ pub async fn remove_tag<R: Runtime>(
     tag_name: String,
 ) -> Result<RemoveTagOutcome, RemoveTagErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = RemoveTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, NoOpBus);
+    let uc = RemoveTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
 
     let cmd = RemoveTagCommand {
         note_id: parse_note_id(&note_id),

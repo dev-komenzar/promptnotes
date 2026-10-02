@@ -10,8 +10,8 @@ use time::OffsetDateTime;
 
 use super::application::AssignTagUseCase;
 use super::domain::{AssignTagCommand, AssignTagError};
-use crate::note_capture::shared::events::DomainEvent;
-use crate::note_capture::shared::ports::{Clock, EventBus};
+use crate::note_capture::shared::adapters::event_bus::TauriEventBus;
+use crate::note_capture::shared::ports::Clock;
 use crate::note_capture::shared::storage::resolve_storage_dir;
 use crate::note_capture::shared::types::{NoteId, Timestamp};
 use crate::note_capture::slices::create_note::FsNoteRepository;
@@ -23,12 +23,6 @@ impl Clock for SystemClock {
     }
 }
 
-struct NoOpBus;
-impl EventBus for NoOpBus {
-    fn publish(&self, _event: DomainEvent) {
-        // The Note Feed BC will subscribe here once it lands.
-    }
-}
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
@@ -79,7 +73,7 @@ pub async fn assign_tag<R: Runtime>(
     raw_tag: String,
 ) -> Result<AssignTagOutcome, AssignTagErrorDto> {
     let storage_dir = resolve_storage_dir(&app);
-    let uc = AssignTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, NoOpBus);
+    let uc = AssignTagUseCase::new(FsNoteRepository::new(storage_dir), SystemClock, TauriEventBus::new(app));
 
     // NoteId has no validating constructor yet (spec.md#oq-invalid-note-id-reuse);
     // round-trip through Timestamp parsing as in auto-save-note.
