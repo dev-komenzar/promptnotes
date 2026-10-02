@@ -122,10 +122,12 @@
 <section
 	data-testid="region-draft"
 	aria-label="New note"
-	class="sticky top-0 z-10 shrink-0 border-b border-neutral-200 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950"
+	class="sticky top-0 z-10 flex min-h-0 flex-col border-b border-neutral-200 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950"
 >
-	<div class="flex flex-col gap-1.5">
-		<div class="flex min-h-[1.25rem] flex-wrap items-center gap-1 px-1 text-xs text-neutral-500">
+	<div class="flex min-h-0 flex-col gap-1.5">
+		<div
+			class="flex min-h-[1.25rem] shrink-0 flex-wrap items-center gap-1 px-1 text-xs text-neutral-500"
+		>
 			{#each store.tags as tag (tag)}
 				<span
 					class="inline-flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
@@ -156,9 +158,9 @@
 		<div
 			bind:this={host}
 			data-testid="screen-1-draft-body"
-			class="min-h-[3rem] rounded border border-neutral-200 bg-white px-2 py-1 text-sm focus-within:border-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
+			class="flex max-h-[70vh] min-h-[3rem] flex-col rounded border border-neutral-200 bg-white px-2 py-1 text-sm focus-within:border-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
 		></div>
-		<div class="flex items-center justify-end gap-2">
+		<div class="flex shrink-0 items-center justify-end gap-2">
 			<span aria-hidden="true" class="text-[10px] text-neutral-400">{shortcutHint}</span>
 			<button
 				type="button"
@@ -175,8 +177,10 @@
 </section>
 
 <style>
+	/* I-PM19: エディタは host の max-height (70vh) まで伸び、超過分は scroller 内でスクロールする */
 	div[data-testid='screen-1-draft-body'] :global(.cm-editor) {
 		outline: none;
+		min-height: 0;
 	}
 	div[data-testid='screen-1-draft-body'] :global(.cm-editor .cm-scroller) {
 		font-family:

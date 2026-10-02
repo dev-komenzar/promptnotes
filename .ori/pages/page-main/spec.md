@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-07-28
+  last_derived: 2026-10-02
   derives_from:
     - domain/ui-fields/screen-1.md#screen-1
     - domain/ui-fields/page-groups.md#page-main
@@ -119,6 +119,8 @@ UI 実装はこの 3 点を曖昧化してはならない。
 - **I-PM6（Block 縦並び単一カラム）**: Feed は 1 列縦並びのみ。複数カラム / グリッド表示禁止
 - **I-PM7（Toast 独立 + multi-kind）**: Toast スタックは互いに独立。1 つの Undo 失効が他 Toast の Undo を失効させない（screen-1.md#cross-toast-display）。Toast は discriminated union（`kind: 'deleted' | 'copied' | 'copy-failed'`）で管理され、kind ごとにアイコン（🗑️/✅/⚠️）を表示する。全 kind 共通で auto-dismiss（5s）+ ✕ボタンを持つ。`deleted` のみ Undo ボタンを持つ
 - **I-PM8（widget 排他なし）**: `widget-settings-modal` open 中でも page-main の Toolbar / Feed は維持される（Modal は modal だが、page の state は dispose しない）
+- **I-PM19（Draft 本文の最大高さ）**: Draft 本文エディタ（`screen-1-draft-body`）は内容に応じて伸縮するが、最大高さは viewport の 70%（`70vh`）。超過分は **本文エディタ内でスクロール**し（CodeMirror の scroller）、Draft region 全体やページ全体はスクロールさせない。viewport が低く Draft が収まらない場合は Draft を Feed より優先し、Feed は見えなくなってよいが、タグ行と `screen-1-draft-submit` の行は常に viewport 内に表示され、本文エディタのみが縮む。Block の「全文表示」規約（I-PM6 / unique-points 3）は Draft には適用しない
+  > domain/ui-fields/screen-1.md#fields-draft より: 「最大高さを超える内容は本文エディタ内でスクロールする」「viewport が低く Draft が収まらない場合は Draft を Feed より優先する」
 
 ### Cross-region 不変条件 {#invariants-cross-region}
 
@@ -213,6 +215,15 @@ DOM 構造に複数カラム grid / 並列 viewport が存在しないこと（I
 ### tp-no-raw-invoke: 生 invoke 禁止 {#tp-no-raw-invoke}
 
 eslint static check で `apps/promptnotes/src/ui-page/**` / `apps/promptnotes/src/ui-widget/**` から `@tauri-apps/api/core` の import が 0 件であること（I-PM13、`.ori/architecture.md` `forbidden_imports` 経由で自動検出）。
+
+### tp-draft-max-height: Draft 本文の最大高さとエディタ内スクロール {#tp-draft-max-height}
+
+I-PM19 を DraftRegion の browser component test（vitest client project / Playwright chromium）で検証する:
+
+- viewport を十分高く（例: 800px）した状態で、viewport を超える行数（例: 200 行）の本文を Draft に入れる → 本文エディタの高さが `0.7 × viewport 高さ` 以下に収まり、CodeMirror scroller が `scrollHeight > clientHeight`（内部スクロール可能）である
+- 短い本文（1 行）では本文エディタは最大高さまで伸びない（内容に応じた高さ）
+- 長い本文の末尾にカーソルがある状態で、カーソル行がエディタの可視範囲内にある
+- viewport が低い（例: 300px）状態で長い本文を入れても、`screen-1-draft-submit` とタグ入力（`screen-1-draft-tag-input`）の bounding box が viewport 内に収まる
 
 ### tp-a11y-basic: 基本 a11y {#tp-a11y-basic}
 
