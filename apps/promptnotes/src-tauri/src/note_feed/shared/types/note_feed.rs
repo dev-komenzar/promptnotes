@@ -86,7 +86,12 @@ impl NoteFeed {
     /// `DateRangeFilter::Last*Days` の評価には `OffsetDateTime::now_utc()` を内部で使用する
     /// (aggregates.md 改訂により `now` パラメータ削除)。
     pub fn visible_notes(&self) -> Vec<&Note> {
-        let now = OffsetDateTime::now_utc();
+        self.visible_notes_at(OffsetDateTime::now_utc())
+    }
+
+    /// [`NoteFeed::visible_notes`] の `now` 注入版。`DateRangeFilter::Last*Days` を
+    /// 固定時刻で評価したいテスト用 (ddd-test.md: 副作用は引数注入)。
+    pub(crate) fn visible_notes_at(&self, now: OffsetDateTime) -> Vec<&Note> {
         let mut filtered: Vec<&Note> = self
             .source
             .iter()

@@ -50,6 +50,11 @@ fn write_md(
     fs::write(dir.join(format!("{id}.md")), content).unwrap();
 }
 
+/// TP-F5 / TP-F6 の date_range 評価基準時刻 (実時計に依存させない)。
+fn fixed_now() -> OffsetDateTime {
+    datetime!(2026-06-27 12:00 UTC)
+}
+
 // ===== TP-LA*: NoteRepository::list_all =====
 
 /// TP-LA1 — 空 storage_dir → Vec::new()
@@ -204,7 +209,7 @@ fn tp_f4_tag_filter() {
 fn tp_f5_last_7_days() {
     let filter = FeedFilter::initial().with_date_range(DateRangeFilter::Last7Days);
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes();
+    let visible = feed.visible_notes_at(fixed_now());
     let ids: Vec<_> = visible
         .iter()
         .map(|n| n.id().as_str().to_string())
@@ -222,7 +227,7 @@ fn tp_f6_and_composition() {
         .with_tag(Some(tag.clone()))
         .with_date_range(DateRangeFilter::Last30Days);
     let feed = NoteFeed::empty().hydrate(three_notes()).with_filter(filter);
-    let visible = feed.visible_notes();
+    let visible = feed.visible_notes_at(fixed_now());
     assert_eq!(visible.len(), 1);
     assert_eq!(visible[0].id().as_str(), "20260615100000");
 }
