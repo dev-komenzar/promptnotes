@@ -167,22 +167,8 @@ impl NoteRepository for RcRepo {
     }
 }
 
-struct RcBus(Rc<FakeBus>);
-impl EventBus for RcBus {
-    fn publish(&self, e: DomainEvent) {
-        self.0.publish(e);
-    }
-}
-
-struct RcTimer(Rc<FakeTimer>);
-impl DebounceTimer for RcTimer {
-    fn cancel(&self, id: &NoteId) {
-        self.0.cancel(id);
-    }
-}
-
 type Rig = (
-    FlushNoteUseCase<RcRepo, FixedClock, RcBus, RcTimer>,
+    FlushNoteUseCase<RcRepo, FixedClock, Rc<FakeBus>, Rc<FakeTimer>>,
     Rc<FakeRepo>,
     Rc<FakeBus>,
     Rc<FakeTimer>,
@@ -198,8 +184,8 @@ fn rig(now: OffsetDateTime) -> Rig {
             timer: timer.clone(),
         },
         FixedClock::new(now),
-        RcBus(bus.clone()),
-        RcTimer(timer.clone()),
+        bus.clone(),
+        timer.clone(),
     );
     (uc, repo, bus, timer)
 }
@@ -816,5 +802,5 @@ fn tp_as1_use_case_signature_is_pinned() {
             FlushNoteCommand,
         ) -> Result<Option<Note>, FlushError> = FlushNoteUseCase::<R, C, E, D>::execute;
     }
-    _pin::<RcRepo, FixedClock, RcBus, RcTimer>();
+    _pin::<RcRepo, FixedClock, Rc<FakeBus>, Rc<FakeTimer>>();
 }
