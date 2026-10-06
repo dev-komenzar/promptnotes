@@ -139,7 +139,7 @@
           '';
 
           outputHashMode = "flat";
-          outputHash = "sha256-MmbFubnGI5sHyktbnJH77j/2C5F5NoGPF557OHU68/A=";
+          outputHash = "sha256-S3/SoKtlcMG1Dhte3Qh+7vGMW/dGoLt2JbkCegyAb1A=";
         };
 
         # FOD: cargo dependencies (vendored crates)
