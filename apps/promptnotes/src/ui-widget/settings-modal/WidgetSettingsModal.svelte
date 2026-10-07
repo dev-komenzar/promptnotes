@@ -17,21 +17,42 @@
 				? F
 				: never
 			: never;
+		getAppVersionFn?: Parameters<typeof createSettingsModalStore>[1] extends infer D
+			? D extends { getAppVersionFn?: infer F }
+				? F
+				: never
+			: never;
 		openDialogFn?: typeof openDialog;
 	};
 
-	let { initial, onClose, onSaved, updateSettingsFn, openDialogFn = openDialog }: Props = $props();
+	let {
+		initial,
+		onClose,
+		onSaved,
+		updateSettingsFn,
+		getAppVersionFn,
+		openDialogFn = openDialog
+	}: Props = $props();
 
 	// Modal は parent の {#if settingsModalOpen} で mount/unmount 制御するため、
 	// initial / updateSettingsFn は mount 時の値で確定して良い（再開時は新 instance）。
 	const store = untrack(() =>
-		createSettingsModalStore(initial, { updateSettingsFn, onPreviewTheme: previewTheme })
+		createSettingsModalStore(initial, {
+			updateSettingsFn,
+			getAppVersionFn,
+			onPreviewTheme: previewTheme
+		})
 	);
 
 	let dialogEl: HTMLDialogElement | null = $state(null);
 
 	$effect(() => {
 		dialogEl?.showModal();
+	});
+
+	// I-SM9: mount ごとに 1 回だけ取得
+	$effect(() => {
+		untrack(() => void store.loadAppVersion());
 	});
 
 	const THEMES: Array<{ value: Theme; label: string }> = [
@@ -192,7 +213,15 @@
 			{/if}
 		{/if}
 
-		<footer class="flex justify-end gap-2 pt-2">
+		<footer class="flex items-center justify-end gap-2 pt-2">
+			{#if store.appVersion}
+				<span
+					data-testid="screen-2-app-version"
+					class="mr-auto text-xs text-neutral-500 dark:text-neutral-400"
+				>
+					v{store.appVersion}
+				</span>
+			{/if}
 			<button
 				type="button"
 				data-testid="screen-2-cancel"

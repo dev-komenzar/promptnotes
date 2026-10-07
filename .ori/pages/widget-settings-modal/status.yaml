@@ -1,7 +1,7 @@
 page_id: widget-settings-modal
-derived_at: 2026-06-26T00:00:00.000Z
+derived_at: 2026-10-07
 beads:
-  epic: ori-4g0
+  epic: ori-page-widget-settings-modal
   current_phase: finalize
   completion:
     - derive
@@ -13,49 +13,35 @@ beads:
 phases:
   derive:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
-    notes: spec.md derived (screen-2 = Settings Modal、page-main overlay widget)
+    issue: ori-derive-widget-settings-modal
+    completed_at: 2026-10-07
+    notes: get-app-version 追加に伴う再 derive (screen-2-app-version / I-SM9..11)
   plan:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
+    issue: ori-plan-widget-settings-modal
+    completed_at: 2026-10-07
   test-red:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
+    issue: ori-test-red-widget-settings-modal
+    completed_at: 2026-10-07
+    failing_tests: 4
   impl-green:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
-    notes: PR
+    issue: ori-impl-green-widget-settings-modal
+    completed_at: 2026-10-07
+    passing_tests: 15
   refactor:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
+    issue: ori-refactor-widget-settings-modal
+    completed_at: 2026-10-07
   review:
     status: closed
-    issue: ori-4g0
-    completed_at: 2026-06-27
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/page-groups.md
-      sectionId: widget-settings-modal
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/ui-fields/screen-2.md
-      sectionId: fields
-    detected_at: 2026-10-07T05:40:00.000Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/ui-fields/screen-2.md
-      sectionId: cross-app-version-display
-    detected_at: 2026-10-07T05:40:00.000Z
-    affected_phase: derive
-    reason: add
-finalized_at: 2026-06-27
-followup: []
+    issue: ori-review-widget-settings-modal
+    completed_at: 2026-10-07
+    passes: 1
+    verdict: PASS
+dirty: []
+finalized_at: 2026-10-07
+followup:
+  - ori-z42w
 proposals: {}
