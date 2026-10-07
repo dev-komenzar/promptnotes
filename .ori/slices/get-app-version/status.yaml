@@ -1,0 +1,44 @@
+slice_id: get-app-version
+derived_at: 2026-10-07
+beads:
+  epic: ori-slice-get-app-version
+  current_phase: finalize
+  completion:
+    - derive
+    - plan
+    - test-red
+    - impl-green
+    - refactor
+    - review
+phases:
+  derive:
+    status: closed
+    issue: ori-derive-get-app-version
+    completed_at: 2026-10-07
+  plan:
+    status: closed
+    issue: ori-plan-get-app-version
+    completed_at: 2026-10-07
+  test-red:
+    status: closed
+    issue: ori-test-red-get-app-version
+    completed_at: 2026-10-07
+    failing_tests: 10
+  impl-green:
+    status: closed
+    issue: ori-impl-green-get-app-version
+    completed_at: 2026-10-07
+    passing_tests: 13
+  refactor:
+    status: closed
+    issue: ori-refactor-get-app-version
+    completed_at: 2026-10-07
+  review:
+    status: closed
+    issue: ori-review-get-app-version
+    completed_at: 2026-10-07
+    passes: 1
+    verdict: PASS
+    passing_tests: 13
+dirty: []
+finalized_at: 2026-10-07
