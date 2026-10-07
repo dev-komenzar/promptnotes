@@ -12,8 +12,8 @@ coherence:
     - domain/domain-events.md#storage-dir-changed
   hash:
     domain/workflows/detect-external-changes.md#.*: a66910b0d892
-    domain/aggregates.md#.*: 56f7a54a8ab2
-    domain/bounded-contexts.md#.*: 7ebfcda8743b
+    domain/aggregates.md#.*: c2eaa083eaf0
+    domain/bounded-contexts.md#.*: 957e7f4a4930
     domain/domain-events.md#.*: 71db66eafe03
 ori:
   schema:

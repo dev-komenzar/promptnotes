@@ -4,7 +4,7 @@ coherence:
   last_derived: 2026-06-30
   hash:
     domain/workflows/change-sort-order.md#.*: 137e642d209c
-    domain/aggregates.md#.*: 56f7a54a8ab2
+    domain/aggregates.md#.*: c2eaa083eaf0
     domain/domain-events.md#.*: 71db66eafe03
 ori:
   schema:

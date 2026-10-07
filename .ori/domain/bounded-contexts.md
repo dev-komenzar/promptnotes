@@ -101,7 +101,8 @@ Note の lifecycle とは独立に変更され、Note とは別の永続化先�
 ### Purpose {#update-distribution-purpose}
 
 新バージョンの検出と通知を司る。実装は Tauri v2 updater plugin + GitHub Releases に
-外注し、PromptNotes 側のロジックは「起動時に確認する」「通知する」のみ。
+外注し、PromptNotes 側のロジックは「起動時に確認する」「通知する」
+「現在のバージョンを提示する」のみ。
 
 ### Subdomain Type {#update-distribution-subdomain-type}
 
@@ -112,6 +113,7 @@ Note の lifecycle とは独立に変更され、Note とは別の永続化先�
 
 - **UpdateChannel** — Tauri updater が参照する更新元（GitHub Releases）
 - **VersionNotification** — 新バージョン検出時の起動時通知
+- **AppVersion** — 設定モーダルに表示する現在のアプリバージョン（ビルド時定数）
 
 ### Core Aggregates {#update-distribution-core-aggregates}
 

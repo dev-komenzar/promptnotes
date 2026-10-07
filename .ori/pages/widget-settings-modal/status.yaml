@@ -44,6 +44,18 @@ dirty:
     detected_at: 2026-06-30T10:11:08.338Z
     affected_phase: derive
     reason: edit
+  - source:
+      path: .ori/domain/ui-fields/screen-2.md
+      sectionId: fields
+    detected_at: 2026-10-07T05:40:00.000Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/ui-fields/screen-2.md
+      sectionId: cross-app-version-display
+    detected_at: 2026-10-07T05:40:00.000Z
+    affected_phase: derive
+    reason: add
 finalized_at: 2026-06-27
 followup: []
 proposals: {}

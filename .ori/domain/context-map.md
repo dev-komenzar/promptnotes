@@ -21,7 +21,7 @@ Phase 3 で確定した 4 BC（Note Capture / Note Feed / User Preferences / Upd
 | User Preferences | Note Capture | Customer-Supplier | 起動時に `storageDir` を DI 注入 | ACL 不要（`PathBuf` のみ受け渡し） |
 | User Preferences | Note Feed | Customer-Supplier | 起動時に `sortPreference` を DI 注入 | フィルター・検索は復元しない（Q3 決定） |
 | GitHub Releases (external) | Update Distribution | Conformist + ACL | Tauri v2 updater plugin (HTTP) | updater plugin 自体が ACL を兼ねる |
-| Update Distribution | (なし) | Separate Ways | - | 他 BC から参照されない。アプリ起動時通知のみ |
+| Update Distribution | (なし) | Separate Ways | - | 他 BC から参照されない。アプリ起動時通知と設定モーダルへのバージョン提示（UI 層のみ）|
 
 ## Diagram {#diagram}
 
@@ -71,6 +71,9 @@ graph LR
 - Conformist 側の判断: PromptNotes 側はスキーマ変更に追従するだけ（独自の変換ロジックを書かない）
 - 他 BC から `UpdateChannel` を参照しない（**Separate Ways**）。
   起動時通知だけが副作用
+- 設定モーダル（widget-settings-modal）での現在バージョン表示は
+  [get-app-version](workflows/get-app-version.md) を **UI 層が直接** 呼ぶ。
+  User Preferences BC は Version を知らないため Separate Ways は維持される
 
 ### 採用しなかったパターン {#decisions-rejected}
 

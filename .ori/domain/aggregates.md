@@ -274,6 +274,8 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 #### Queries {#update-channel-aggregate-queries}
 
+- `UpdateChannel::current_version(&self) -> &Version`
+  - 設定モーダルのバージョン表示に使う（[get-app-version](workflows/get-app-version.md)）
 - `UpdateChannel::has_new_version(&self) -> bool`
 - `UpdateChannel::latest_release(&self) -> Option<&Release>`
 

@@ -124,6 +124,12 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 - **定義**: アプリの semver バージョン
 - **kind**: VO
 
+### AppVersion {#glossary-app-version}
+
+- **定義**: 設定モーダルに表示する現在のアプリバージョン文字列。
+  ビルド時定数を `Version` として正規化した Display、parse 不能なら raw 文字列
+- **kind**: 表示用 DTO（[get-app-version](workflows/get-app-version.md) の Output）
+
 ### Release {#glossary-release}
 
 - **定義**: GitHub Releases の 1 リリース（version + url + notes）
