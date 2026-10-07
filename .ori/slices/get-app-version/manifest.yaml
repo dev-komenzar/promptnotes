@@ -1,0 +1,13 @@
+slice_id: "get-app-version"
+type: "query"
+derives_from:
+  - domain/workflows/get-app-version.md#get-app-version
+  - domain/aggregates.md#update-channel-aggregate
+  - domain/bounded-contexts.md#update-distribution
+relations: []
+implementation:
+  language: rust
+  primary_bc: update-distribution
+  generates:
+    - apps/promptnotes/src-tauri/src/update_distribution/slices/get_app_version/
+    - apps/promptnotes/src/lib/update-distribution/slices/get-app-version/

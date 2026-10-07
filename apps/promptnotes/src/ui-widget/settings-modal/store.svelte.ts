@@ -5,6 +5,7 @@ import {
 	type UpdateSettingsError,
 	type UpdateSettingsInput
 } from '$lib/user-preferences/slices/update-settings';
+import { getAppVersion as defaultGetAppVersion } from '$lib/update-distribution/slices/get-app-version';
 
 /**
  * widget-settings-modal の draft state + save/cancel ロジックを保持する store。
@@ -12,10 +13,12 @@ import {
  * - I-SM4: 編集中の値は modal scope に閉じる（cancel / Esc で破棄）
  * - I-SM3: save は `update-settings` slice を呼び、成功で `onSaved` を発火
  * - I-SM6: 差分なし save は workflow を呼ばずに close（C-US1 最適化）
+ * - I-SM9〜11: app version は `get-app-version` slice から取得し、form state とは独立
  */
 
 export type SettingsModalStoreDeps = {
 	updateSettingsFn?: typeof defaultUpdateSettings;
+	getAppVersionFn?: typeof defaultGetAppVersion;
 	/** I-SM5: theme 選択時の即時 preview callback（DOM 操作の注入点） */
 	onPreviewTheme?: (theme: Theme) => void;
 };
@@ -29,11 +32,14 @@ export type SettingsModalStore = ReturnType<typeof createSettingsModalStore>;
 
 export function createSettingsModalStore(initial: SettingsDto, deps: SettingsModalStoreDeps = {}) {
 	const updateSettingsFn = deps.updateSettingsFn ?? defaultUpdateSettings;
+	const getAppVersionFn = deps.getAppVersionFn ?? defaultGetAppVersion;
 
 	const baseline = $state<SettingsDto>({ ...initial });
 	let storageDir = $state(initial.storage_dir);
 	let theme = $state<Theme>(initial.theme);
 	let saveState = $state<SaveState>({ kind: 'idle' });
+	// I-SM10: 取得前 / 失敗時は null（UI は行ごと非表示）
+	let appVersion = $state<string | null>(null);
 
 	const dirty = $derived(storageDir !== baseline.storage_dir || theme !== baseline.theme);
 
@@ -53,6 +59,15 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 		if (storageDir !== baseline.storage_dir) input.storage_dir = storageDir;
 		if (theme !== baseline.theme) input.theme = theme;
 		return input;
+	}
+
+	// I-SM9: mount 時に 1 回呼ぶ。I-SM10: reject は握り潰して非表示のまま。
+	async function loadAppVersion(): Promise<void> {
+		try {
+			appVersion = await getAppVersionFn();
+		} catch {
+			appVersion = null;
+		}
 	}
 
 	async function save(): Promise<
@@ -90,8 +105,12 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 		get dirty() {
 			return dirty;
 		},
+		get appVersion() {
+			return appVersion;
+		},
 		setStorageDir,
 		setTheme,
-		save
+		save,
+		loadAppVersion
 	};
 }

@@ -9,8 +9,8 @@ coherence:
     - domain/validation.md#s12-startup-state
   hash:
     domain/workflows/list-feed.md#.*: b05c95558e97
-    domain/aggregates.md#.*: 56f7a54a8ab2
-    domain/bounded-contexts.md#.*: 7ebfcda8743b
+    domain/aggregates.md#.*: c2eaa083eaf0
+    domain/bounded-contexts.md#.*: 957e7f4a4930
     domain/validation.md#.*: 4a02c17cc025
 ori:
   schema:

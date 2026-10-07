@@ -4,8 +4,8 @@ coherence:
   last_derived: 2026-06-30
   hash:
     domain/workflows/copy-note-body.md#.*: 5ec956893834
-    domain/aggregates.md#.*: 56f7a54a8ab2
-    domain/bounded-contexts.md#.*: 7ebfcda8743b
+    domain/aggregates.md#.*: c2eaa083eaf0
+    domain/bounded-contexts.md#.*: 957e7f4a4930
 ori:
   schema:
     propagation_level: file

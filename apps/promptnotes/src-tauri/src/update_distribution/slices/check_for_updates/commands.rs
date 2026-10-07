@@ -8,6 +8,7 @@ use serde::Serialize;
 use super::application::CheckForUpdatesUseCase;
 use super::domain::CheckForUpdatesCommand;
 use super::infrastructure::{TauriEventBus, TauriUpdaterPort};
+use crate::update_distribution::shared::build_info::build_version;
 use crate::update_distribution::shared::types::{UpdateChannel, Version};
 
 /// Serializable response for the frontend.
@@ -49,7 +50,7 @@ impl From<UpdateChannel> for UpdateChannelResponse {
 /// **I-U3**: invoke once on app start. No polling.
 #[tauri::command]
 pub async fn check_for_updates(app_handle: tauri::AppHandle) -> UpdateChannelResponse {
-    let current_version_str = env!("CARGO_PKG_VERSION");
+    let current_version_str = build_version();
     let current_version = match Version::from_str(current_version_str) {
         Ok(v) => v,
         Err(_) => {

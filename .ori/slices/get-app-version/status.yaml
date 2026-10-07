@@ -1,7 +1,7 @@
-page_id: widget-settings-modal
+slice_id: get-app-version
 derived_at: 2026-10-07
 beads:
-  epic: ori-page-widget-settings-modal
+  epic: ori-slice-get-app-version
   current_phase: finalize
   completion:
     - derive
@@ -13,35 +13,32 @@ beads:
 phases:
   derive:
     status: closed
-    issue: ori-derive-widget-settings-modal
+    issue: ori-derive-get-app-version
     completed_at: 2026-10-07
-    notes: get-app-version 追加に伴う再 derive (screen-2-app-version / I-SM9..11)
   plan:
     status: closed
-    issue: ori-plan-widget-settings-modal
+    issue: ori-plan-get-app-version
     completed_at: 2026-10-07
   test-red:
     status: closed
-    issue: ori-test-red-widget-settings-modal
+    issue: ori-test-red-get-app-version
     completed_at: 2026-10-07
-    failing_tests: 4
+    failing_tests: 10
   impl-green:
     status: closed
-    issue: ori-impl-green-widget-settings-modal
+    issue: ori-impl-green-get-app-version
     completed_at: 2026-10-07
-    passing_tests: 15
+    passing_tests: 13
   refactor:
     status: closed
-    issue: ori-refactor-widget-settings-modal
+    issue: ori-refactor-get-app-version
     completed_at: 2026-10-07
   review:
     status: closed
-    issue: ori-review-widget-settings-modal
+    issue: ori-review-get-app-version
     completed_at: 2026-10-07
     passes: 1
     verdict: PASS
+    passing_tests: 13
 dirty: []
 finalized_at: 2026-10-07
-followup:
-  - ori-z42w
-proposals: {}

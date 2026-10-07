@@ -5,10 +5,12 @@ derives_from:
   - domain/ui-fields/screen-2.md#screen-2
   - domain/ui-fields/page-groups.md#widget-settings-modal
   - domain/workflows/update-settings.md#update-settings
+  - domain/workflows/get-app-version.md#get-app-version
 relations:
   - kind: hosts
     slices:
       - update-settings
+      - get-app-version
   - kind: mounted-by
     page: page-main
 implementation:

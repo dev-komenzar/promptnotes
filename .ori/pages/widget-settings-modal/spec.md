@@ -4,11 +4,17 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-10-07
   derives_from:
     - domain/ui-fields/screen-2.md#screen-2
     - domain/ui-fields/page-groups.md#widget-settings-modal
     - domain/workflows/update-settings.md#update-settings
+    - domain/workflows/get-app-version.md#get-app-version
+  hash:
+    domain/ui-fields/screen-2.md#.*: 2b2217c5c875
+    domain/ui-fields/page-groups.md#.*: c9acbcb8a72d
+    domain/workflows/update-settings.md#.*: f420da94bd93
+    domain/workflows/get-app-version.md#.*: c3a5c313f0f5
 ---
 
 # widget-settings-modal — Widget Specification {#widget-settings-modal-spec}
@@ -25,17 +31,42 @@ workflow の **唯一の trigger UI** となる。
 - **mount lifecycle**: on-demand（page-main の toolbar 歯車 / `Cmd+,` で mount、
   save / cancel / Esc で unmount）
 - **parent**: page-main（lifecycle は page-main に従属、I-PM2）
-- **hosts**: `update-settings`（唯一）
+- **hosts**: `update-settings`（唯一の command）/ `get-app-version`（表示用 query）
 
 ## ホストする slices {#hosted-slices}
 
 | field | slice | trigger | 副作用 |
 |--|--|--|--|
 | `screen-2-save` | [update-settings](../../slices/update-settings/spec.md) | primary button | `storage_dir` / `theme` 差分を永続化 + 0〜2 件 event |
+| `screen-2-app-version` | [get-app-version](../../slices/get-app-version/spec.md) | modal mount 時に 1 回 | なし（読み取り専用 query） |
 
 `screen-2-storage-dir` の folder picker は OS ネイティブ dialog（`@tauri-apps/plugin-dialog`）
 を起動するが、これは widget の form 状態を組み立てるための副作用であり slice ではない。
-slice 呼出は **save ボタン押下時の 1 度のみ**（C-US1 / C-US5）。
+`update-settings` の呼出は **save ボタン押下時の 1 度のみ**（C-US1 / C-US5）。
+
+> domain/ui-fields/screen-2.md#cross-app-version-display より:
+> モーダル mount 時に `get-app-version` を 1 回呼ぶ。取得完了前、または呼び出し自体が失敗した場合は
+> **行ごと非表示**（エラー表示はしない）。表示値は Save / Cancel / theme プレビューの影響を受けない。
+> 差分判定（`cross-no-diff`）の対象外。
+
+## 入出力 {#io}
+
+- **入力 (props)**: `initial: SettingsDto`（mount 時の settings）、`onClose` / `onSaved` callback、
+  test 用の注入点 `updateSettingsFn` / `getAppVersionFn` / `openDialogFn`
+- **出力 (slice 呼出)**:
+  - `updateSettings(input: UpdateSettingsInput)` — save 時、差分のみ
+  - `getAppVersion(): Promise<string>` — mount 時に 1 回
+- **表示 (read-only)**: `screen-2-app-version` に `v{version}`（例: `v0.2.2`）
+
+## 境界契約 {#boundary-contract}
+
+- boundary kind: `tauri_command`（slice の TS wrapper 経由）
+- contact point:
+  - `apps/promptnotes/src/lib/user-preferences/slices/update-settings/index.ts`（`updateSettings`）
+  - `apps/promptnotes/src/lib/update-distribution/slices/get-app-version/index.ts`（`getAppVersion`）
+- public_entry: `apps/promptnotes/src/ui-widget/settings-modal/WidgetSettingsModal.svelte`（page-main から mount）
+- 禁止: `ui-widget/settings-modal/` から `@tauri-apps/api/core` の `invoke` / `@tauri-apps/api/app` の
+  `getVersion` を直接 import すること（I-SM7 / I-SM9。get-app-version spec#boundary-contract の C-GAV5）
 
 ## レイアウト {#layout}
 
@@ -53,13 +84,15 @@ slice 呼出は **save ボタン押下時の 1 度のみ**（C-US1 / C-US5）。
 │  テーマ                                                     │
 │   ( ) System   ( ) Light   ( ) Dark                        │
 │                                                            │
-│              [キャンセル]  [保存]                            │
+│  v0.2.2                     [キャンセル]  [保存]            │
 └────────────────────────────────────────────────────────────┘
 ```
 
 - HTML `<dialog>` element + `showModal()` で OS ネイティブ風の modal を実現
 - `Cmd+,` / Toolbar 歯車で open、Esc / cancel / save で close（cross-screen-shortcuts と整合）
 - 背景の dim 等の装飾はしない（screen-2.md#notes-os-native-modal）
+- `screen-2-app-version` はモーダル下部（ボタン行の左）に控えめな secondary text で表示。
+  取得前 / 失敗時は要素ごと描画しない
 
 ## 不変条件 {#invariants}
 
@@ -90,6 +123,15 @@ slice 呼出は **save ボタン押下時の 1 度のみ**（C-US1 / C-US5）。
 - **I-SM8（folder picker は plugin-dialog）**: `@tauri-apps/plugin-dialog` の `open()` は
   raw `invoke` ではないため許容。ただし folder picker から得た path は **save 時に
   slice 経由で再検証**（slice 側で I-S1 / I-S2 を再評価）
+
+### App version 表示 {#invariants-app-version}
+
+- **I-SM9（slice 経由で取得）**: バージョンは `get-app-version` slice の `getAppVersion()` からのみ取得する。
+  modal mount ごとに **1 回だけ** 呼ぶ
+- **I-SM10（失敗時は非表示）**: 取得前 / reject 時は `screen-2-app-version` を描画しない。
+  エラー表示・save 阻害はしない
+- **I-SM11（form 状態と独立）**: 表示値は draft state に含めず、`dirty` 判定 / save payload /
+  cancel rollback の対象外
 
 ## テスト観点 (vitest) {#test-points}
 
@@ -137,6 +179,24 @@ eslint static check で `apps/promptnotes/src/ui-widget/settings-modal/` から
 `@tauri-apps/api/core` の import が 0 件（I-SM7）。
 `@tauri-apps/plugin-dialog` は許容（I-SM8）。
 
+### tp-sm-app-version-shown: mount 後にバージョン表示 {#tp-sm-app-version-shown}
+
+`getAppVersionFn` が `'0.2.2'` で resolve → store の `appVersion` が `'0.2.2'` になり、
+`getAppVersionFn` の呼出は **1 回**（I-SM9）。component では `v0.2.2` が表示される。
+
+### tp-sm-app-version-hidden-before-resolve: 取得前は非表示 {#tp-sm-app-version-hidden-before-resolve}
+
+`getAppVersionFn` が未 resolve の間、store の `appVersion` は `null`（I-SM10）。
+
+### tp-sm-app-version-hidden-on-error: 取得失敗は非表示 {#tp-sm-app-version-hidden-on-error}
+
+`getAppVersionFn` が reject → `appVersion` は `null` のまま、例外は外に漏れず、
+`saveState` は `idle` のまま（I-SM10）。
+
+### tp-sm-app-version-not-in-diff: バージョンは差分判定の対象外 {#tp-sm-app-version-not-in-diff}
+
+バージョン取得後に何も編集せず save → `updateSettings` は呼ばれず close（I-SM6 / I-SM11）。
+
 ## 実装ノート {#impl-notes}
 
 ### Svelte 5 + `<dialog>` element {#impl-svelte-dialog}
@@ -150,7 +210,10 @@ eslint static check で `apps/promptnotes/src/ui-widget/settings-modal/` から
 
 - `createSettingsModalStore(initialSettings, deps)` factory を切り、
   draft state / save / cancel logic を **vitest server (node)** で単体テスト可能にする
-- deps: `updateSettingsFn` (slice の `updateSettings` 関数) を注入
+- deps: `updateSettingsFn` (slice の `updateSettings` 関数) / `getAppVersionFn`
+  (slice の `getAppVersion` 関数) を注入
+- store に `appVersion: string | null` と `loadAppVersion(): Promise<void>`（reject を握り潰す）を持たせ、
+  component の mount 時に `loadAppVersion()` を 1 回呼ぶ
 - component (`*.svelte`) は store の薄い presentation layer
 
 ### ディレクトリ構成 {#impl-layout-dir}

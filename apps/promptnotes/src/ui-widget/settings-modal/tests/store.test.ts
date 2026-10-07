@@ -156,4 +156,57 @@ describe('widget:widget-settings-modal store', () => {
 		expect(onPreviewTheme).toHaveBeenCalledTimes(3);
 		expect(onPreviewTheme.mock.calls).toEqual([['Light'], ['Dark'], ['System']]);
 	});
+
+	it('spec#tp-sm-app-version-shown — loadAppVersion で getAppVersion を 1 回呼び appVersion に反映', async () => {
+		const getAppVersionFn = vi.fn().mockResolvedValue('0.2.2');
+		const store = createSettingsModalStore(makeSettings(), {
+			updateSettingsFn: vi.fn(),
+			getAppVersionFn
+		});
+
+		await store.loadAppVersion();
+
+		expect(getAppVersionFn).toHaveBeenCalledTimes(1);
+		expect(store.appVersion).toBe('0.2.2');
+	});
+
+	it('spec#tp-sm-app-version-hidden-before-resolve — 取得完了前の appVersion は null', () => {
+		const getAppVersionFn = vi.fn().mockReturnValue(new Promise<string>(() => {}));
+		const store = createSettingsModalStore(makeSettings(), {
+			updateSettingsFn: vi.fn(),
+			getAppVersionFn
+		});
+
+		void store.loadAppVersion();
+
+		expect(store.appVersion).toBeNull();
+	});
+
+	it('spec#tp-sm-app-version-hidden-on-error — reject 時は appVersion=null のまま例外を漏らさない', async () => {
+		const getAppVersionFn = vi.fn().mockRejectedValue(new Error('ipc failed'));
+		const store = createSettingsModalStore(makeSettings(), {
+			updateSettingsFn: vi.fn(),
+			getAppVersionFn
+		});
+
+		await expect(store.loadAppVersion()).resolves.toBeUndefined();
+
+		expect(store.appVersion).toBeNull();
+		expect(store.saveState).toStrictEqual({ kind: 'idle' });
+	});
+
+	it('spec#tp-sm-app-version-not-in-diff — バージョン取得後の無編集 save は updateSettings を呼ばず close', async () => {
+		const updateSettingsFn = vi.fn();
+		const store = createSettingsModalStore(makeSettings(), {
+			updateSettingsFn,
+			getAppVersionFn: vi.fn().mockResolvedValue('0.2.2')
+		});
+
+		await store.loadAppVersion();
+		const outcome = await store.save();
+
+		expect(store.dirty).toBe(false);
+		expect(outcome).toStrictEqual({ kind: 'closed' });
+		expect(updateSettingsFn).not.toHaveBeenCalled();
+	});
 });

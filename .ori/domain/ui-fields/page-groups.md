@@ -54,7 +54,7 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 
 - **kind**: ui-widget
 - **screens**: [screen-2](screen-2.md)
-- **対応 workflow**: update-settings
+- **対応 workflow**: update-settings, get-app-version（表示のみ）
 - **mount trigger**:
   - page-main の `screen-1-toolbar-settings-button` クリック
   - macOS menu bar 「PromptNotes → Preferences」 (`Cmd+,`)
