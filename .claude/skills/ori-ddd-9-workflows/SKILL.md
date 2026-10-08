@@ -150,7 +150,7 @@ Phase 9 完了後、ユーザに以下を提示：
 - **通常パス**：`/ori-ddd-10-types` — workflows の入出力型を compile 可能な型定義に落とす
 - **scaffold パス**：slice の新規作成を提案（上記参照）
   - 作成後すぐ `/ori-flow <slice-id>` で 7-phase 実装を開始できる
-  - ただし `.ori/architecture.md` が無ければ先に `/ori-arch` を実行してもらう（pattern / stack を未確定のまま `/ori-flow` を呼ぶと slice render が動かない）
+  - ただし `.ori/architecture.md` が無ければ先に `/ori-architect` → `/ori-bootstrap` を実行してもらう（pattern / stack 未確定・`apps/<app>/` 未初期化のまま `/ori-flow` を呼ぶと slice render / build が動かない）
 - **UI 観点に進むパス**：`/ori-ddd-11a-ui-fields` — workflow の input/output から UI 項目を抽出
   - 適用条件：workflow が確定し、画面設計に進みたい場合
 - **戻る**：steps が集約をまたぐと判明したら `/ori-ddd-5-aggregates` で境界を見直す

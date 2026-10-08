@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ori-init: install Tauri / specta scaffold into a freshly `pnpm tauri init`-ed app.
 #
-# Called by /ori-arch after the upstream framework init for stack=typescript-tauri
+# Called by /ori-bootstrap after the upstream framework init for stack=typescript-tauri
 # completes (apps/<app>/src-tauri/ exists). Implements the specta infra side of
 # Slice DoD enforcement (rules 2–4 in
-# .apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md):
+# .apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md):
 #
 #   - src-tauri/Cargo.toml      : tauri-specta + specta + specta-typescript deps
 #   - src-tauri/src/bin/export-types.rs : specta bindings export entry
@@ -57,7 +57,7 @@ done
 
 [[ -z "$DEST" || -z "$APP_NAME" || -z "$BC_NAME" ]] && { usage; exit 2; }
 
-# kebab → snake for Rust identifier rules (mirrors render-architecture.js).
+# kebab → snake for Rust identifier rules (TS=kebab / Rust=snake).
 BC_NAME_RS="${BC_NAME//-/_}"
 APP_NAME_RS="${APP_NAME//-/_}"
 
@@ -141,7 +141,13 @@ copy_file \
 #   The 2.0.0-rc line is the tauri 2-compatible release (webkit2gtk-4.1 /
 #   libsoup-3.0). Pin exactly so a future rc bump can't silently shift
 #   the dep graph under the smoke gate.
-TAURI_PIN="=2.11.5"
+#
+# tauri's internal crates (tauri-runtime / tauri-runtime-wry) are NOT pinned by
+# us and resolve via caret to the latest release on a fresh project (no
+# Cargo.lock). Keep TAURI_PIN on the same minor as the newest tauri-runtime-wry
+# or the tauri crate stops compiling (ori-wu6: tauri =2.11.5 + runtime-wry
+# 2.12.1 → E0599/E0277). When bumping, match `cargo info tauri-runtime-wry`.
+TAURI_PIN="=2.12.1"
 SPECTA_PIN="=2.0.0-rc.25"
 TAURI_SPECTA_PIN="=2.0.0-rc.25"
 SPECTA_TYPESCRIPT_PIN="=0.0.12"

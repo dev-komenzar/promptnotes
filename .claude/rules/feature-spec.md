@@ -1,22 +1,12 @@
 ---
 paths:
-  - ".ori/slices/*/spec.md"
-  - ".ori/pages/*/spec.md"
+  - ".ori/features/*/spec.md"
 ---
 
 - **このファイルは派生文書**: `manifest.yaml` の `derives_from` が source
-- **直接編集を原則禁止**: spec を変えたい場合は **派生元（domain doc）を編集** するのが正道
-- **現状の手順（ori tooling は MVP stub）**: `/ori-sync` (`sync.js`) は検知・伝播が未実装で、
-  `/ori-sync --force` による proposal 自動生成も無い。実際は次の手動手順で行う:
-  1. domain doc を編集（上流提案が必要なら `/ori-propose` → `/ori-review-proposals`）
-  2. spec.md を手動で再整理（`/ori-derive` 相当）
-  3. spec.md frontmatter の `coherence.hash` を現在値に更新:
-     `sha256sum .ori/<path>.md | cut -c1-12`（ファイル全体のハッシュ。key は `domain/x.md#.*`）、
-     あわせて `last_derived` を更新
-  4. `status.yaml` の `dirty` / `followup` を手動メンテ（dirty 解除は `/ori-finalize` 経由）
-  - hash の drift 確認: spec の `coherence.hash` と `sha256sum` 結果を突き合わせる。
-    domain 側の変更が追記のみで spec 本文に影響しないことを diff で確認してから値だけ更新する
-  - ori 側が実装されたらこの節を更新する
+- **直接編集を原則禁止**:
+  1. spec を変えたい場合は **派生元（domain doc）を編集** → `/ori-sync` で spec.md を再生成
+  2. **ここでの直接編集は不可**（`/ori-sync --force` は廃止済）。上流の変更が要る場合は `/ori-propose` で提案を作成する
 - **構成（必須）**: `## 概要 {#overview}`, `## 入出力 {#io}`, `## 不変条件 {#invariants}`,
   `## 境界契約 {#boundary-contract}`, `## テスト観点 {#test-points}`, `## 実装ノート {#impl-notes}`
 - **glossary 参照**: 用語は `[Note](#note)` 形式で glossary 内アンカーへ
@@ -25,7 +15,7 @@ paths:
 ## 境界契約 (Boundary contract) section 必須化 {#boundary-contract-section}
 
 `## 境界契約 {#boundary-contract}` section は **必須**。
-Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done")
+Slice DoD ([`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の "Slice Definition of Done")
 の rule 2「tests は外部境界経由のみ」を spec レベルで明示するための section。
 
 宣言すべき項目:
@@ -58,3 +48,13 @@ Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Def
 
 `/ori-doctor` はこの section の宣言と実体 boundary file の存在/参照を突合する。
 section が欠落している spec は `/ori-derive` 段階で reject される。
+
+## page / widget の testid {#page-testids}
+
+page / widget の spec.md は testid の具体値を**持たない**。testid は
+`.ori/pages/<id>/testids.yaml` (契約。規範は `ddd-vsa-hex/pattern.md` "page / widget の testid 契約") が
+唯一の source で、spec.md からはリンクで参照する。
+
+- 禁止: 「ui-fields の field id (`screen-<N>-*`) をそのまま data-testid に写す」等、
+  契約と別の testid 規則を spec に書くこと (実装がそれに従い E2E と乖離する)
+- テスト観点で testid に触れる場合は契約の値 (`page.<id>.<elem>`) を引用する

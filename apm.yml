@@ -4,7 +4,7 @@ description: APM project for promptnotes
 author: dev-komenzar
 dependencies:
   apm:
-  - dev-komenzar/ori
+  - dev-komenzar/ori#03b34866412ee8af28597bb06cdb93c2799335a4
   mcp: []
 includes: auto
 scripts: {}

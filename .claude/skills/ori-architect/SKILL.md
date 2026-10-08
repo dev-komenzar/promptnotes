@@ -1,18 +1,28 @@
 ---
 name: ori-architect
-description: /ori-arch の「ori artifact 追加」step として委譲され、要件対話 (platforms / os_integration / ui_native 等) から `.ori/architecture.md` を動的生成する。DDD + vsa-hex の核 (invariants) は不変、ビルド/配信/OS 統合の差は decision_points としてメイン session で対話確定する。
+description: `/ori-distill` の次のステップ。要件対話 (platforms / os_integration / ui_native 等) から `.ori/architecture.md` を動的生成する。DDD + vsa-hex の核 (invariants) は不変、ビルド/配信/OS 統合の差は decision_points としてメイン session で対話確定する。apps/ 未初期化でも可 (codebase init は後段の `/ori-bootstrap`)。
 ---
 
-`/ori-arch` の「ori artifact 追加」step として動作する。**このスキルはメイン session で
+`/ori-distill` で `.ori/domain/` が作られた後の **次のステップ** (大フロー
+`/ori-init → /ori-distill → /ori-architect → /ori-bootstrap → /ori-flow`
+のうち **architecture.md 生成**)。**このスキルはメイン session で
 実行される** (要件対話 = ヒアリングが必要なため。subagent は headless でユーザと対話できない —
 ori-c79 で agent として定義したが ori-8gz でスキルへ書き直した)。
+
+> ori-c79 で固定 stack テンプレート (`stacks/<stack>/architecture.md.tpl`) の
+> cartesian product 方式を撤廃。DDD + vsa-hex の核 (invariants) は不変、
+> ビルド/配信/OS 統合の差は decision_points として対話で確定する。
+> 旧 tpl の期待出力は golden test (`packages/skills/ori-architect/tests/golden-agent-vs-tpl.test.ts`)
+> の GOLDEN 定数に引き継がれた。
+> 旧 `/ori-arch` (前提確認 + upstream init 案内 + 委譲のみ) は ori-63f で本スキルに統合・廃止。
+> upstream framework init の案内 / runner deps 追加 / tauri specta scaffold は `/ori-bootstrap` が担う。
 
 ## 入力 / 出力
 
 - 入力：
   - ユーザ要件（platforms / os_integration / ui_native / language / BC 名）— 対話で引き出す
   - app 名（`.ori/config.yaml` の `workspace.apps[0].name`）
-  - upstream framework init 済みの `apps/<app>/`（`/ori-arch` の手順 2 で案内済み）
+  - `apps/<app>/` は **未初期化でも可**。upstream framework init と codebase の readiness 検証は後段の `/ori-bootstrap` が行う
 - 出力：`.ori/architecture.md` 1 ファイルのみ。それ以外 ori は target にファイルを足さない
   - frontmatter: ArchitectureSpec (`version: 1`、workspace (runtime blocks)、root/roots、
     layer_sets、slice_internal、cross_slice、cross_bc、cross_root、`phase_hooks:`、
@@ -21,14 +31,17 @@ ori-c79 で agent として定義したが ori-8gz でスキルへ書き直し�
 
 ## 手順
 
+0. **前提確認** — `ls .ori/config.yaml` が存在すること (なければ `/ori-init` を先に案内)。
+   `.ori/domain/` が無ければ `/ori-distill` を案内する。既存 `.ori/architecture.md` がある場合は
+   generate 時に上書き可否を確認する。
 1. **elicit** — `questions:` を順に提示し、ユーザの回答を得る（推奨 + 上書き可。ハイブリッド UI 対応）。pattern は `ddd-vsa-hex`（唯一の curated pattern）で固定のため質問対象外。
 2. **decide** — decision_points を確定し、roots（id / language / adapter / slice_root /
    public_entry）と layer_sets を決める
 3. **compose** — `invariants:` から layer graph / slice_internal / boundaries を選択・結合して
    frontmatter を組み立てる
 4. **generate** — `.ori/architecture.md` を書く（前回生成物がある場合は上書き可否を先に確認）
-5. **self-check** — guardrails g-1..g-8 を検証する：`node .apm/skills/ori-doctor/scripts/lint.js .ori`
-   が全 pass すること（fail したら修正して再生成）
+5. **self-check** — guardrails g-1..g-8 を検証する：`node scripts/lint.js .ori`
+   が全 pass すること（fail したら修正して再生成。往復は confirm まで）
 6. **confirm** — 生成物をユーザに提示し確定を得る
 
 ## ロール
@@ -239,7 +252,7 @@ runtime_recipes:
                     "@types/mocha", "@types/node"]
   notes:
     - "healthcheck は default TCP probe。runtime.healthcheck: {http: /health} 宣言時のみ HTTP 待機"
-    - runner_deps は /ori-arch がプロジェクト root package.json に pnpm add -D で追加
+    - runner_deps は /ori-bootstrap がプロジェクト root package.json に pnpm add -D で追加
     - 新 stack (go / rust backend / RN 等) は recipe をこの知識に追加するだけで参加する
       (cartesian template 増幅なし)
 ```
@@ -276,6 +289,20 @@ generation_procedure:
 
 ## 注意
 
+- **上書きは確認してから**：既存 `.ori/architecture.md` がある場合は confirm step の前に上書き可否を確認する
+- **.ori/ skeleton は壊さない**：書き出すのは `.ori/architecture.md` 1 ファイルのみ。`/ori-init` が作る `.ori/config.yaml` 等とは衝突しない
+- **`apps/` は生成しない**：upstream framework init は `/ori-bootstrap` の責務
+- **patterns/ 探索順**：skill bundle 隣接 (`patterns/` — bundle が住む場所がどこであっても `patterns/` は sibling)
+- **CLI 拡張は禁止** (`ori-execution-model-shift-2026-06-03`)：新機能はこのスキル + scripts/ で実装する
+- **`phase_hooks` block は必須出力** (ori-fzr.11 / 2026-06-26)：生成する `.ori/architecture.md` の
+  frontmatter に `phase_hooks:` block を含めること (hook 不要な stack は `phase_hooks: {}`)。
+  `/ori-flow` / `/ori-doctor` がこの block を読んで Slice DoD rule 4 (`pattern.md`) の
+  bindings 再生成を invoke する。schema 詳細は `architecture-md-schema.md` の "phase_hooks" を参照。
+  期待値は golden test の `GOLDEN[*].phase_hooks` に固定されている (ori-c79.6)
+- **example-slice/ は AI 専用の study material** (`patterns/<pattern>/stacks/<stack>/example-slice/`)：
+  target にはコピーしない。初回 slice 作成時 (`/ori-flow new-slice <id>`) に AI が **読んでから**
+  ユーザ固有 domain の slice を生成する。構造規約 / public_entry / cross-slice 禁止のような不変則は
+  `architecture.md` 由来、具体的な実装スタイル (Result 型のシグネチャ等) は `example-slice/` 由来
 - **知らない stack を捏造しない**: 既存の実績 (typescript / typescript-tauri) から
   要件差分を設計し、未検証の組み合わせは「実験的」と明記する。
 - **guardrails は交渉しない**: ユーザ要望が invariants と衝突する場合、理由を説明して
@@ -283,3 +310,59 @@ generation_procedure:
 - **market 参考実装**: LobeHub (React のみで Web+Mobile+Electron)、Bluesky (Expo RN で
   Web+iOS+Android 一本化 + `*.web` / `*.android` / `*.ios` 分岐) は「1 コードベースで
   複数配信」の参考にできるが、ori の layer vocabulary にそのまま当てはめない。
+
+## Migration — phase_hooks 未保有の既存 architecture.md
+
+ori-fzr.11 (2026-06-26) 以前に生成された `.ori/architecture.md` は frontmatter に `phase_hooks:` block を持たない。`/ori-flow` が phase 終端で binding 再生成 hook を invoke しないため Slice DoD rule 4 が手動運用に退化する (`pattern.md` 参照)。
+
+移行手順:
+
+1. **ori-architect で再生成する場合 (推奨)**: 本スキルで要件対話から `.ori/architecture.md` を再生成する。手で加えていた変更は事前に diff を取って merge し直すこと。
+2. **手で最小追加で済ませる場合**:
+   - typescript-tauri stack: `packages/skills/ori-architect/tests/fixtures/golden-constants.ts`
+     の `GOLDEN.typescriptTauri.phase_hooks` 相当の block を frontmatter 末尾に貼る
+     (app 名 / BC 名は実値に置換)
+   - typescript stack (cross_root 無し): `phase_hooks: {}` を 1 行だけ追加
+
+migration 完了の確認は `node ./scripts/check.js` (adapter check) が pass し、かつ `grep -E '^phase_hooks:' .ori/architecture.md` が hit すること。
+
+## Architecture Export / Check スクリプト
+
+`scripts/` 配下の JS スクリプトで `.ori/architecture.md` を adapter 経由でコンパイル・検証できます。
+script path は skill bundle に対する相対 (`./scripts/<x>.js`) で統一します — install 場所
+(ori repo dev / apm consumer / Claude Code 統合済 consumer) に依存しません。
+
+```bash
+# eslint.config.js を生成
+node ./scripts/export.js --adapter=eslint
+
+# Rust 向け arch test を生成
+node ./scripts/export.js --adapter=rust --root=rs
+
+# dry-run (ファイル出力なし)
+node ./scripts/export.js --adapter=eslint --dry-run
+
+# adapter の native linter で違反チェック
+node ./scripts/check.js --adapter=eslint
+
+# ui-fields から ## Page Map セクションを自動更新
+node ./scripts/sync-page-map.js
+
+# dry-run
+node ./scripts/sync-page-map.js --dry-run
+```
+
+オプション (export / check 共通)：
+- `--adapter=<name>` — adapter 指定 (省略時は architecture.md の `adapter:` フィールドを使用)
+- `--root=<id>` — multi-root 対象 (省略時は `default_root`)
+- `--spec=<path>` — spec ファイルパス (省略時: `.ori/architecture.md`)
+
+## 次のアクション
+
+`/ori-architect` 完了後、ユーザに以下を提示：
+
+- **codebase 準備パス (次の step)**：`/ori-bootstrap` — upstream framework init の案内、readiness 検証、runner deps 追加、(typescript-tauri) specta scaffold。apps/ が未初期化でもここで揃う
+- **最初の slice 作成パス**：`/ori-bootstrap` 完了後に `/ori-flow new-slice <id>` で新 slice を scaffold → 7-phase 開発を回す
+- **scenario scaffold パス**: `node scripts/new-scenario.js --list-validation` で validation.md の未 cover section（scenario 候補）を確認 → ユーザ確認の上 `new-scenario.js <id>` で scaffold → `/ori-flow <id>`（4 phase。scenario id = validation section anchor、1:1）
+- **domain が未整備な場合のパス**：`.ori/domain/` が空なら `/ori-distill phase=discovery` で domain を先に立ち上げ、その後 `/ori-architect` をやり直す
+- **既存 domain がある場合のパス**：`/ori-migrate` で `docs/domain/` 等を `.ori/domain/` に昇格

@@ -3,7 +3,7 @@
 #
 # Walks .ori/slices/*/manifest.yaml, resolves each slice's source-tree location
 # from .ori/architecture.md, and checks the 4 Slice DoD rules declared in
-# .apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md ("Slice Definition of Done"):
+# .apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md ("Slice Definition of Done"):
 #
 #   rule:dod-1  sub_layers 全埋め違反 (declared layer dir が空 / placeholder のみ)
 #   rule:dod-2  boundary 経由 test 違反 (tests が application/ 直 import / bindings 不使用)
@@ -146,7 +146,7 @@ emit_violation() {
   local desc="${detail}
 
 Reference:
-- Slice DoD rule definitions: .apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md (\"Slice Definition of Done\")
+- Slice DoD rule definitions: .apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md (\"Slice Definition of Done\")
 - Label convention: .apm/instructions/task-management.instructions.md (\"/ori-doctor violation issue の label convention\")
 - Auto-filed by: .apm/skills/ori-doctor/scripts/check-dod-sweep.sh"
 

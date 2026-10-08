@@ -150,7 +150,7 @@ if not compose_services:
 header = (
     "# @ori-generated scenario:" + scenario_id + "\n"
     "# /ori-generate が生成 (manifest + architecture.md runtime blocks + infra catalog)。\n"
-    "# 直接編集には /ori-sync --force が必要。\n"
+    "# 直接編集不可。source (manifest / architecture.md) を編集し /ori-sync → /ori-flow で再生成。\n"
 )
 body = yaml.dump({'services': compose_services}, default_flow_style=False, sort_keys=False)
 with open(out_path, 'w') as f:

@@ -1,0 +1,346 @@
+---
+ori:
+  node_id: pattern:ddd-vsa-hex
+  type: pattern
+  version: 1.0.0
+  applicable_when:
+    - "domain complexity: medium-high"
+    - "bounded contexts: multiple"
+    - "test-first development desired"
+  not_applicable_when:
+    - "domain complexity: trivial (CRUD only)"
+    - "single-developer prototype"
+  default_layer_set: ddd-vsa-hex-ts
+  alternate_layer_sets: [ddd-vsa-hex-rs]
+  cross_cutting_concerns: [auth, error-handling, logging]
+---
+
+# Pattern: DDD-VSA-Hex
+
+DDD (Domain-Driven Design) + VSA (Vertical Slice Architecture) + Hexagonal を 1
+パターンに統合したアーキテクチャ。BC ごとに slice 群を縦に積み、各 slice 内は
+hexagonal の薄い 4 + 1 サブレイヤで pipeline 化する。
+
+## Summary
+
+- **BC = top-level folder**: 1 BC = 1 ディレクトリ。BC 間は contracts / events 経由でのみ
+  協調し直接 import 禁止。
+- **Slice = use case 単位の vertical cut**: BC 内に `slices/<slice-id>/` を並べ、それぞれが
+  domain / application / infrastructure / presentation / tests を自前で持つ。
+- **Public entry per slice**: slice の対外 API は `<public_entry>`(言語別)1 ファイル
+  のみ。slice 内部に外から直接 import するのはアーキ違反。
+- **UI layer は別ピラミッド**: 1 ピラミッドの外側に `ui-widget` / `ui-page` (ddd-vsa-hex
+  固有の ui-layer)を置き、slice の public entry 経由でのみ domain に触る。
+- **SSoT は architecture.md frontmatter**: 依存ルールは全て `.ori/architecture.md` の
+  frontmatter に declarative に書かれ、adapter (eslint / rust 等)が build-time に
+  enforce する。
+
+## When to use
+
+- 中〜高複雑度のドメインで、ロジックがビジネスルール起点に育つ見込みがある。
+- 複数の BC が同居し、横断的な汚染 (ある BC の事情が別 BC に染み出す)を物理的に防ぎたい。
+- テスト先行 / 静的依存検査ベースで品質を底上げしたい (ユニットの粒度を slice-internal
+  に押し込みたい)。
+- 同一 project 内で frontend / backend (or TS / Rust)を 2 root として平行に育てる必要がある。
+
+## When NOT to use
+
+- CRUD だけで済むトリビアルなアプリ / プロトタイプ。レイヤ階層がオーバーヘッドになる。
+- ドメインモデルが 1 個に閉じ、かつ team 規模が 1 人だけ。VSA の slice 分離コストを
+  正当化しにくい。
+- ライブラリパッケージ / SDK 開発。BC + slice の概念が当てはまらない。
+
+## Tradeoffs
+
+| 得るもの | 払うコスト |
+| --- | --- |
+| BC / slice 境界が物理的に lint で守られる | ファイル数 / ディレクトリ階層が深くなる |
+| slice 単位の追加・差し替え・削除が安全 | 共通化したい code に thin layer をいくつか足す必要が出る |
+| domain / application / infrastructure の分離が test しやすい | "1 file の方が読みやすい" 局面では分散感が出る |
+| TS / Rust 両 root 同居が可能 (`cross_root` で繋ぐ) | 2 言語を維持する手間が増える |
+
+## Conceptual structure (stack-agnostic)
+
+```
+<root.path>/
+├── <slice_root>/                       # BC = 1 ディレクトリ (e.g. task-management)
+│   ├── shared/                         # BC-internal shared (kind: shared)
+│   │   ├── types/                      # Result / branded VOs / 共通型
+│   │   ├── events/                     # base DomainEvent shape
+│   │   ├── contracts/                  # cross-slice 契約 (default empty)
+│   │   └── <ipc/>                      # (stack 依存) 例: tauri-specta bindings
+│   └── slices/                         # slice_subdir
+│       └── <slice-id>/                 # 1 use case = 1 slice
+│           ├── <public_entry>          # 対外 PUBLIC API — 唯一の出入口
+│           ├── domain/                 # aggregates / VO / events (pure)
+│           ├── application/            # use case orchestration
+│           ├── infrastructure/         # adapters / I/O
+│           ├── presentation/           # view model / pure render (or commands)
+│           └── tests/                  # slice-local tests
+├── <ui-widget>/                        # ddd-vsa-hex ui-layer (order 1, 任意)
+└── <ui-page>/                          # ddd-vsa-hex ui-layer (order 2)
+```
+
+- BC を複数同居させる場合は `<slice_root>` を横に並べる(`task-management/` と
+  `billing/` 等)。
+- frontend / backend など複数 root を同居させる場合は `architecture.md` の
+  `roots:` で複数宣言し、`cross_root:` で生成物 (例: type-bridge bindings)を declare。
+
+## Layer responsibilities
+
+### Top-level layers
+
+| layer | kind | 責務 |
+| --- | --- | --- |
+| `shared` | shared | BC-internal の共通基盤 (Result / branded VO / event base / contracts)。誰からも import されてよいが何も import しない |
+| `domain` | slice | 1 child = 1 slice。BC のユースケースを vertical に切り出した単位 |
+| `ui-widget` | ui-layer (order 1) | 複数 slice を横断する UI コンポーネント (任意) |
+| `ui-page` | ui-layer (order 2) | page = 複数 slice の宿主。ルーティング / page-level state を担う |
+
+### Slice-internal sub-layers
+
+slice 内部は一方向 pipeline:
+
+```
+presentation → application → domain
+infrastructure → domain
+tests → (presentation, application, infrastructure, domain)
+```
+
+| sub-layer | 責務 |
+| --- | --- |
+| `domain` | aggregate / VO / domain event / pure 関数。I/O / framework 依存禁止 |
+| `application` | use case orchestration。domain 関数を組み合わせ port (infrastructure)を呼ぶ |
+| `infrastructure` | I/O adapter (repository / API client / DB)。domain で宣言された port を実装 |
+| `presentation` | UI 向けの薄い変換 (view model / pure render)。Rust では tauri commands 等の external interface |
+| `tests` | slice-local test。同じ slice 内の任意の sub-layer に到達可 |
+
+## Dependency rules
+
+### Cross-layer (top-level)
+
+```
+ui-page    → [ui-widget, shared, domain]
+ui-widget  → [shared, domain]
+domain     → [shared]
+shared     → []
+```
+
+`same_layer: prohibited` — 同じ layer の sibling 同士の import は不可
+(例: 1 つの ui-widget が別の ui-widget を直接呼ぶ等)。
+
+### Cross-slice
+
+```
+prohibited_direct: true
+via: [shared/contracts, shared/events]
+```
+
+slice A が slice B の事情を必要とする場合は、`<slice_root>/shared/contracts/` に
+型を宣言するか `shared/events/` に domain event を発行し、両者がその contract に
+依存する形に倒す。slice 直 import は静的検査で reject される。
+
+### Cross-BC
+
+```
+via: [<root.path>/shared/contracts, <root.path>/shared/events]
+same_event_bus: true
+```
+
+BC をまたぐ場合は app-level の `shared/` を経由する。同 app 内では 1 つの
+event bus を共有する想定 (multi-app 化したら別途 `cross_app:` で宣言)。
+
+### Cross-root (任意、複数言語/複数 deploy 単位時)
+
+```
+cross_root:
+  - from: { root: <id>, path: <generator-source> }
+    to:   { root: <id>, path: <generated-binding> }
+    generator: <generator-name>
+    auto_generated: true
+```
+
+例: tauri-specta が Rust の `#[tauri::command]` から TS の bindings.ts を生成する
+ケース等。生成物は片方の root から手書きで触らない。
+
+## Slice Definition of Done
+
+A slice is "complete" iff:
+
+1. **All declared `slice_internal.sub_layers` have content**
+   (e.g., `domain`, `application`, `infrastructure`, `presentation`, `tests`).
+
+2. **Tests exercise the slice through its declared external boundary**:
+   - If the slice's enclosing layer participates in a `cross_root` contract
+     (e.g., Tauri command surface bridged by tauri-specta),
+     tests MUST invoke through the generator-produced binding,
+     not through internal Rust/application calls.
+   - Otherwise, tests MUST import only via the slice's `public_entry`.
+
+3. **Test fixtures use the production wiring**, not fakes/mocks for adapters
+   that the slice depends on. Unit-level tests with fakes MAY live in
+   `application/`-internal test modules but DO NOT count toward DoD.
+   Boundary tests (rule 2) MUST construct the slice with its production
+   adapter set.
+
+4. **Every `cross_root` contract is up-to-date**: the generator-produced
+   file matches the latest source side. Phase hooks SHOULD rebuild on
+   `flow-impl-red` and `flow-impl-green`.
+
+Each stack template instantiates rules 2–4 with concrete file paths and
+tooling (see `stacks/<stack>/`).
+
+## Naming conventions
+
+- **BC name (TS / kebab-case)**: `task-management`, `billing`, `order-fulfillment` 等。
+  ドメイン語彙をそのまま使う。
+- **BC name (Rust / snake_case)**: TS の `task-management` ↔ Rust の `task_management`。
+  言語識別子規則に従う。
+- **Slice id**: 動詞句 + 名詞で use case を表現 (`complete-task`, `create-order`,
+  `archive-task` 等)。TS は kebab、Rust は snake で揃える。
+- **Public entry**: 言語別 (`index.ts` / `mod.rs` / `lib.rs` 等)で 1 ファイル統一。
+- **Slice ファイル**: `domain/<vo-name>.ts` / `application/<verb-noun>.ts` 等、
+  PascalCase 型と関数名は中身で命名、ファイル名は kebab/snake で統一。
+- **Branded VO**: 型名は PascalCase (`TaskId`、`TaskTitle`)、コンストラクタは
+  lowercase verb (`taskId(raw)`, `taskTitle(raw)`)、Error 型は `<VO>Error` 命名。
+
+## Cross-cutting concerns placement
+
+| 関心事 | 配置先 | 理由 |
+| --- | --- | --- |
+| **Auth / authorization** | `<root.path>/shared/guards/` (生成物)、宣言は `.ori/architecture.md` の `cross_cutting_concerns` | 全 slice 横断で必要、SSoT 1 箇所 |
+| **Error 共通型** | `<slice_root>/shared/types/result.rs` (or `.ts`) | BC ごとに `Result<T, AppError>` を共有 |
+| **Logging** | `<root.path>/shared/logger.ts` (生成物) | 1 instance を全 slice が import |
+| **Domain event base** | `<slice_root>/shared/events/event.ts` | BC ごとに event の基底形を 1 つ |
+| **Event bus** | `<root.path>/shared/events/event-bus.ts` (生成物) | BC をまたいだ event 配信が 1 hub |
+| **Validation / Result** | `<slice_root>/shared/types/result.ts` | "ok / err" の判定だけは BC 全体で揃える |
+
+cross-cutting を slice 内部に閉じ込めると、slice 間の対称性が崩れて結局
+app-level に重複が出る。逆に最初から app-level に寄せると BC ごとの方言が
+作りにくくなる。`shared/` の 2 段構成 (BC-internal + app-level)はそのバランスを
+取るためのもの。
+
+## Test conventions (stack-agnostic)
+
+`Slice Definition of Done` (rule 2/3) が要求する「boundary 経由 test」と
+「production wiring fixture」を、**言語・テストライブラリ中立**なメタルールの
+形で具体化する。実際のランナー / assertion 記法 / property test ライブラリは
+**stack-specific** (各 `stacks/<stack>/test.md`) に置き、本節は関心事としての
+メタルールだけを担う。
+
+### トレーサビリティ
+
+- **テストは spec.md のセクションを引用する**: `describe` / `it` 名に
+  `spec.md#<section-id>` (例: `spec.md#invariants`) を必ず含め、domain 文書と
+  テストの相互 grep を可能にする。
+- **feature/scenario ID を最外殻に**: `describe('slice:<slice-id>', ...)` /
+  `describe('scenario:<scenario-id>', ...)` のように、該当 ID を最外殻の
+  `describe` に置く (grep 容易性)。
+
+### Mock 境界
+
+- **Mock / fake は adapter 境界のみ**: domain 純粋コードは実物を使う。
+  mock 注入は `infrastructure/` 配下に限定し、slice DoD test では行わない
+  (rule 3 違反)。
+- **adapter 以外の境界 (clock / fs 等の副作用) は引数注入 / trait 抽象で**:
+  `Date.now()` やファイル I/O を domain/application に直書きしない。
+
+### GIVEN / WHEN / THEN
+
+- Gherkin 風の `GIVEN / WHEN / THEN` コメントで `validation.md` シナリオを
+  残してよい (テストを自然言語 scenario に対応づける)。
+
+### DoD boundary fixture (rule 2/3) {#dod-boundary-fixture}
+
+- boundary test は **外部境界 (生成済み binding / public_entry) 経由のみ**。
+  `application/` / `infrastructure/` への直 import は DoD 違反
+  (`/ori-doctor` が AST 検査で `dod-violation` 起票)。
+- fixture は **production wiring** で組む (rule 3)。fake/mock adapter で組んだ
+  test は DoD カウントに含めない。
+
+### UI selector / testid 規約 (stack-agnostic)
+
+UI framework を採用するプロジェクトに適用する selector 優先順位と testid 命名。
+
+- **層別デフォルト**:
+  - Component test 層 — `getByRole` / `getByLabelText` を第一推奨。
+    `data-testid` は role 不能時の fallback のみ (a11y 回帰を同時検出)。
+  - E2E 層 — `data-testid` を第一推奨 (実 DOM/CSS で role 安定性が落ちるため)。
+- **testid 命名は VSA namespace を直接反映** (separator は `.`、BC prefix は
+  collision 時のみ escalation):
+
+  | 配置 | testid pattern | 例 |
+  | --- | --- | --- |
+  | slice presentation 集約要素 | `<slice-id>` | `data-testid="complete-task"` |
+  | slice presentation 子要素 | `<slice-id>.<elem>` | `data-testid="complete-task.submit"` |
+  | ui-widget 集約要素 (root) | `widget.<id>` | `data-testid="widget.task-list"` |
+  | ui-widget 子要素 | `widget.<id>.<elem>` | `data-testid="widget.task-list.row"` |
+  | ui-page 集約要素 (root) | `page.<id>` | `data-testid="page.tasks"` |
+  | ui-page 子要素 | `page.<id>.<elem>` | `data-testid="page.tasks.header"` |
+  | shared (BC 共有 UI) | `shared.<area>.<elem>` | `data-testid="shared.toast.message"` |
+
+- `<id>` は `.ori/pages/<id>/` のディレクトリ名を**そのまま**使う。id が kind 接頭辞を
+  含んでいても除去しない (`page-main` → `page.page-main.<elem>`)。変換を持たないことで
+  実装・テスト生成の解釈差を無くす。
+- `<elem>` は機能名 (`submit` / `cancel` / `row`) 。実装詳細名 (`button1`) 禁止。
+  kebab-case、階層が要るときは `.` で連結する。
+- **testid は literal で書く**。式・テンプレート埋め込み (`` data-testid={`x-${v}`} ``) で
+  組み立てない。動的要素は固定 testid + `data-key={id}` で絞る。literal であることが
+  契約検査 (実装 grep) の前提になる。
+- prod ビルドでの testid strip はデフォルト残す (stack-specific / downstream で
+  bundler plugin 導入は任意)。
+
+#### page / widget の testid 契約 (`testids.yaml`, ori-oan.7) {#page-testid-contract}
+
+page / widget の testid は規則から各自が導出するのではなく、**`.ori/pages/<id>/testids.yaml`
+に具体値として確定した契約**を実装 (`/ori-test-red` / `/ori-impl-green`) と
+E2E 生成 (`/ori-generate`) の双方が読む。規則の解釈を 2 箇所で行うと乖離する
+(promptnotes で ui-field id 直写しと規約形式が並立した G5 の再発) ため、解釈は script 1 箇所に寄せる。
+
+```yaml
+# .ori/pages/widget-settings-modal/testids.yaml
+derived:   # @ori-generated — scripts/testids.js sync が ui-fields から再生成。手編集禁止
+  - testid: widget.widget-settings-modal.save
+    field: screen-2-save
+extra:     # ori-derive / ori-generate が scripts/testids.js add-extra で追記
+  - testid: widget.widget-settings-modal
+    purpose: root
+    source: derive                  # derive | scenario:<scenario-id>
+  - testid: widget.widget-settings-modal.theme-option
+    purpose: テーマ選択肢
+    dynamic: data-key               # 固定 testid + data-key
+    source: derive
+```
+
+- **derived (ui-fields 由来)**: `domain/ui-fields/screen-<N>.md` の field id
+  (`screen-1-note-body` 等) は**ドメイン側の識別子**であり testid ではない。page manifest の
+  `derives_from` が指す screen の `## Fields {#fields}` 全 field について
+  `<kind>.<id>.<elem>` を導出する。`<elem>` は field id から `screen-<N>-` を除いた部分。
+  例: ui-field `screen-1-note-body` を page `capture` に配置 → `page.capture.note-body`。
+  - page 内で `<elem>` が衝突したら (複数 screen の `save` 等) script は停止する。
+    field id の改名か page grouping の見直しで解消する (自動で prefix を残す等の回避はしない)。
+    11b (page grouping) の自己検証で `check-collisions` により前倒し検出する。
+  - page 未 scaffold・screen 不在は推測で埋めず停止する (旧 `TBD` 規則は廃止)。
+- **extra (ui-field 以外)**: root / region / エラー表示 / 部品など。`/ori-derive` が page spec
+  合成時に登録し、scenario が契約外の要素を必要とした場合は `/ori-generate` が
+  `source: scenario:<id>` で追記する。追記のみで、既存行の変更・削除は人間が行う。
+- **検査** (`scripts/testids.js check`): ① derived の stale ② extra 形式 (`<kind>.<id>` 接頭辞) ③ 重複
+  ④ 契約 testid が実装 source に literal で存在する (契約 ⊆ 実装。契約外の実装 testid は許容)
+  ⑤ 実装 testid の lint (動的組み立て禁止・形式・存在しない page 参照)。
+  `/ori-impl-green` の完了条件 / `/ori-review` structural gate / `/ori-doctor` が実行する。
+  ⑤ の違反は page に帰属させる (`page.<id>` / `widget.<id>` → その page、`screen-<N>-*` → その screen を持つ page。
+  値から決まらなければ、同じファイルが付けている testid から page が 1 つに決まればその page)。
+  page を指定した check はその page に帰属する違反だけを数え、帰属できない違反は `NOTE` で表示し `--all` だけが数える。
+- **既存実装の移行** (ori-oan.13): 契約より前の実装 (ui-field id を testid にしたもの等) は実装側を契約へ移す。
+  実装 testid を契約の alias にはしない。手順は [`ui-test.instructions.md#testid-migration`](../../../../../apm_modules/dev-komenzar/ori/.apm/instructions/ui-test.instructions.md#testid-migration)
+  (置換対応表 `scripts/testids.js migrate-map <id>`)。
+- `testids.js` は cwd から上方へ `.ori/` を探して project root を決める。project root 外 (user スコープに install された skill dir 等) から実行する場合は `--root <project-root>` を渡す。
+- slice presentation (`<slice-id>.<elem>`) は本契約の対象外 (ori-oan.12)。
+
+### 責務分離 (正典と stack-specific)
+
+- 本節は **stack-agnostic なメタルールと UI selector 規約**。
+  ランナー名・property test ライブラリ・assertion 記法などの concretion は
+  `stacks/<stack>/test.md` を正典とする。instructions
+  (`ddd-test.instructions.md` 等) は両者のポインタのみを持ち、concretion を
+  二重管理しない。

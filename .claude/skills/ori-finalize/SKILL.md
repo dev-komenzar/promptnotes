@@ -1,13 +1,13 @@
 ---
 name: ori-finalize
-description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮上・beads 後始末を行う。/ori-sync が全体伝播するのに対し、こちらは 1 slice を締める
+description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮上・beads 後始末を行う。/ori-sync が全体伝播するのに対し、こちらは 1 slice を締める。scenario では phase 4 として台帳 (status.yaml) を確定する
 ---
 
 ユーザが `/ori-finalize <slice-id>` を呼ぶ、または `/ori-flow` 内部から phase 7 として起動した際に、**当該 slice の状態を整理して "1 slice を完了させる"**。`/ori-sync` が全体に変更を fan-out するのに対し、`/ori-finalize` は **1 slice の内向きの締め**。
 
 ## 引数
 
-- `slice-id`：対象 slice の id
+- `id`：対象 slice / scenario の id
 
 ## 役割
 
@@ -78,6 +78,22 @@ description: /ori-flow phase 7。当該 slice の dirty 解除・proposal の浮
    ```bash
    bd close ori-finalize-<slice-id> --reason="slice complete; status cleared; <N> proposals surfaced"
    ```
+
+## scenario の場合（type: scenario）
+
+`/ori-flow` の scenario workflow は phase 4 で `/ori-finalize <scenario-id>` を呼ぶ。scenario では slice 固有の `clear-dirty.sh` / `update-hash.sh`（どちらも `.ori/slices/<id>/` 固定）を使わず、次の順で締める:
+
+1. **前提確認**：`.ori/scenarios/<id>/review.md` が存在し verdict=PASS であることを確認する（slice の review gate に相当）
+2. **phase 台帳の確定（R1）**（決定的 writer。冪等）:
+   ```bash
+   node scripts/scenario-status.js set <scenario-id> finalize done
+   node scripts/scenario-status.js show <scenario-id>
+   ```
+3. **beads close**:
+   ```bash
+   bd close ori-finalize-<scenario-id> --reason="scenario complete; phase ledger updated"
+   ```
+4. **dirty / spec hash**: scenario の `status.yaml.dirty` と `spec.md` hash 更新は現状未実装（R3 で扱う）。この phase では台帳の確定のみ行う
 
 ## 注意
 

@@ -5,7 +5,7 @@ description: /ori-flow phase 3。spec.md のテスト観点から failing test �
 
 ユーザが `/ori-test-red <slice-id>` を呼ぶ、または `/ori-flow` 内部から phase 3 として起動した際に、**該当 slice の `<source_root>/<bc>/slices/<slice-id>/tests/` 配下に failing test を書く**。**impl (production application logic) は書かない**。RED が観測できた時点で完了。`<source_root>` は `.ori/architecture.md` の `root.path`（単一 root）または `roots[<id>].path`（multi-root）、なければ `.ori/config.yaml` `workspace.apps[<app>].path + "/src"` で resolve（後述）。
 
-**stack=typescript-tauri** の場合は **Slice DoD rule 2/3** (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done") を強制するため、test だけでなく **boundary 契約一式 (stub Rust command + invoke_handler 登録 + specta rebuild + bindings 経由 test)** を p3 sub-step として emit する (= **b3 emit**)。
+**stack=typescript-tauri** の場合は **Slice DoD rule 2/3** ([`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の "Slice Definition of Done") を強制するため、test だけでなく **boundary 契約一式 (stub Rust command + invoke_handler 登録 + specta rebuild + bindings 経由 test)** を p3 sub-step として emit する (= **b3 emit**)。
 
 ## 引数
 
@@ -24,15 +24,16 @@ description: /ori-flow phase 3。spec.md のテスト観点から failing test �
 - 入力：
   - `.ori/slices/<id>/spec.md`（phase 1 で生成済み。`## 境界契約 {#boundary-contract}` section を含む — `feature-spec.instructions.md` 参照）
   - `.ori/slices/<id>/manifest.yaml`（`bc:` `app:` と `expected_deliverables` の解決に必要）
+  - `.ori/pages/<id>/testids.yaml`（type: page / widget のみ。testid 契約 — `scripts/testids.js sync <id>` で最新化してから読む）
   - `.ori/config.yaml`（`workspace.apps:` から `app:` 解決、fallback として `apps[].path`/src を `<source_root>` に使う）
   - `.ori/architecture.md`（あれば `root.path` / `roots[<id>].path` を canonical な `<source_root>` として優先採用。`stack:` field から typescript-tauri 判定）
-  - `.apm/instructions/ddd-test.instructions.md`（test 共通メタルール; concretion の正典は下記 test.md）
-  - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`（Rust stub 規約: "#commands-rs-required"）
-  - `.apm/instructions/ui-test.instructions.md`（UI selector / `setupProductionBuilder()` の glue）
+  - [`ddd-test.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/ddd-test.instructions.md)（test 共通メタルール; concretion の正典は下記 test.md）
+  - [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md)（Rust stub 規約: "#commands-rs-required"）
+  - [`ui-test.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/ui-test.instructions.md)（UI selector / `setupProductionBuilder()` の glue）
   - テスト concretion 正典（stack-specific）:
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/test.md`（vitest + fast-check + assertion 記法）
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`（boundary test / `setupProductionBuilder`）
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md`（cargo test + proptest / Tauri command surface）
+    - [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript/test.md)（vitest + fast-check + assertion 記法）
+    - [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md)（boundary test / `setupProductionBuilder`）
+    - [`ori-architect/patterns/ddd-vsa-hex/stacks/rust/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/rust/test.md)（cargo test + proptest / Tauri command surface）
 - 出力：
   - 全 stack: `<source_root>/<bc>/slices/<slice-id>/tests/<topic>.test.ts`
   - stack=typescript-tauri 追加:
@@ -49,10 +50,10 @@ description: /ori-flow phase 3。spec.md のテスト観点から failing test �
 
 | 規定 | 参照 |
 | --- | --- |
-| Slice DoD rules 1-4 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
-| Test contract instantiation (typescript-tauri) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/architecture.md.tpl` "Test Contract" section |
-| 参照実装 (commands.rs / dod.test.ts / setupProductionBuilder.ts) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/` |
-| 初期 scaffold (export-types.rs / specta-build.sh / setupProductionBuilder skeleton) | `.apm/skills/ori-init/scripts/install-tauri-scaffold.sh` + `.apm/skills/ori-init/scripts/templates/tauri-stack/` |
+| Slice DoD rules 1-4 | [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) "Slice Definition of Done" |
+| Test contract instantiation (typescript-tauri) | `.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/architecture.md.tpl` "Test Contract" section |
+| 参照実装 (commands.rs / dod.test.ts / setupProductionBuilder.ts) | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/`](../ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/) |
+| 初期 scaffold (export-types.rs / specta-build.sh / setupProductionBuilder skeleton) | [`ori-init/scripts/install-tauri-scaffold.sh`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-init/scripts/install-tauri-scaffold.sh) + [`ori-init/scripts/templates/tauri-stack/`](../ori-init/scripts/templates/tauri-stack/) |
 
 ## `<app>` `<bc>` `<source_root>` `<stack>` の解決
 
@@ -159,6 +160,11 @@ skill 起動時に以下の順序で resolve:
 9. **domain / application 層の vitest テストを emit**:
    - 既存ルール (sibling import / fast-check VO test) で `<slice-id>.test.ts` / `<slice-id>-vo.property.test.ts` を書く
    - impl 不在の段階では module-not-found / type error で fail。`// @ts-expect-error` は不要、失敗をそのまま観測
+9b. **page / widget の presentation test** (manifest `type: page` / `type: widget` のみ。ori-oan.7):
+   - `node scripts/testids.js sync <id>` を実行してから `.ori/pages/<id>/testids.yaml` を読む
+   - component test は `getByRole` / `getByLabelText` を第一推奨。testid が要る場合は**契約の値だけ**を使う
+     (`derived:` / `extra:` の `testid`)。ui-fields の field id (`screen-<N>-*`) や規則からの自前導出を書かない
+   - 契約に無い testid が必要なら test に直書きせず、`/ori-derive` の extra 登録漏れとしてユーザに報告する
 10. **`pnpm test --filter <slice-id>` 相当を Bash で実行**して RED を確認：
     ```bash
     pnpm -F <app> test <source_root>/<bc>/slices/<slice-id>/tests

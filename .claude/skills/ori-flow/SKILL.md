@@ -85,12 +85,16 @@ manifest テンプレートは skill bundle 内の `./templates/slice-manifest.y
 
 ### scenario workflow (4 phase)
 
+scenario は **scenario-first が既定**: 参加 slice（`contracts.slices`）の完了を待たずに 4 phase を実行する。slice 完了ゲート・slice への beads dep は存在しない（slice 未実装なら生成テストが実行時に RED になる。詳細は scenario.instructions.md §creation-timing）。
+
 3. **phase 1: derive** — `/ori-derive <id>` を起動（scenario spec を domain docs から合成）
 4. **phase 2: generate** — `/ori-generate <id>` を起動（scenario test code を生成）
 5. **phase 3: review** — `/ori-review <id>` を起動（scenario の adversarial review）
-6. **phase 4: finalize** — `/ori-finalize <id>` を起動（dirty 解除、spec hash 更新）
+6. **phase 4: finalize** — `/ori-finalize <id>` を起動（台帳確定、beads close）
 
 各ステップ後、対応する `bd show ori-<phase>-<id>` を見て status が closed なら次の phase へ。closed でなければ §「停止条件」へ。
+
+**phase 台帳（status.yaml）**: 各 scenario phase skill は完了時に `scenario-status.js set <id> <phase> done` を呼び、台帳を決定的に更新する（R1）。orchestrator は台帳を直接書かない（責務は phase skill 側）。`node scripts/scenario-status.js show <id>` で確認できる。
 
 ## 停止条件
 
@@ -116,6 +120,7 @@ manifest テンプレートは skill bundle 内の `./templates/slice-manifest.y
 - domain 文書を変更したくなった場合は `/ori-sync --force <path>` または `/ori-propose` で proposal 生成
 - **slice / page / scenario 不在時に勝手に新規作成しない**：必ずユーザ確認
 - orchestrator が runner / bundle / 独自 state file を導入したくなったら、それは「各 phase skill が self-contained でない」サイン — 該当 phase skill を強化するのが正しい修正方向（orchestrator に責務を集約しない）
+- **scenario が RED でも scenario workflow で実装しない**：scenario = 検証軸（4 phase、impl phase なし）。RED の対処は実装軸の別ワークフロー（対象 slice に対する `/ori-flow <slice-id>`、または `/ori-bug` case 4）で行う。scenario と slice は 1:1 対応不要で、`contracts.slices` は任意の情報リンク（blocking しない）
 - **scenario type の検出**：`manifest.yaml` の `type: scenario` で判定。`type` フィールドが存在しない場合はエラーで停止
 
 ## 次のアクション

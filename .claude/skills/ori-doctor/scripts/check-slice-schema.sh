@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ori-doctor: check slice document schema
 # Validates: spec.md structure, status.yaml presence, manifest.yaml presence
+# status.yaml absent = slice created outside new-slice.js or legacy (new-slice.js always writes it).
+# WARN only: never ERROR, in-progress slices must not fail the doctor run
 set -euo pipefail
 
 # Auto-detect project root (PWD-first; SCRIPT_DIR fallback last).
@@ -39,7 +41,8 @@ for dir in .ori/slices/*/; do
     ((ISSUES++)) || true
   fi
   if [[ ! -f "$dir/status.yaml" ]]; then
-    echo "  WARN  slices/$id: missing status.yaml"
+    echo "  WARN  slices/$id: no status.yaml (created outside new-slice.js or legacy); /ori-flow cannot finalize until restored"
+    echo "        fix: 1) restore .ori/slices/$id/status.yaml (see ori-doctor SKILL.md), 2) /ori-flow $id"
     ((ISSUES++)) || true
   fi
 done

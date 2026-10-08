@@ -2,7 +2,7 @@
 //
 // Returns a handler suitable for `@tauri-apps/api/mocks#mockIPC`, wired
 // to each slice's PRODUCTION adapter set (no fakes / no stubs). DoD
-// rule 3 (.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md)
+// rule 3 (.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md)
 // requires boundary tests to construct slices via this single entry —
 // per-slice fake builders MUST NOT be used to satisfy DoD.
 //
