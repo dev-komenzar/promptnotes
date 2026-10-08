@@ -5,15 +5,17 @@
 	import { copyNoteBody } from '$lib/note-capture/slices/copy-note-body';
 	import { draftStore } from '../stores/draft.svelte';
 	import { feedStore } from '../stores/feed.svelte';
+	import { focusStore } from '../stores/focus.svelte';
 	import { toastStore } from '../stores/toasts.svelte';
 	import { submitShortcutHint } from '../submit-shortcut-hint';
 
 	type Props = {
 		store?: typeof draftStore;
 		feed?: typeof feedStore;
+		focus?: typeof focusStore;
 	};
 
-	let { store = draftStore, feed = feedStore }: Props = $props();
+	let { store = draftStore, feed = feedStore, focus = focusStore }: Props = $props();
 
 	let host: HTMLDivElement | undefined = $state();
 	let view: EditorView | undefined;
@@ -44,6 +46,8 @@
 				created_at: outcome.created_at,
 				updated_at: outcome.created_at
 			});
+			// I-PM9: 新 Block を FOCUSED にする (Block 側の $effect が DOM focus を移す)
+			focus.focus(outcome.id);
 			// Fire-and-forget clipboard copy (post-condition from create-note workflow)
 			copyNoteBody(outcome.id)
 				.then(() => toastStore.pushCopied())

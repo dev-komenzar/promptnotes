@@ -3,6 +3,11 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import DraftRegion from '../regions/DraftRegion.svelte';
 import { submitShortcutHint } from '../submit-shortcut-hint';
+import { createFocusStore } from '../stores/focus.svelte';
+
+vi.mock('$lib/note-capture/slices/copy-note-body', () => ({
+	copyNoteBody: vi.fn().mockResolvedValue(undefined)
+}));
 
 function makeFakeStore() {
 	return {
@@ -37,5 +42,41 @@ describe('component:DraftRegion add button footer', () => {
 		await vi.waitFor(() => {
 			expect(store.submit).toHaveBeenCalledTimes(1);
 		});
+	});
+});
+
+describe('component:DraftRegion submit → focus (I-PM9)', () => {
+	it('spec#invariants-cross-region I-PM9 — submit 成功時に新 Block を FOCUSED にする', async () => {
+		const store = makeFakeStore();
+		store.submit.mockResolvedValue({
+			outcome: 'created',
+			id: 'new-note-id',
+			created_at: '2026-01-01T00:00:00Z'
+		});
+		const feed = { prependNote: vi.fn() };
+		const focus = createFocusStore();
+		render(DraftRegion, { store: store as never, feed: feed as never, focus });
+
+		await page.getByRole('button', { name: /Add new note/ }).click();
+
+		await vi.waitFor(() => {
+			expect(feed.prependNote).toHaveBeenCalledTimes(1);
+		});
+		expect(focus.activeId).toBe('new-note-id');
+		expect(focus.activeState).toBe('FOCUSED');
+	});
+
+	it('spec#invariants-cross-region I-PM9 — submit が no_op の場合はフォーカスを変えない', async () => {
+		const store = makeFakeStore();
+		const feed = { prependNote: vi.fn() };
+		const focus = createFocusStore();
+		render(DraftRegion, { store: store as never, feed: feed as never, focus });
+
+		await page.getByRole('button', { name: /Add new note/ }).click();
+
+		await vi.waitFor(() => {
+			expect(store.submit).toHaveBeenCalledTimes(1);
+		});
+		expect(focus.activeId).toBeNull();
 	});
 });
