@@ -47,6 +47,14 @@ description: ori 独自 Phase 11b（Page Grouping）。ui-fields の依存関係
     - 確定した `depends_on` (page-groups.md) から `.ori/architecture.md` の `## Page Map` section を自動生成
     - マーカー（`<!-- BEGIN ori-distill phase-11b auto-generated; do not edit between markers -->` ～ `<!-- END ori-distill phase-11b auto-generated -->`）の外側は保持される
 8. `for f in .ori/domain/ui-fields/*.md; do bash ./scripts/lint-domain.sh "$f"; done` を実行して自己検証
+   - **testid `<elem>` 衝突検査** (ori-oan.7): `node scripts/testids.js check-collisions` を実行する。
+     page の testid は field id から `screen-<N>-` を除いた `<elem>` で導出されるため、
+     1 page に複数 screen を束ねると `screen-2-save` / `screen-3-save` が同じ testid に衝突する
+     (規範: `ddd-vsa-hex/pattern.md` "page / widget の testid 契約")。exit 1 なら衝突した
+     grouping と field を提示し、**field id の改名 (11a へ戻る) か grouping の見直し**をユーザに選ばせる。
+     自動で prefix を残す等の回避はしない
+   - grouping ⇔ screen の対応は `depends_on` の `ui-field:screen-N` から読まれる。WARN「解析できません」が出たら
+     出力テンプレートどおり `ui-field:screen-N` で書いているか確認する
 9. lint 失敗時は **1 回だけ** 自動修正を試み、それでも失敗ならユーザに判断を委ねる
 
 ### Phase 完了時：page の一括 scaffold 提案
@@ -114,7 +122,7 @@ ori:
 
 旧仕様では screen-N.md の `coherence.depended_by:` に back-edge を書き戻していたが、`/ori-sync` が `depends_on` edge から reverse 参照を計算するため不要。screen-N.md の `ori:` frontmatter は Phase 11a の出力のまま保持する。
 
-### `/ori-arch sync-page-map` への入力
+### sync-page-map.js (ori-architect bundle) への入力
 
 `page-groups.md` の各 page H2 (`page-grouping:<id>`) の `depends_on` を読み取り、`.ori/architecture.md` の `## Page Map` section を生成する（screen → workflow → slice の推移閉包は sync-page-map が解決）。
 
@@ -129,9 +137,10 @@ ori:
 
 **これが distill-ddd 系の最終 phase**。完了したら実装に進む：
 
-まず `ls .ori/architecture.md` で architecture.md の有無を確認し、**無ければ `/ori-arch` を最初に案内する**（`/ori-flow` は `.ori/architecture.md` 前提で動作する）。
+まず `ls .ori/architecture.md` で architecture.md の有無を確認し、**無ければ `/ori-architect` → `/ori-bootstrap` を最初に案内する**（`/ori-flow` は `.ori/architecture.md` と build 可能な `apps/<app>/` を前提に動作する）。
 
-- **architecture 未確定**：`/ori-arch` — pattern (ddd-vsa-hex 等) / stack を決めて `.ori/architecture.md` を render。完了後に下記メインパスへ
+- **architecture 未確定**：`/ori-architect` — pattern (ddd-vsa-hex 等) / stack を決めて `.ori/architecture.md` を生成 → `/ori-bootstrap` で upstream init / readiness verify。完了後に下記メインパスへ
+- **codebase 未準備**：architecture.md はあるが `apps/<app>/` の readiness 未確認なら `/ori-bootstrap`
 - **メインパス**：`/ori-flow <first-id>` — 1 slice / page を 7 phase で実装開始
   - 推奨：slice → page の順（domain ロジック先行）
 - **scaffold だけ済ませて休む**：page の新規作成を提案し beads issue だけ作っておく

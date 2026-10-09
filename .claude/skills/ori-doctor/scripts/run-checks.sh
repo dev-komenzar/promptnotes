@@ -31,15 +31,18 @@ TOTAL=0
 for check in "$SCRIPT_DIR"/check-*.sh; do
   name=$(basename "$check" .sh | sed 's/^check-//')
   echo "[$name]"
-  "$check" 2>&1 || true
-  TOTAL=$((TOTAL + ${PIPESTATUS[0]:-0}))
+  # Capture rc via `|| rc=$?`: `|| true` would clobber PIPESTATUS/$? with 0.
+  rc=0
+  "$check" 2>&1 || rc=$?
+  TOTAL=$((TOTAL + rc))
   echo ""
 done
 
 echo "[lint]"
 if command -v node >/dev/null 2>&1 && [ -f "$SCRIPT_DIR/lint.js" ]; then
-  node "$SCRIPT_DIR/lint.js" 2>&1 || true
-  TOTAL=$((TOTAL + ${PIPESTATUS[0]:-0}))
+  rc=0
+  node "$SCRIPT_DIR/lint.js" 2>&1 || rc=$?
+  TOTAL=$((TOTAL + rc))
 else
   echo "  lint.js not found or node unavailable, skipping JS lint check"
 fi

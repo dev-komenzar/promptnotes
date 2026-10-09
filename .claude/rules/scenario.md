@@ -48,18 +48,31 @@ scenario の参加者（app）は 2 つの run-mode のいずれかで起動さ�
 - infra（postgres / redis 等）は app ではないため run-mode を持たない。`/ori-generate` の **infra catalog**（skill bundle 内 `scripts/infra-catalog.yaml`）で解決する
 - **「1 scenario = 1 UI runner」制約**: scenario の UI 駆動面は単一 runner（playwright / wdio / vitest）でカバーできること
 
+## 前提条件(test readiness) {#test-readiness}
+
+scenario の generate は、生成物だけで E2E が走るよう app 側の前提を満たす必要がある。`runner=wdio`(local Tauri)時の確定事項:
+
+- **build-then-test の binary 契約**: `runtime.build` は `runtime.binary` を生成する command でなければならない。Tauri の `cargo build` 単体は devUrl 参照の dev binary になるため不可。`tauri build --debug --no-bundle`(例: `bun run build:test`)を使う
+- **plugin 前提**: `@wdio/tauri-service` は `driverProvider` に関係なく `tauri-plugin-wdio` を必須とする。未導入時は focus 系コマンド(`$` / `$$` / `findElement(s)` / `elementClick` / `getTitle`)ごとに 5 秒待機する。配線は Cargo dep + capabilities `wdio:default` + `lib.rs` の `#[cfg(debug_assertions)]` 登録 + frontend 動的 import(`VITE_WDIO_TEST` gate)。production 非混入
+- **storage 隔離（XDG temp）**: runner config の `onPrepare` が per-run temp root を `mkdtemp` し、`XDG_CONFIG_HOME` / `XDG_DATA_HOME` / `XDG_CACHE_HOME` / `XDG_STATE_HOME` を root 配下に向ける。Tauri の `app_config_dir` / `app_data_dir`、WebKitGTK の storage、window-state 等はすべて XDG で解決されるため、app 側 override 無しで settings / preferences を含め隔離される。`HOME` は差し替えない（XDG を経由せず `$HOME` を直接読む app 処理は隔離対象外）。temp root は `ORI_SCENARIO_TMP` として test code / seed に公開する
+  - app 固有の storage override env（例: 旧 ori 標準の `TAURI_TEST_STORAGE_DIR`）は ori 標準ではなく、generate は注入しない。app は保存先を `app_config_dir` / `app_data_dir` 等の XDG 解決に任せる。`runtime.test_env` は固定文字列のみで per-run temp を指せない（per-run の path が必要な test は `ORI_SCENARIO_TMP` を使う）
+- **platform**: wdio scenario は **Linux のみ正式サポート**（XDG 隔離が効くのは Linux のみ。macOS は tauri-driver 非対応）。非 Linux では runner config が隔離を保証できない旨を明示して fail fast する（`SevereServiceError`。普通の `Error` は wdio launcher に握りつぶされる）。runner config は `maxInstances: 1` 固定（>1 / multiremote では `@wdio/tauri-service` が `XDG_DATA_HOME` を上書きする）
+- **node_modules 解決**: `.ori/scenarios/node_modules` → `apps/<app>/node_modules` の symlink
+- **fixture seed**: 既存データ前提の scenario は `onPrepare` で seed する。frontmatter 形式の SSoT は domain / app 側
+
+`/ori-derive` が spec.md の実装ノートにこれらを記録し、`/ori-generate` が生成物に反映する。frontend への plugin import だけは framework 固有のためコード生成せず、実装ノートの要求として残す。
+
 ## ディレクトリ構造 {#directory-structure}
 
 ```
 .ori/scenarios/<scenario-id>/
   manifest.yaml          # SSoT（人間が書く）
   spec.md                # 派生（/ori-derive が生成）
-  validation.md          # 派生（Gherkin 形式、/ori-derive が生成）
   tests/
     <scenario-id>.spec.ts  # 生成テストコード（/ori-generate が生成）
   docker-compose.yml     # 自動生成（/ori-generate が生成。compose-service 系 app + infra のみ、対象ゼロなら省略）
   playwright.config.ts | wdio.conf.ts  # 自動生成（runner 別。vitest は config なし）
-  status.yaml            # dirty 管理（/ori-sync が更新）
+  status.yaml            # phase 台帳 + dirty 管理（phase skill が scenario-status.js で更新、/ori-sync が dirty を伝播）
   review.md              # レビューログ（/ori-review が生成）
 ```
 
@@ -72,6 +85,10 @@ scenario の manifest.yaml は以下のフィールドを持つ:
 ### 必須フィールド {#required-fields}
 
 - **`scenario_id`**: kebab-case。**`.ori/domain/validation.md` の H2 section anchor と 1:1**（§id-convention 参照）。ファイルパス・beads issue ID と連動するため **rename 禁止**
+
+  > ⚠️ **1 scenario = 1 validation section。複数の validation section を 1 scenario にまとめないこと。**
+  > まとめたい場合は先に validation.md 側で section を統合する。`new-scenario.js --list-validation` は
+  > 各 section がそれぞれ 1 つの scenario に対応する前提で表示する。
 - **`type`**: `scenario` 固定
 - **`derives_from`**: ドメイン文書の `path` または `path#section-id` のリスト。**`domain/validation.md#<scenario-id>` を必ず含める**（1:1 anchor）。任意で workflow section 等を追加できる
 
@@ -88,7 +105,7 @@ scenario の manifest.yaml は以下のフィールドを持つ:
 - **`contracts`**: サービス間契約の宣言
   - `http`: HTTP エンドポイントのリスト（例: `["POST /api/orders", "GET /api/orders/:id"]`）
   - `events`: イベント名のリスト（例: `["OrderCreated", "PaymentCompleted"]`）
-  - `slices`: 参照する slice ID のリスト（例: `["create-order", "process-payment"]`）
+  - `slices`: 参照する slice ID のリスト（例: `["create-order", "process-payment"]`）。**任意かつ非要件**: 順序制約・traceability のための情報リンクであり、scenario 検証の成立要件でも slice 実装との対応表でもない。slice 依存ゲートは撤去済みのため blocking しない（未指定・未実装 slice の参照でも scenario は scaffold / RED 可能）
 - **`runner`**: runner の明示 override（例: `playwright` / `wdio` / `vitest`）。未指定時は derive phase が優先チェーンで解決（後述）。無効な指定（tauri 参加なのに `playwright` 等）は derive でエラー停止する
 - **`infrastructure`**: インフラ構成の宣言
   - `services`: 参加者リスト（app 名 + infra 名）。起動方法は `workspace.apps[].runtime` または infra catalog から解決される
@@ -130,9 +147,10 @@ infrastructure:
 ## 作成タイミング {#creation-timing}
 
 1. **DDD pipeline 完了**: `/ori-distill` で workflows + validation が整備される
-2. **manifest scaffold**: `new-scenario.js <id>`（ori-flow skill bundle の `scripts/`）。id は validation.md の section anchor から選択する（`--list-validation` で anchor 一覧と coverage を確認。§id-convention）。`/ori-arch` 完了時の次アクション・`/ori-feature-status` の coverage 表示が導線になる
-3. **beads dep 設定**: 参加 slice の beads issue に `bd depends` が自動設定
-4. **全 slice 完了で unblock**: 参加 slice が全て完了したら、scenario の `/ori-flow` が unblock
+2. **manifest scaffold**: `new-scenario.js <id>`（ori-flow skill bundle の `scripts/`）。id は validation.md の section anchor から選択する（`--list-validation` で anchor 一覧と coverage を確認。§id-convention）。`/ori-architect` 完了時の次アクション・`/ori-feature-status` の coverage 表示が導線になる
+3. **即 `/ori-flow` 可能（scenario-first 既定）**: scaffold 直後から scenario の `/ori-flow`（derive → generate → review → finalize）を回してよい。参加 slice の完了は待たない（slice が 0 件完了でも 4 phase は通る）
+
+scenario は slice 完了から独立している。ori は scenario を実行しない（実行は CI / 手動）ため、slice 完了は ori にとって検証可能な前提ではない。slice 未実装の状態で生成されたテストは実行時に RED となり、それが未実装を可視化する。参加 slice の beads issue への `bd depends` 設定・slice 完了ゲートは行わない（`contracts.slices` は blocking しない情報リンク。§optional-fields）。
 
 ## 4 phase フロー {#four-phase-flow}
 
@@ -141,7 +159,7 @@ scenario は 4 phase で実装する。詳細は各 SKILL.md に委譲。
 ### 1. derive (`/ori-derive <scenario-id>`)
 
 - **入力**: manifest.yaml + ドメイン文書（workflows + validation）
-- **出力**: spec.md（自然言語 + 参照マッピング）+ validation.md（Gherkin）+ runner 解決結果の記録
+- **出力**: spec.md（自然言語 + 参照マッピング + `#scenario-steps` は Gherkin（`Scenario:` / `Given` / `When` / `Then`）で書くことが必須。`Then` 件数は domain/validation.md#<id> と一致させる）+ runner 解決結果の記録。scenario dir に `validation.md` は生成しない（Gherkin の原典は `.ori/domain/validation.md`、派生側は spec.md に内包）
 - **責務**: ドメイン文書から scenario の仕様を派生。矛盾があれば停止し `/ori-propose` を促す
 - **runner chain の解決**（優先チェーン）:
   1. manifest の `runner:`（明示指定）
@@ -153,7 +171,7 @@ scenario は 4 phase で実装する。詳細は各 SKILL.md に委譲。
 
 ### 2. generate (`/ori-generate <scenario-id>`)
 
-- **入力**: manifest.yaml + spec.md（runner 解決済み）+ validation.md（Gherkin）+ `.ori/architecture.md`（runtime blocks）
+- **入力**: manifest.yaml + spec.md（runner 解決済み。Gherkin は `#scenario-steps`）+ `.ori/architecture.md`（runtime blocks）
 - **出力**: テストコード + runner config（`playwright.config.ts` / `wdio.conf.ts`、vitest は config なし）+ docker-compose.yml（compose-service 系 app + infra のみ。`local` 系 app は compose に含めない）
 - **責務**: Gherkin シナリオからテストコードを生成、`infrastructure.services` を runtime block / infra catalog から解決して docker-compose.yml を生成
 - **サービス名解決ルール**: ① `workspace.apps` と一致 → app service（runtime block から生成）② infra catalog と一致 → catalog から生成 ③ 不一致 → 停止してユーザ確認（推測で埋めない）
@@ -175,7 +193,7 @@ scenario は 4 phase で実装する。詳細は各 SKILL.md に委譲。
 
 - **scenario → page**: オプション、配列（`pages: [id, ...]`）
 - **page → scenario**: 参照しない
-- **scenario → slice**: contracts.slices で参照
+- **scenario → slice**: contracts.slices で参照（任意の情報リンク。1:1 対応は不要）
 - **scenario → app**: infrastructure.services で app 名を参照（起動方法は `workspace.apps[].runtime` から解決）
 
 ## beads 連携 {#beads-integration}
@@ -183,14 +201,29 @@ scenario は 4 phase で実装する。詳細は各 SKILL.md に委譲。
 - **EpicKind**: `scenario`
 - **issue 名**: `ori-scenario-<scenario-id>`
 - **phase issue**: derive / generate / review / finalize
-- **依存**: 参加 slice の beads issue に `bd depends` 自動設定
+- **依存**: phase issue 間の順序依存のみ。参加 slice の beads issue への `bd depends` は設定しない（scenario-first。§creation-timing）
 - **dirty 伝播**: `/ori-sync` が `.ori/scenarios/` も走査、finalize で解除
+
+### phase 台帳 (status.yaml) と bd の役割 {#phase-ledger}
+
+- **bd issue** (`ori-scenario-<id>` / `ori-<phase>-<scenario-id>`) が **phase 進行の SSoT**（closed かどうかで次 phase へ進む）
+- **`.ori/scenarios/<id>/status.yaml`** は **機械可読な成果物台帳**（bd と相補的）。各 phase skill が完了時に決定的 writer で必ず更新する (writer は各 phase skill の `scripts/` に同梱):
+  ```bash
+  node <phase skill>/scripts/scenario-status.js set <scenario-id> <phase> done
+  node <phase skill>/scripts/scenario-status.js show <scenario-id>
+  ```
+- **手で編集しない**: writer が legacy schema を正規化する（`phases` の文字列値、`beads`/`dirty` 欠落を修復）。`phases` / `beads.completion` が phase 完走の記録
 
 ## 注意 {#caveats}
 
-- **spec.md / validation.md は派生ファイル**: 直接編集には `/ori-sync --force` が必要
-- **テストコードは派生ファイル**: 直接編集には `/ori-sync --force` が必要
-- **runner config（playwright.config.ts / wdio.conf.ts）は派生ファイル**: 直接編集には `/ori-sync --force` が必要
-- **docker-compose.yml は派生ファイル**: 直接編集には `/ori-sync --force` が必要
+- **派生ファイルの正規更新手順（唯一）**: spec.md・テストコード・runner config・docker-compose.yml はすべて派生ファイル。直接編集しない（`/ori-sync --force` は廃止済）。手順は次の 1 つ:
+  1. 変えたい内容の **source を編集**する（`manifest.yaml` / ドメイン文書 / `.ori/architecture.md`）
+  2. `/ori-sync` で dirty を伝播 → `/ori-flow <scenario-id>`（該当 phase を再実行）で再生成
+  3. source 側に不備があり上流の変更が要る場合は `/ori-propose` で提案を作成する
+- **spec.md frontmatter の hash**: `coherence.upstream[].hash` は `/ori-derive` が `resolve-upstream.sh` の出力から書き込む値（upstream **ファイル全体**の sha256 先頭 12 hex。`path#section` 指定でも section 単位ではない）が正典。`<section-id>` や `abc123` 等の placeholder・手書き値は不可。scenario spec.md の hash 更新は `/ori-finalize` では未実装（R3 で扱う）で、現状は `/ori-derive` 実行時点の値
 - **推測で埋めない**: `TBD` を残し、人間判断に委ねる箇所を明示
+- **scenario = 検証軸、実装は別ワークフロー**: scenario は未充足を RED として示すことに徹する。ori は scenario を実行せず（実行は CI / 手動）、RED の対処も scenario 側では行わない
+  - RED の対処は実装軸の別ワークフローで行う: `/ori-flow <slice-id>`（未実装・未 finalize の slice）または `/ori-bug`（case 4: cross-slice bug）
+  - scenario に実装を書かない（impl phase を持たない 4 phase 設計を維持し、2 軸の独立性を保つ）
+  - scenario と slice を 1:1 対応させる必要はない（1 scenario が複数 slice に跨る / slice を持たない scenario も可）
 - **自動 scaffold は禁止**: scenario が存在しなくても勝手に新規作成を呼ばない（ユーザ確認必須）

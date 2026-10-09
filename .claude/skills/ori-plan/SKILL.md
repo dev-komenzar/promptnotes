@@ -35,11 +35,11 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
 
 | 規定 | 参照 |
 | --- | --- |
-| Slice DoD rules 1-4 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
-| b3 emit 仕様 (stub → invoke_handler → specta rebuild → fixture → dod.test.ts) | `.apm/skills/ori-test-red/SKILL.md` "手順" (ori-fzr.8 で normative 化) |
-| production fixture 規約 (`setupProductionBuilder()`) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` "#setup-production-builder" |
-| 境界契約 section 必須化 | `.apm/instructions/feature-spec.instructions.md` "境界契約 section 必須化" |
-| `expected_deliverables` schema | `.apm/instructions/feature-manifest.instructions.md` "expected_deliverables の宣言" |
+| Slice DoD rules 1-4 | [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) "Slice Definition of Done" |
+| b3 emit 仕様 (stub → invoke_handler → specta rebuild → fixture → dod.test.ts) | [`ori-test-red/SKILL.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-test-red/SKILL.md) "手順" (ori-fzr.8 で normative 化) |
+| production fixture 規約 (`setupProductionBuilder()`) | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md) "#setup-production-builder" |
+| 境界契約 section 必須化 | [`feature-spec.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/feature-spec.instructions.md) "境界契約 section 必須化" |
+| `expected_deliverables` schema | [`feature-manifest.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/feature-manifest.instructions.md) "expected_deliverables の宣言" |
 
 ## なぜ plan.md を作らないか
 
@@ -96,7 +96,7 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
 
      b3 emit sub-step (Slice DoD rule 2/3 — stack=typescript-tauri):
      spec.md#boundary-contract で宣言した binding 経由で boundary test を組む。
-     詳細は .apm/skills/ori-test-red/SKILL.md "手順" を参照。
+     詳細は [`ori-test-red/SKILL.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-test-red/SKILL.md) "手順" を参照。
 
      - [ ] stub commands.rs を `apps/<app>/src-tauri/src/<bc_rs>/slices/<slice_rs>/commands.rs` に emit (`#[tauri::command]` + `Err("pending")`)
      - [ ] `lib.rs` / `src-tauri/src/bin/export-types.rs` の `collect_commands![...]` に `<slice_rs>_cmd` を追記 (invoke_handler 登録)
@@ -131,7 +131,7 @@ description: /ori-flow phase 2。spec.md を読み、下流 phase の beads issu
      )"
      ```
    - **refactor**：観点（重複除去・抽象化候補）を列挙。空でも良い
-   - **review**：spec ↔ impl の意味的乖離に絞った観点を列挙。**DoD 個別 rules は checklist に書かない** (`/ori-review` が 3 structural gate で構造強制するので drift 源になる、`.apm/skills/ori-review/SKILL.md` "なぜ DoD 個別 rules を review checklist にしないか" 参照)
+   - **review**：spec ↔ impl の意味的乖離に絞った観点を列挙。**DoD 個別 rules は checklist に書かない** (`/ori-review` が 3 structural gate で構造強制するので drift 源になる、[`ori-review/SKILL.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-review/SKILL.md) "なぜ DoD 個別 rules を review checklist にしないか" 参照)
      ```bash
      bd update ori-review-<id> --description="$(cat <<'EOF'
      - [ ] spec.md と impl の挙動乖離

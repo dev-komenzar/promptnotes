@@ -110,9 +110,9 @@ This file is the **single source of truth** for both the TypeScript frontend
 
 ```bash
 # TypeScript root (default)
-node .apm/skills/ori-arch/scripts/export.js --adapter=eslint --root=ts
+node .claude/skills/ori-architect/scripts/export.js --adapter=eslint --root=ts
 # Rust root
-node .apm/skills/ori-arch/scripts/export.js --adapter=rust --root=rs
+node .claude/skills/ori-architect/scripts/export.js --adapter=rust --root=rs
 ```
 
 ## Roots
@@ -130,7 +130,7 @@ This is the only sanctioned cross-root contract; everything else stays inside
 its own root. (Rust identifier rules require underscores, hence the
 `note_capture` spelling on the Rust side.)
 
-See `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/`
+See `.claude/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/`
 for a worked slice (`complete-task` on the TS side, `complete_task` on the
 Rust side) — AI agents read it on demand when generating new slices.
 
@@ -210,6 +210,6 @@ apps/promptnotes/src-tauri/src/
 Regenerate after editing this file:
 
 ```bash
-node .apm/skills/ori-arch/scripts/export.js --adapter=eslint --root=ts
-node .apm/skills/ori-arch/scripts/export.js --adapter=rust   --root=rs
+node .claude/skills/ori-architect/scripts/export.js --adapter=eslint --root=ts
+node .claude/skills/ori-architect/scripts/export.js --adapter=rust   --root=rs
 ```

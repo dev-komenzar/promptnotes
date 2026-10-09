@@ -204,7 +204,7 @@ Tauri v2 desktop app。frontend は SvelteKit (static adapter、SSR 無し)、ba
 
 ## Conventions & Patterns
 
-- DDD / VSA (Value-Oriented SE) パターン。BC 別 module layout は [.claude/rules/ddd-typescript.md](.claude/rules/ddd-typescript.md) 参照（Rust 規約は ori の [pattern stacks/rust/test.md](.claude/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md) を正典とする）
+- DDD / VSA (Value-Oriented SE) パターン。BC 別 module layout は [.claude/rules/ddd-typescript.md](.claude/rules/ddd-typescript.md) 参照（Rust 規約は ori の [pattern stacks/rust/test.md](.claude/skills/ori-architect/patterns/ddd-vsa-hex/stacks/rust/test.md) を正典とする）
 - Test 規約は [.claude/rules/ddd-test.md](.claude/rules/ddd-test.md) / [.claude/rules/ui-test.md](.claude/rules/ui-test.md) 参照
 - VO の Smart Constructor は proptest / fast-check で fuzz
 - Mock は adapter 境界のみ。domain 純粋コードは実物使用

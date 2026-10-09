@@ -28,7 +28,7 @@ description: /ori-flow phase 5。テスト GREEN を保ったまま重複除去�
   - `.ori/slices/<id>/manifest.yaml`（`bc:` と `app:` の解決）
   - `.ori/config.yaml`（`workspace.apps:`、fallback `<source_root>` 解決）
   - `.ori/architecture.md`（あれば `root.path` / `roots[<id>].path` を canonical `<source_root>` として優先採用）
-  - `.apm/instructions/ddd-typescript.instructions`
+  - [`ddd-typescript.instructions`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/ddd-typescript.instructions.md)
 - 出力：
   - 同じ `<source_root>/<bc>/slices/<slice-id>/...` を tidy（差分のみ）
   - テストファイル：変更禁止（新観点追加は phase 3 へ戻る）

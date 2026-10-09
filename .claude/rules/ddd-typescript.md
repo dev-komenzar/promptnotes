@@ -45,7 +45,7 @@ paths:
 
 ## Slice 完了 (DoD) における必須事項 {#slice-dod-required}
 
-`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done"
+[`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の "Slice Definition of Done"
 を TypeScript 側で具体化する規約。
 
 ### `presentation/` は slice 完了の必須サブレイヤ {#presentation-required}
@@ -70,7 +70,7 @@ DoD rule 2 (boundary 経由 test) を TS で具体化する規約。
 - 唯一許される command surface import は
   `import { commands } from "<bc>/shared/ipc/bindings";`
   (tauri-specta が `commands.rs` から生成、
-  `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` 参照)
+  [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md) 参照)
 - **以下は全て DoD 違反**:
   - `application/` の handler を直 import (`import { handleCreateNote } from "../application/..."`)
   - `infrastructure/` の adapter を直 import

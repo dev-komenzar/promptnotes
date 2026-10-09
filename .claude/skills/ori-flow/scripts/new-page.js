@@ -8125,7 +8125,7 @@ ${e.cyan(d)}
 // packages/skills/ori-flow/src/new-page.ts
 var import_yaml = __toESM(require_dist(), 1);
 import { mkdir, writeFile, access, readFile } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { join as join2, dirname as dirname2 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/slice-runner/dist/index.js
@@ -9231,8 +9231,36 @@ function _getDefaultLogLevel() {
 }
 var consola = createConsola2();
 
+// packages/skills/ori-flow/src/internal/project-root.ts
+import { stat } from "node:fs/promises";
+import { dirname, join } from "node:path";
+async function isDir(p) {
+  try {
+    return (await stat(p)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+async function exists(p) {
+  try {
+    await stat(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function findProjectRoot(start = process.cwd()) {
+  let d2 = start;
+  for (; ; ) {
+    if (await isDir(join(d2, ".ori"))) return d2;
+    const parent = dirname(d2);
+    if (parent === d2 || await exists(join(d2, ".git"))) return start;
+    d2 = parent;
+  }
+}
+
 // packages/skills/ori-flow/src/new-page.ts
-async function exists(path) {
+async function exists2(path) {
   try {
     await access(path);
     return true;
@@ -9241,8 +9269,8 @@ async function exists(path) {
   }
 }
 async function loadTemplate(name) {
-  const templatesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "templates");
-  const tplPath = join(templatesDir, name);
+  const templatesDir = join2(dirname2(fileURLToPath(import.meta.url)), "..", "templates");
+  const tplPath = join2(templatesDir, name);
   try {
     return await readFile(tplPath, "utf8");
   } catch {
@@ -9258,9 +9286,9 @@ if (!id || !/^[a-z][a-z0-9-]*$/.test(id)) {
   consola.error("Usage: new-page.js <id>\npage id must be lower-kebab-case");
   process.exit(1);
 }
-var cwd = process.cwd();
-var dir = join(cwd, ".ori/pages", id);
-if (await exists(dir)) {
+var cwd = await findProjectRoot();
+var dir = join2(cwd, ".ori/pages", id);
+if (await exists2(dir)) {
   consola.error(`Page already exists: .ori/pages/${id}`);
   process.exit(1);
 }
@@ -9278,7 +9306,7 @@ if (tpl) {
     implementation: { language: "typescript", primary_bc: "TODO", generates: [] }
   });
 }
-await writeFile(join(dir, "manifest.yaml"), manifestContent, "utf8");
+await writeFile(join2(dir, "manifest.yaml"), manifestContent, "utf8");
 var specStub = `---
 ori:
   schema:
@@ -9311,8 +9339,8 @@ TODO
 
 TODO
 `;
-await writeFile(join(dir, "spec.md"), specStub, "utf8");
-await writeFile(join(dir, "notes.md"), `# ${id} \u2014 Implementation notes
+await writeFile(join2(dir, "spec.md"), specStub, "utf8");
+await writeFile(join2(dir, "notes.md"), `# ${id} \u2014 Implementation notes
 
 `, "utf8");
 var status = {
@@ -9322,6 +9350,6 @@ var status = {
   phases: {},
   dirty: []
 };
-await writeFile(join(dir, "status.yaml"), (0, import_yaml.stringify)(status), "utf8");
+await writeFile(join2(dir, "status.yaml"), (0, import_yaml.stringify)(status), "utf8");
 consola.success(`Created .ori/pages/${id}/ (manifest, spec, notes, status)`);
 consola.info("Next: edit manifest.yaml to add derives_from references, then run the derive phase");

@@ -19,7 +19,7 @@ description: capability-role × phase × agent から具体 model への割当�
 | deep | 派生・実装（コード生成） |
 | fast | refactor・整理（規則的変換） |
 
-各 capability は `.apm/agents/` の config で具体 model に解決される。例：
+各 capability は ori の agent 定義 ([`ori-reviewer.agent.md`](../../../apm_modules/dev-komenzar/ori/.apm/agents/ori-reviewer.agent.md) など。consumer では `.claude/agents/` / `.codex/agents/` に deploy される) の config で具体 model に解決される。例：
 
 ```
 reasoning → claude-opus-4-7
@@ -58,7 +58,7 @@ node ./scripts/show.js
    - cost down（安い model に下げる）— トレードオフ：精度低下
    - quality up（より強力な model）— トレードオフ：コスト増
    - vendor 切替（Anthropic → DeepSeek 等）
-3. **config ファイルを編集**：agent の frontmatter（`name`, `model`）を更新
+3. **config ファイルを編集**：agent の frontmatter（`name`, `model`）を更新。編集するのは deploy 先の agent ファイル（Claude: `.claude/agents/<name>.md`、Codex: `.codex/agents/<name>.toml`）で、上の link は定義の参照用
 4. **影響の説明**：
    - phase 別コスト見積を簡易表示
    - 「review を haiku に下げると adversarial 視点が弱くなる」等の警告
@@ -110,6 +110,6 @@ node ./scripts/show.js
 設定変更後、ユーザに以下を提示：
 
 - **試運転パス**：`/ori-flow <small-slice>` で小さい slice を 1 つ回し、コスト・品質を確認
-- **元に戻すパス**：`git diff` で agent ファイルの変更を確認。問題あれば `git checkout HEAD -- .apm/agents/`
+- **元に戻すパス**：`git diff` で agent ファイルの変更を確認。問題あれば `git checkout HEAD -- <変更した agent ファイル>`
 - **doctor 確認パス**：`/ori-doctor` で全体に影響が出ていないか
-- **commit 推奨**：model 設定は session 跨ぎで重要。`git add .apm/agents && git commit` を案内
+- **commit 推奨**：model 設定は session 跨ぎで重要。`git add <変更した agent ファイル> && git commit` を案内

@@ -45,9 +45,9 @@ scenario の 4 phase に対応する beads issue を作成する:
 
 ### 依存管理 {#dependency-management}
 
-- 参加 slice の beads issue に `bd depends` を自動設定
-- 全 slice 完了後に scenario の `/ori-flow` が unblock
-- 例: `bd dep add ori-scenario-order-flow-e2e ori-create-order`
+- scenario は参加 slice の完了に依存しない（scenario-first 既定）。参加 slice の beads issue への `bd depends` は設定せず、scaffold 直後から `/ori-flow` 可能
+- 依存は scenario 内の phase issue 間（derive → generate → review → finalize）の順序のみ
+- `contracts.slices` は traceability のための任意情報リンクで blocking しない（詳細: scenario.instructions.md §creation-timing）
 
 ### dirty 伝播 {#dirty-propagation}
 
@@ -96,7 +96,7 @@ Phase / milestone は `bd create --labels=phase-x` で表現する。**epic と�
 
 ## `/ori-doctor` violation issue の label convention {#dod-violation-labels}
 
-`/ori-doctor` が Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の
+`/ori-doctor` が Slice DoD ([`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の
 "Slice Definition of Done") 違反を検出した時に起票する bd issue の label 規約。
 violation 種別と所在を label から grep で復元できるようにする。
 
@@ -146,6 +146,13 @@ bd create \
   --priority=2 \
   --labels=dod-violation,slice:create-note,rule:dod-2,bc:note-taking
 ```
+
+### testid 契約違反 (`/ori-doctor --testid-sweep`)
+
+page / widget の testid 契約 (`.ori/pages/<id>/testids.yaml`) 違反は DoD violation と別系統で、
+`testid-violation` + `page:<page-id>` を付与する (page 単位で 1 issue。実装 testid の lint 違反はその page に帰属させ、
+帰属できないものだけ `page:_impl`)。dedupe は同 label set の open issue の有無で行う。
+起票元は `/ori-doctor --testid-sweep` (全 page) と `/ori-generate` (実装のある参加 page)。解消手順は [`ui-test.instructions.md#testid-migration`](../../apm_modules/dev-komenzar/ori/.apm/instructions/ui-test.instructions.md#testid-migration)。
 
 ## 公式 BOUNDARIES.md の core question {#core-question}
 

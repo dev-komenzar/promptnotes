@@ -10,7 +10,7 @@ paths:
 - **`relations`** (任意): `{ target, type }` のリスト。`type` は `derives_from` か `references` のみ（MVP）
 - **`implementation`**: `language`, `primary_bc`, `generates` (生成先ファイル一覧)
 - **`expected_deliverables`**: slice 完了 (Slice DoD) の必須成果物宣言。SSoT は
-  `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done"
+  [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の "Slice Definition of Done"
   section。`/ori-doctor` はこの宣言と実体生成物を突合して DoD 違反を検出する
 - **不明な top-level キー禁止**: typo 検出のためスキーマは strict mode
 - **編集後**: 必須キーとスキーマの自己検証必須

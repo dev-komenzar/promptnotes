@@ -46,23 +46,23 @@ description: ori workspace を初期化し distill-ddd phase 1 にユーザを�
 6. **次ステップ提示**：
    - distill-ddd phase 1 を始めるなら `/ori-distill phase=discovery` を呼ぶ
    - **アーキテクチャ・スタック決定 (architect-expert agent が要件対話から
-     `.ori/architecture.md` を生成)** は `/ori-arch` に委譲
+     `.ori/architecture.md` を生成)** は `/ori-architect` に委譲。codebase init (upstream framework init / readiness 検証) は後段の `/ori-bootstrap`
    - 既存 docs があれば手動配置 + 検証
-7. **config 確認**：`.apm/agents/` の config を読み、現在の agent / phase 別モデル割当を表示
+7. **config 確認**：deploy 先の agent ファイル（Claude: `.claude/agents/<name>.md`、Codex: `.codex/agents/<name>.toml`。定義は [`ori-reviewer.agent.md`](../../../apm_modules/dev-komenzar/ori/.apm/agents/ori-reviewer.agent.md) など）の config を読み、現在の agent / phase 別モデル割当を表示
 
 ## 注意
 
 - 初期化は **silent**：`.ori/` skeleton と config 以外、プロジェクトルートには一切ファイルを書かない
 - 既存の `.ori/` がある場合は `--force` 相当の上書きをユーザに確認すること
 - このスキルは workflow を回さない。実装は `/ori-flow` を使う
-- Framework / template scaffold（package.json / src-tauri 等）は `/ori-arch` の framework_init で生成される。例外として stack=typescript-tauri の specta infra (Slice DoD rule 4 を満たすのに必須) は本 skill bundle の `install-tauri-scaffold.sh` 経由で `/ori-arch` が apply する (下記)
+- Framework / template scaffold（package.json / src-tauri 等）は `/ori-bootstrap` の案内する upstream framework init で生成される。例外として stack=typescript-tauri の specta infra (Slice DoD rule 4 を満たすのに必須) は本 skill bundle の `install-tauri-scaffold.sh` 経由で `/ori-bootstrap` が apply する (下記)
 
 ## Tauri scaffold extension (specta infra)
 
-Slice DoD (`.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` の "Slice Definition of Done" rules 2–4) を typescript-tauri stack で機械的に満たすため、本 skill bundle に specta infra の scaffold templates + install script を同梱する。`/ori-arch` が stack=typescript-tauri を選んだ場合、upstream `pnpm tauri init` 完了後にこの script を呼び出す。
+Slice DoD ([`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) の "Slice Definition of Done" rules 2–4) を typescript-tauri stack で機械的に満たすため、本 skill bundle に specta infra の scaffold templates + install script を同梱する。`/ori-bootstrap` が stack=typescript-tauri を検出した場合、upstream `pnpm tauri init` 完了後にこの script を呼び出す。
 
 ```bash
-# /ori-arch から呼ばれる前提
+# /ori-bootstrap から呼ばれる前提
 bash ./scripts/install-tauri-scaffold.sh \
   --dest <repo-root> \
   --app-name <app-name> \

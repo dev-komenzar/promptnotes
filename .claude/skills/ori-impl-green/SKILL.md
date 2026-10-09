@@ -19,15 +19,16 @@ description: /ori-flow phase 4。failing test を GREEN にする最小実装を
 
 - 入力：
   - `.ori/slices/<id>/spec.md`
+  - `.ori/pages/<id>/testids.yaml`（type: page / widget のみ。testid 契約 — `scripts/testids.js sync <id>` で最新化してから読む）
   - `.ori/slices/<id>/manifest.yaml`（`bc:` と `app:` の解決、`expected_deliverables` (DoD) の取得に必要）
   - `.ori/config.yaml`（`workspace.apps:` から `app:` 解決、fallback として `apps[].path`/src を `<source_root>` に使う）
   - `.ori/architecture.md`（`root.path` / `roots[].path` を canonical な `<source_root>` として優先採用、`cross_root` の有無で Tauri stack 判定、`phase_hooks.flow-impl-green-post` を読み specta 再生成 step を実行）
   - `<source_root>/<bc>/slices/<slice-id>/tests/*.test.ts`（phase 3 で RED 確認済み）
   - 実装規約 (SSoT):
-    - `.apm/instructions/ddd-typescript.instructions.md`
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` (Tauri stack の場合、特に "#commands-rs-required" section)
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` (Slice DoD)
-    - `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/` (worked code)
+    - [`ddd-typescript.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/ddd-typescript.instructions.md)
+    - [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md) (Tauri stack の場合、特に "#commands-rs-required" section)
+    - [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) (Slice DoD)
+    - [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/`](../ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/) (worked code)
 - 出力：
   - `<source_root>/<bc>/slices/<slice-id>/{domain,application,infrastructure,presentation}/...`
   - Tauri stack: `apps/<app>/src-tauri/src/<bc_rs>/slices/<slice_rs>/{domain.rs,application.rs,infrastructure.rs,commands.rs}` (commands.rs は stub `Err("pending")` → real impl 置換)
@@ -143,8 +144,27 @@ skill 起動時に以下の順序で resolve:
    test -f apps/<app>/src/<bc>/shared/ipc/bindings.ts
    ```
 
+9b. **page / widget の testid 契約検査** (manifest `type: page` / `type: widget` のみ。ori-oan.7 — 完了条件):
+    - 実装前に `node scripts/testids.js sync <id>` を実行し、`.ori/pages/<id>/testids.yaml` の
+      `derived:` + `extra:` の testid を **literal で** DOM に付与する
+      (`data-testid="page.<id>.<elem>"`。式・テンプレート埋め込み禁止、動的要素は固定 testid + `data-key`。
+      規範: `ddd-vsa-hex/pattern.md` "page / widget の testid 契約")
+    - spec.md や ui-fields に field id (`screen-<N>-*`) があっても、それを testid にしない
+    - 完了前に検査する:
+      ```bash
+      node scripts/testids.js check <id>
+      ```
+      exit 0 が完了条件。違反 (契約 testid の実装不在 / 動的 testid / 形式違反) は step 10 の self-fix 対象
+    - 契約外の testid を実装に足すのは許容 (検査は 契約 ⊆ 実装)。ただし形式 lint は全 testid にかかる
+      (page を指定した check が数えるのは、その page に帰属する実装違反だけ。他 page の未移行では止まらない。
+      帰属できない違反は `NOTE impl:` で出るので、この page の変更で入ったものは直す)
+    - 既存実装の testid を契約へ移す場合 (`testid-violation` issue) は [`ui-test.instructions.md#testid-migration`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/ui-test.instructions.md#testid-migration) に従う。
+      `node scripts/testids.js migrate-map <id>` の対応表で実装と app の unit test の selector を同じ変更で置換し、
+      `migrate-map` も exit 0 にする
+
 10. **失敗時のリカバリ**:
     - 型 / lint / clippy エラー → **1 回だけ** 自動修正
+    - testid 契約違反 (step 9b) → **1 回だけ** 実装側を修正 (契約 `testids.yaml` は書き換えない)
     - テスト失敗が想定外 → spec を読み直す。1 回だけ patch して再実行
     - specta build 失敗 → `Cargo.toml` の deps と `lib.rs` の `collect_commands![]` 配線を疑う、1 回だけ修正
     - それでも失敗 → 停止して人間に判断を委ねる
@@ -160,12 +180,12 @@ skill 起動時に以下の順序で resolve:
 
 | 用途 | 参照先 |
 | --- | --- |
-| pure TS slice の domain / application / infrastructure 形 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/` |
-| Tauri stack の Rust 側 (commands.rs / application.rs / infrastructure.rs / domain.rs) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/` |
-| Tauri stack の TS 側 (shared/ipc / shared/test-fixtures / boundary test) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/` |
-| Slice DoD の rule 全文 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Slice Definition of Done" |
-| commands.rs Green 条件 (Tauri stack) | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` "#commands-rs-required" section |
-| 境界契約宣言の写し方 | `.apm/instructions/feature-spec.instructions.md` "境界契約 section 必須化" |
+| pure TS slice の domain / application / infrastructure 形 | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/`](../ori-architect/patterns/ddd-vsa-hex/stacks/typescript/example-slice/task-management/slices/complete-task/) |
+| Tauri stack の Rust 側 (commands.rs / application.rs / infrastructure.rs / domain.rs) | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/`](../ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/rust/task_management/slices/complete_task/) |
+| Tauri stack の TS 側 (shared/ipc / shared/test-fixtures / boundary test) | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/`](../ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/example-slice/ts/task-management/) |
+| Slice DoD の rule 全文 | [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) "Slice Definition of Done" |
+| commands.rs Green 条件 (Tauri stack) | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md) "#commands-rs-required" section |
+| 境界契約宣言の写し方 | [`feature-spec.instructions.md`](../../../apm_modules/dev-komenzar/ori/.apm/instructions/feature-spec.instructions.md) "境界契約 section 必須化" |
 | production fixture 雛形 | ori-init scaffold (`install-tauri-scaffold.sh` 配置物) — `apps/<app>/src/<bc>/shared/test-fixtures/setupProductionBuilder.ts` |
 | `phase_hooks` 由来 specta 再生成 | `architecture.md` frontmatter `phase_hooks.flow-impl-green-post` + `apm-scripts/specta-build.sh` |
 

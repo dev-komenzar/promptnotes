@@ -151,4 +151,4 @@ Phase 10 完了後、ユーザに以下を提示：
 - **通常パス**：`/ori-ddd-11a-ui-fields` — 型定義から UI 入力項目を抽出
 - **戻る**：型で表現できない概念があるなら `/ori-ddd-5-aggregates` で集約設計を見直す
 - **早期実装パス**：UI が無いシステムなら 11a/11b をスキップし、`/ori-ddd-9-workflows` 完了後の slice を直接 `/ori-flow` で実装
-  - 前提：`.ori/architecture.md` 必須。未生成なら **先に `/ori-arch`** を実行して pattern / stack を確定する
+  - 前提：`.ori/architecture.md` 必須。未生成なら **先に `/ori-architect`** を実行して pattern / stack を確定する

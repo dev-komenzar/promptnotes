@@ -26,8 +26,6 @@ node ./scripts/sync.js [--file=<path>] [--since=<ref>] [--check]
 3. dirty な slice ごとに：
    - 該当 phase の beads issue を reopen（手動 or `bd update --status=open`）
    - ユーザに「これらの slice の再 derive が必要です」と通知
-> **本リポジトリの注記**: `scripts/sync.js` は MVP stub で検知・伝播は未実装、`--force` による proposal 自動生成も無い。現実の手順は `.claude/rules/feature-spec.md` を参照。
-
 4. 派生文書（spec.md）の直接編集は SSoT 違反のため不可。spec に不備がある場合は domain 文書を修正し `/ori-sync` を再実行するか、`/ori-propose` で upstream 修正提案を作成してください
 
 ## 次のアクション

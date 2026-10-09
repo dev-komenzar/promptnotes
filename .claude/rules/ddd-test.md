@@ -24,10 +24,10 @@
 
 | 関心事 | 正典 |
 | --- | --- |
-| stack-agnostic メタルール + UI selector / testid 規約 | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/pattern.md` "Test conventions" |
-| TypeScript のランナー / assertion / property test | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript/test.md` |
-| TypeScript-Tauri の boundary test / production fixture | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md` |
-| Rust の言語共通規約 / Tauri command surface | `.apm/skills/ori-arch/patterns/ddd-vsa-hex/stacks/rust/test.md` |
+| stack-agnostic メタルール + UI selector / testid 規約 | [`ori-architect/patterns/ddd-vsa-hex/pattern.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/pattern.md) "Test conventions" |
+| TypeScript のランナー / assertion / property test | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript/test.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript/test.md) |
+| TypeScript-Tauri の boundary test / production fixture | [`ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/typescript-tauri/test.md) |
+| Rust の言語共通規約 / Tauri command surface | [`ori-architect/patterns/ddd-vsa-hex/stacks/rust/test.md`](../../apm_modules/dev-komenzar/ori/.apm/skills/ori-architect/patterns/ddd-vsa-hex/stacks/rust/test.md) |
 
 ## 責務分離
 
