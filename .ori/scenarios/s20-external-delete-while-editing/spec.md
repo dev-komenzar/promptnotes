@@ -18,7 +18,7 @@ coherence:
     - path: domain/aggregates.md#note-aggregate
       hash: 56f7a54a8ab2
     - path: domain/ui-fields/screen-1.md#screen-1
-      hash: f1895fd2632c
+      hash: 18a41b79b1f8
     - path: domain/ui-fields/page-groups.md#widget-external-change-conflict
       hash: 8986615249ac
     - path: domain/glossary.md#glossary-timestamp

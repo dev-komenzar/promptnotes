@@ -22,7 +22,7 @@ coherence:
     - path: domain/domain-events.md#sort-preference-changed
       hash: 71db66eafe03
     - path: domain/ui-fields/screen-1.md#screen-1
-      hash: f1895fd2632c
+      hash: 18a41b79b1f8
 ---
 
 # s12-startup-state — Scenario Specification

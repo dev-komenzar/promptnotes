@@ -82,7 +82,7 @@ Rust `NoteFeed::visible_notes` の `matches_query` は `nfkc().collect().to_lowe
 ### 経緯 {#pass-rederive-2026-10-13-context}
 
 - domain/ui-fields/screen-1.md#cross-filter-immediate に検索入力の表示値 (raw) と IME 変換中の送信抑止が追加された (9862e3f、proposal 2026-10-13 の accept)。/ori-sync がこの scenario を dirty にした
-- 再 derive: spec.md の本文・シナリオステップ・テスト観点に差分なし。変わったのは frontmatter の screen-1.md hash (4bc0f83f71f3 → f1895fd2632c) だけ
+- 再 derive: spec.md の本文・シナリオステップ・テスト観点に差分なし。変わったのは frontmatter の screen-1.md hash (4bc0f83f71f3 → 18a41b79b1f8、#421 rebase 後) だけ
 - 追加された規定 (検索入力の表示値 / IME 変換中) はこの scenario の Then / テスト観点に影響しない。page-main の tp-search-query-input (component test) で担保している
 - generate: spec の内容が変わらないため、テストコード・runner config は再生成不要
 
