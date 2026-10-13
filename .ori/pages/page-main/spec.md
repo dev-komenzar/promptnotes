@@ -129,6 +129,7 @@ UI 実装はこの 3 点を曖昧化してはならない。
 - **I-PM10a（click-to-edit カーソル位置保持）**: IDLE / FOCUSED 状態の Block をクリックして EDITING に遷移する際、CodeMirror EditorView のカーソルはクリック位置に対応するドキュメントオフセットに配置される。カーソルが先頭 (position 0) に強制移動されてはならない。実装はクリック座標から `EditorView.posAtCoords()` で位置を解決するか、EditorState 再構築時に旧 selection を保持することで実現する
 - **I-PM11（filter / sort の即時反映）**: Toolbar の filter / sort 変更は debounce なしで Feed に反映。Sort 変更はアニメーション付き再配置（screen-1.md#cross-sort-immediate）
 - **I-PM12（auto-save と flush の二重実行禁止）**: 1 つの Block の EDITING → 別状態への遷移時、`flush-note` が先に呼ばれ、debounce timer は cancel される。`auto-save-note` と `flush-note` が同 body に対して二重 write を起こしてはならない（C-AS3 / C-FL3 の NoOp 契約に依存）
+- **I-PM20（検索入力の表示値と IME）**: Toolbar の検索入力欄はユーザーが入力した raw 文字列をそのまま表示し、`update-feed-filter` が返す正規化値（NFKC / lowercase / trim 済み `NormalizedQuery`）で上書きしない。IME 変換中（`compositionstart`〜`compositionend`）は検索文字列を送信せず、確定時に確定値で 1 回だけ送信する。`compositionend` と確定 `input` の発火順は WebView（WebKitGTK / WKWebView / Chromium）で異なるが、どちらの順でも送信は 1 回とする。composition を伴わない入力は I-PM11 どおり 1 文字ごとに即時送信する（screen-1.md#cross-filter-immediate）
 
 ### 経路境界 {#invariants-boundary}
 
@@ -207,6 +208,18 @@ EDITING Block の body を編集 → 別 Block クリック → debounce timer c
 ### tp-sort-immediate: sort 変更で Feed 再配置 {#tp-sort-immediate}
 
 Toolbar の sort field / direction を変更 → Feed の Block 順序が即時更新 + change-sort-order slice 経由で Settings 永続化（screen-1.md#cross-sort-immediate）。
+
+### tp-search-query-input: 検索入力の表示値と IME {#tp-search-query-input}
+
+I-PM20 / I-PM11 を ToolbarRegion の browser component test（vitest client project）で検証する。`update-feed-filter` の呼出は adapter 境界で fake 化し、backend と同じ正規化を遅延付きで返す:
+
+- composition を伴わない入力は 1 文字ごとに即時 `set_query` を送る（I-PM11）
+- IME 変換中は `set_query` を送らず、入力欄の値も外から書き換わらない
+- 確定時に `set_query` を 1 回だけ送る（`input` → `compositionend` の順と、`compositionend` → `input` の順の両方）
+- Esc で composition をキャンセルすると変換前の値に戻り、追加送信しない
+- 確定値が直前の送信値と同じなら再送しない
+- 大文字や末尾空白を含む入力（例: `Foo `）が入力欄にそのまま残る（正規化値で上書きしない）
+- Clear all で入力欄が空になり `clear_all` を送る
 
 ### tp-no-multi-pane: 単一ペイン制約 {#tp-no-multi-pane}
 

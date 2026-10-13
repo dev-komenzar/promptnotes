@@ -138,3 +138,26 @@ verdict=PASS。軽微な指摘はこの PR 内で対応した (Pass 2 は不要)
 - LOW 1: 採用しない。`queryDraft` を DOM 値と常に一致させておくと、compositionend 前に再描画が起きても stale 値で上書きされない。この同期がむしろ安全側
 - LOW 2: 任意の hardening として残す (blocker ではない)
 - LOW 3: proposal workflow (`/ori-review-proposals`) に委ねる。spec.md は派生文書なので直接編集しない
+
+# Review: page-main I-PM20 re-derive (ori-pir2) {#review-search-ime-rederive}
+
+## Pass 1 {#search-ime-rederive-pass-1}
+
+### Structural gates {#search-ime-rederive-pass-1-gates}
+
+- (a) boundary test: PASS (`bun run test` 23 files / 186 tests。`ToolbarRegion.search-query.svelte.test.ts` 8 tests)
+- (b) arch lint:     PASS (`bun run lint` exit 0。`bun run check` 0 errors / 0 warnings)
+- (c) public_entry:  N/A (page。import の変更なし)
+- (d) testid 契約:   FAIL 1 件 (`page.page-main.block-updated-at` の実装不在)。既存の機能欠落で、follow-up ori-6lvx で追跡中。本変更とは無関係
+
+### Semantic findings (reviewer: ori-reviewer, fresh context) {#search-ime-rederive-pass-1-findings}
+
+- I-PM20 は screen-1.md#cross-filter-immediate の 4 命題を過不足なく派生している
+- tp-search-query-input の全観点に assertion がある (UNVERIFIED 0)
+- 実装 (ToolbarRegion.svelte) は I-PM20 を満たす
+- **LOW** spec.md#tp-search-query-input — 「Clear all で clear_all を送る」は tp 名のスコープ (表示値と IME) をやや越える
+
+### Disposition {#search-ime-rederive-pass-1-disposition}
+
+- verdict=PASS
+- LOW: 現状のまま採用。Clear all で入力欄が空になるのは、I-PM20 で表示値をローカル状態にしたことの回帰ガードであり、表示値の観点に含まれる
