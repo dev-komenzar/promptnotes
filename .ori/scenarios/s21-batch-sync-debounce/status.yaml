@@ -2,15 +2,19 @@ scenario_id: s21-batch-sync-debounce
 derived_at: 2026-09-21T07:03:51.154Z
 beads:
   epic: ori-scenario-s21-batch-sync-debounce
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

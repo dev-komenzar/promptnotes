@@ -138,3 +138,52 @@ verdict=PASS。軽微な指摘はこの PR 内で対応した (Pass 2 は不要)
 - LOW 1: 採用しない。`queryDraft` を DOM 値と常に一致させておくと、compositionend 前に再描画が起きても stale 値で上書きされない。この同期がむしろ安全側
 - LOW 2: 任意の hardening として残す (blocker ではない)
 - LOW 3: proposal workflow (`/ori-review-proposals`) に委ねる。spec.md は派生文書なので直接編集しない
+
+# Review: page-main I-PM20 re-derive (ori-pir2) {#review-search-ime-rederive}
+
+## Pass 1 {#search-ime-rederive-pass-1}
+
+### Structural gates {#search-ime-rederive-pass-1-gates}
+
+- (a) boundary test: PASS (`bun run test` 23 files / 186 tests。`ToolbarRegion.search-query.svelte.test.ts` 8 tests)
+- (b) arch lint:     PASS (`bun run lint` exit 0。`bun run check` 0 errors / 0 warnings)
+- (c) public_entry:  N/A (page。import の変更なし)
+- (d) testid 契約:   FAIL 1 件 (`page.page-main.block-updated-at` の実装不在)。既存の機能欠落で、follow-up ori-6lvx で追跡中。本変更とは無関係
+
+### Semantic findings (reviewer: ori-reviewer, fresh context) {#search-ime-rederive-pass-1-findings}
+
+- I-PM20 は screen-1.md#cross-filter-immediate の 4 命題を過不足なく派生している
+- tp-search-query-input の全観点に assertion がある (UNVERIFIED 0)
+- 実装 (ToolbarRegion.svelte) は I-PM20 を満たす
+- **LOW** spec.md#tp-search-query-input — 「Clear all で clear_all を送る」は tp 名のスコープ (表示値と IME) をやや越える
+
+### Disposition {#search-ime-rederive-pass-1-disposition}
+
+- verdict=PASS
+- LOW: 現状のまま採用。Clear all で入力欄が空になるのは、I-PM20 で表示値をローカル状態にしたことの回帰ガードであり、表示値の観点に含まれる
+
+# Review: page-main re-derive after #421 rebase (ori-pir2) {#review-rebase-421}
+
+対象: #421 (cross-draft-submit / note-created、I-PM9) と ori-fdhh (cross-filter-immediate、I-PM20) の両方の domain 変更。dirty は screen-1.md#screen-1 ×2、domain-events.md#theme-changed ×1。theme-changed の section 自体は #421 で変更されていない。
+
+## Pass 1 {#rebase-421-pass-1}
+
+- gates: check 0 errors、lint exit 0、test 23 files / 190 passed
+- reviewer (ori-reviewer, fresh context): **NEEDS_FIX**
+  - **HIGH-1** regions/DraftRegion.svelte:49 — #421 で、Draft submit 後の clipboard copy 失敗時の `toastStore.pushCopyFailed()` が `console.error` に置き換わっていた。spec#tp-copy-failed-toast と create-note.md#post-conditions からの退行
+  - **HIGH-2** tp-copy-failed-toast を assert するテストがない (このため HIGH-1 が CI を素通りした)
+  - **LOW-1** stores/feed.svelte.ts:127 `focusedNoteId` を production で読む箇所がなく、focusStore と二重管理になっている
+  - それ以外 (I-PM9 / tp-golden-create、I-PM20 / tp-search-query-input、theme 系) は過不足なく派生し、検証済み
+
+### Disposition {#rebase-421-pass-1-disposition}
+
+- HIGH-2 → テスト追加 (tp-copy-on-create / tp-copy-failed-toast)。修正前に tp-copy-failed-toast が RED になることを確認
+- HIGH-1 → `/ori-impl-green` 相当の修正。catch で console.error と pushCopyFailed() を両方呼ぶ
+- LOW-1 → 別 issue ori-bn6k で追跡
+
+## Pass 2 {#rebase-421-pass-2}
+
+- gates: check 0 errors、lint exit 0、test 23 files / 192 passed
+- reviewer: HIGH-1 / HIGH-2 とも妥当に修正されたことを確認。新たな乖離なし
+- 残る PARTIAL (tp-empty-body-noop で Feed が変わらないことの assert がない) は既存のもので、本改訂の gate ではない
+- verdict=PASS

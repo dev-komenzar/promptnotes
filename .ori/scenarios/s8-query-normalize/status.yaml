@@ -2,15 +2,19 @@ scenario_id: s8-query-normalize
 derived_at: 2026-09-19T07:49:15.778Z
 beads:
   epic: ori-scenario-s8-query-normalize
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

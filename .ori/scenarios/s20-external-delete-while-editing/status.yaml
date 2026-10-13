@@ -2,15 +2,19 @@ scenario_id: s20-external-delete-while-editing
 derived_at: 2026-09-21T06:35:05.954Z
 beads:
   epic: ori-scenario-s20-external-delete-while-editing
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

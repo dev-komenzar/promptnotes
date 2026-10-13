@@ -45,7 +45,7 @@ beforeEach(() => {
 	updateFeedFilter.mockClear();
 });
 
-describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
+describe('page:page-main spec#tp-search-query-input (bug:ori-fdhh)', () => {
 	it('spec#invariants-cross-region I-PM11 — ASCII 入力は 1 文字ごとに即時 set_query を送る', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
@@ -57,7 +57,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual(['g', 'gp']);
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — IME 変換中は set_query を送らず、入力欄の値も書き換えない', async () => {
+	it('spec#invariants-cross-region I-PM20 — IME 変換中は set_query を送らず、入力欄の値も書き換えない', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 		el.focus();
@@ -76,7 +76,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual([]);
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — 確定時に set_query を 1 回送る (input → compositionend の順: Chromium)', async () => {
+	it('spec#invariants-cross-region I-PM20 — 確定時に set_query を 1 回送る (input → compositionend の順: Chromium)', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 
@@ -90,7 +90,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(el.value).toBe('かな');
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — 確定時に set_query を 1 回送る (compositionend → input の順: WebKit)', async () => {
+	it('spec#invariants-cross-region I-PM20 — 確定時に set_query を 1 回送る (compositionend → input の順: WebKit)', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 
@@ -105,7 +105,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(el.value).toBe('かな');
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — 入力欄は raw 入力を保ち、正規化値 (lowercase / trim) で上書きしない', async () => {
+	it('spec#invariants-cross-region I-PM20 — 入力欄は raw 入力を保ち、正規化値 (lowercase / trim) で上書きしない', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 
@@ -117,7 +117,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual(['Foo', 'Foo ']);
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — Esc で composition をキャンセルすると変換前の値に戻り、追加送信しない', async () => {
+	it('spec#invariants-cross-region I-PM20 — Esc で composition をキャンセルすると変換前の値に戻り、追加送信しない', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 
@@ -133,7 +133,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual(['abc']);
 	});
 
-	it('spec#invariants-cross-region (ori-fdhh proposal) — 確定値が直前の送信値と同じなら再送しない', async () => {
+	it('spec#invariants-cross-region I-PM20 — 確定値が直前の送信値と同じなら再送しない', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 
@@ -151,7 +151,7 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual(['かな']);
 	});
 
-	it('spec#hosted-slices update-feed-filter — Clear all で入力欄が空になり clear_all を送る', async () => {
+	it('spec#tp-search-query-input — Clear all で入力欄が空になり clear_all を送る', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
 

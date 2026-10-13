@@ -47,7 +47,10 @@
 			// Fire-and-forget clipboard copy (post-condition from create-note workflow)
 			copyNoteBody(outcome.id)
 				.then(() => toastStore.pushCopied())
-				.catch((err: unknown) => console.error('draft submit failed', err));
+				.catch((err: unknown) => {
+					console.error('clipboard copy after submit failed', err);
+					toastStore.pushCopyFailed();
+				});
 		}
 		// 成否にかかわらずタグ入力欄をリセット
 		tagInputDraft = '';

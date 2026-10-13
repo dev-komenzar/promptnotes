@@ -144,6 +144,13 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 - 検索文字列 / 期間 / タグ filter の変更は **debounce なしで即時 filter**
   （ローカル完結なので遅延不要、Q7）
 - 結果 0 件のときは「該当する Note がありません」を Feed 領域に表示
+- **検索入力欄の表示値は raw 入力**: `screen-1-toolbar-search-query` はユーザーが入力した
+  文字列をそのまま表示する。NFKC / lowercase / trim は `NormalizedQuery`（filter 条件）側にのみ
+  適用し、正規化値で入力欄を上書きしない
+- **IME 変換中は filter を送信しない**: `compositionstart`〜`compositionend` の間は検索文字列を
+  送信せず、確定時に確定値で 1 回送信する。`compositionend` と確定 `input` の発火順は WebView
+  （WebKitGTK / WKWebView / Chromium）で異なるが、どちらの順でも送信は 1 回とする
+- composition を伴わない入力（ASCII 等）は従来どおり 1 文字ごとに即時 filter する
 
 ### Tag 入力の禁止文字エラー {#cross-tag-error}
 
