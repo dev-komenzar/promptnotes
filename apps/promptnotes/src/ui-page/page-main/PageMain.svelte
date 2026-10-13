@@ -383,7 +383,7 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 <div
-	data-testid="page-main"
+	data-testid="page.page-main"
 	data-settings-modal-open={settingsModalOpen}
 	data-restart-prompt-open={restartPromptOpen}
 	class="flex h-screen min-h-0 w-screen flex-col overflow-hidden bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
@@ -407,7 +407,7 @@
 		role="alertdialog"
 		aria-modal="true"
 		aria-labelledby="restart-prompt-title"
-		data-testid="restart-prompt"
+		data-testid="page.page-main.restart-prompt"
 		class="fixed inset-0 z-50 flex items-center justify-center"
 	>
 		<div
@@ -420,7 +420,7 @@
 			<div class="mt-4 flex justify-end gap-2">
 				<button
 					type="button"
-					data-testid="restart-prompt-later"
+					data-testid="page.page-main.restart-prompt-later"
 					class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 					onclick={handleRestartLater}
 				>
@@ -428,7 +428,7 @@
 				</button>
 				<button
 					type="button"
-					data-testid="restart-prompt-restart"
+					data-testid="page.page-main.restart-prompt-restart"
 					class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
 					onclick={handleRestartNow}
 				>

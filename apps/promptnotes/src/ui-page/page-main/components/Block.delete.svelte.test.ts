@@ -42,7 +42,7 @@ describe('component:Block ori-6aa delete → toast push', () => {
 			pendingFlush
 		});
 
-		const deleteButton = page.getByTestId('screen-1-block-delete');
+		const deleteButton = page.getByTestId('page.page-main.block-delete');
 		await deleteButton.click();
 
 		await vi.waitFor(() => {
@@ -78,7 +78,7 @@ describe('component:Block ori-6aa delete → toast push', () => {
 			pendingFlush
 		});
 
-		const deleteButton = page.getByTestId('screen-1-block-delete');
+		const deleteButton = page.getByTestId('page.page-main.block-delete');
 		await deleteButton.click();
 
 		await vi.waitFor(() => {

@@ -63,7 +63,7 @@
 </script>
 
 <header
-	data-testid="region-toolbar"
+	data-testid="page.page-main.region-toolbar"
 	aria-label="Toolbar"
 	class="flex shrink-0 flex-wrap items-center gap-2 border-b border-neutral-200 bg-neutral-50/80 px-3 py-2 text-sm text-neutral-700 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-200"
 >
@@ -71,7 +71,7 @@
 		<span aria-hidden="true" class="text-neutral-400">🔍</span>
 		<input
 			id="screen-1-toolbar-search-query"
-			data-testid="screen-1-toolbar-search-query"
+			data-testid="page.page-main.toolbar-search-query"
 			type="search"
 			class="w-full min-w-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm placeholder:text-neutral-400 focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800"
 			placeholder="Search (Cmd+F)"
@@ -82,7 +82,7 @@
 	</label>
 
 	<div
-		data-testid="screen-1-toolbar-date-range"
+		data-testid="page.page-main.toolbar-date-range"
 		role="group"
 		aria-label="Date range"
 		class="inline-flex shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
@@ -91,7 +91,8 @@
 			{@const active = feedStore.filter.date_range.kind === preset.key}
 			<button
 				type="button"
-				data-testid={`screen-1-toolbar-date-range-${preset.key}`}
+				data-testid="page.page-main.toolbar-date-range-preset"
+				data-key={preset.key}
 				class={[
 					'px-2 py-1 text-xs transition-colors',
 					active
@@ -109,7 +110,8 @@
 	{#if feedStore.filter.tag}
 		<button
 			type="button"
-			data-testid="screen-1-toolbar-tag-chip"
+			data-testid="page.page-main.toolbar-tag-chip"
+			data-key={feedStore.filter.tag}
 			class="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
 			aria-label={`Remove tag ${feedStore.filter.tag}`}
 			onclick={clearTag}
@@ -122,12 +124,13 @@
 	<div
 		role="group"
 		aria-label="Sort by"
-		data-testid="screen-1-toolbar-sort-field"
+		data-testid="page.page-main.toolbar-sort-field"
 		class="inline-flex shrink-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 	>
 		<button
 			type="button"
-			data-testid="screen-1-toolbar-sort-field-created_at"
+			data-testid="page.page-main.toolbar-sort-field-option"
+			data-key="created_at"
 			class={[
 				'px-2 py-1 text-xs transition-colors',
 				feedStore.sort.field === 'created_at'
@@ -141,7 +144,8 @@
 		</button>
 		<button
 			type="button"
-			data-testid="screen-1-toolbar-sort-field-updated_at"
+			data-testid="page.page-main.toolbar-sort-field-option"
+			data-key="updated_at"
 			class={[
 				'px-2 py-1 text-xs transition-colors',
 				feedStore.sort.field === 'updated_at'
@@ -157,7 +161,7 @@
 
 	<button
 		type="button"
-		data-testid="screen-1-toolbar-sort-direction"
+		data-testid="page.page-main.toolbar-sort-direction"
 		class="inline-flex shrink-0 items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 		aria-label={feedStore.sort.direction === 'asc' ? 'Ascending' : 'Descending'}
 		onclick={toggleSortDirection}
@@ -167,7 +171,7 @@
 
 	<button
 		type="button"
-		data-testid="screen-1-toolbar-clear-all"
+		data-testid="page.page-main.toolbar-clear-all"
 		class="shrink-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
 		aria-label="Clear all filters"
 		onclick={clearAll}
@@ -177,7 +181,7 @@
 
 	<button
 		type="button"
-		data-testid="screen-1-toolbar-settings-button"
+		data-testid="page.page-main.toolbar-settings-button"
 		class="shrink-0 rounded-md border border-transparent px-2 py-1 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-700/60"
 		aria-label="Open settings"
 		onclick={openSettings}

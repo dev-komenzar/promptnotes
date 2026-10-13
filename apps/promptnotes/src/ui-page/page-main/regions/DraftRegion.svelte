@@ -120,7 +120,7 @@
 </script>
 
 <section
-	data-testid="region-draft"
+	data-testid="page.page-main.region-draft"
 	aria-label="New note"
 	class="sticky top-0 z-10 flex min-h-0 flex-col border-b border-neutral-200 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950"
 >
@@ -132,10 +132,10 @@
 				<span
 					class="inline-flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
 				>
-					<span data-testid="screen-1-draft-tag-chip">#{tag}</span>
+					<span data-testid="page.page-main.draft-tag-chip">#{tag}</span>
 					<button
 						type="button"
-						data-testid="screen-1-draft-tag-remove"
+						data-testid="page.page-main.draft-tag-remove"
 						class="text-neutral-400 hover:text-red-500"
 						aria-label={`Remove tag ${tag}`}
 						onclick={() => handleTagRemove(tag)}>×</button
@@ -144,7 +144,7 @@
 			{/each}
 			<input
 				type="text"
-				data-testid="screen-1-draft-tag-input"
+				data-testid="page.page-main.draft-tag-input"
 				class="min-w-[6rem] rounded border border-neutral-200 bg-white px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-900"
 				placeholder="+ tag"
 				aria-label="New tag"
@@ -152,19 +152,21 @@
 				onkeydown={handleTagInputKey}
 			/>
 			{#if tagError}
-				<p class="text-[10px] text-red-500" data-testid="screen-1-draft-tag-error">{tagError}</p>
+				<p class="text-[10px] text-red-500" data-testid="page.page-main.draft-tag-error">
+					{tagError}
+				</p>
 			{/if}
 		</div>
 		<div
 			bind:this={host}
-			data-testid="screen-1-draft-body"
+			data-testid="page.page-main.draft-body"
 			class="flex max-h-[70vh] min-h-[3rem] flex-col rounded border border-neutral-200 bg-white px-2 py-1 text-sm focus-within:border-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
 		></div>
 		<div class="flex shrink-0 items-center justify-end gap-2">
 			<span aria-hidden="true" class="text-[10px] text-neutral-400">{shortcutHint}</span>
 			<button
 				type="button"
-				data-testid="screen-1-draft-submit"
+				data-testid="page.page-main.draft-submit"
 				class="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
 				aria-label="Add new note (Cmd+Enter)"
 				disabled={store.submitting}
@@ -178,11 +180,11 @@
 
 <style>
 	/* I-PM19: エディタは host の max-height (70vh) まで伸び、超過分は scroller 内でスクロールする */
-	div[data-testid='screen-1-draft-body'] :global(.cm-editor) {
+	div[data-testid='page.page-main.draft-body'] :global(.cm-editor) {
 		outline: none;
 		min-height: 0;
 	}
-	div[data-testid='screen-1-draft-body'] :global(.cm-editor .cm-scroller) {
+	div[data-testid='page.page-main.draft-body'] :global(.cm-editor .cm-scroller) {
 		font-family:
 			ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 	}

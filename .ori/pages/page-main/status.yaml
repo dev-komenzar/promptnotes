@@ -1,5 +1,5 @@
 page_id: page-main
-derived_at: 2026-10-02
+derived_at: 2026-10-13
 beads:
   epic: ori-page-page-main
   current_phase: done
@@ -48,6 +48,8 @@ phases:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-06-29
-    notes: dirty cleared; 2 follow-up issues created
+    notes: dirty cleared; 2 follow-up issues created (2026-10-13 testid 契約移行: ori-1jjr、機能欠落 block-updated-at は ori-6lvx)
 dirty: []
-finalized_at: 2026-10-02
+finalized_at: 2026-10-13
+followup:
+  - ori-6lvx
