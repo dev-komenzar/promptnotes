@@ -12,7 +12,7 @@ coherence:
     - path: domain/aggregates.md#note-feed-aggregate
       hash: 56f7a54a8ab2
     - path: domain/ui-fields/screen-1.md#screen-1-toolbar-search-query
-      hash: 4bc0f83f71f3
+      hash: f1895fd2632c
 ---
 
 # s8-query-normalize — Scenario Specification

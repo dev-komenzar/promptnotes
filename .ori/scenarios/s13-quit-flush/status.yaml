@@ -2,21 +2,19 @@ scenario_id: s13-quit-flush
 derived_at: 2026-09-19T10:25:11.700Z
 beads:
   epic: ori-scenario-s13-quit-flush
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/screen-1.md
-      sectionId: screen-1
-    detected_at: 2026-10-13T07:02:36.898Z
-    affected_phase: derive
-    reason: edit
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
+dirty: []
