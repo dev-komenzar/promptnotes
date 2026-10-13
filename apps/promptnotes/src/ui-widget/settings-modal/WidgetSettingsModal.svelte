@@ -162,9 +162,7 @@
 			{#if store.saveState.kind === 'error'}
 				{@const pathMsg = pathErrorMessage(store.saveState.error)}
 				{#if pathMsg}
-					<p
-						class="text-xs text-red-600 dark:text-red-400"
-					>
+					<p class="text-xs text-red-600 dark:text-red-400">
 						{pathMsg}
 					</p>
 				{/if}
@@ -203,9 +201,7 @@
 		{#if store.saveState.kind === 'error'}
 			{@const persistMsg = persistErrorMessage(store.saveState.error)}
 			{#if persistMsg}
-				<p
-					class="text-xs text-red-600 dark:text-red-400"
-				>
+				<p class="text-xs text-red-600 dark:text-red-400">
 					{persistMsg}
 				</p>
 			{/if}
