@@ -38,7 +38,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <main
-	data-testid="region-feed"
+	data-testid="page.page-main.region-feed"
 	aria-label="Note feed"
 	class="flex flex-1 flex-col overflow-y-auto text-sm text-neutral-700 dark:text-neutral-200"
 	onkeydown={handleKeyDown}
@@ -47,7 +47,7 @@
 >
 	{#if visibleNotes.length === 0}
 		<p
-			data-testid="screen-1-feed-empty"
+			data-testid="page.page-main.feed-empty"
 			class="px-3 py-6 text-center text-neutral-400 dark:text-neutral-500"
 		>
 			No notes match

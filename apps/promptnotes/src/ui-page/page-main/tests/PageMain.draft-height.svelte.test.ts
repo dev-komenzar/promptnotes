@@ -21,7 +21,7 @@ function renderPage() {
 }
 
 function draftBody(container: HTMLElement): HTMLElement {
-	const el = container.querySelector<HTMLElement>('[data-testid="screen-1-draft-body"]');
+	const el = container.querySelector<HTMLElement>('[data-testid="page.page-main.draft-body"]');
 	if (!el) throw new Error('screen-1-draft-body not found');
 	return el;
 }
@@ -103,8 +103,8 @@ describe('page:page-main draft max height', () => {
 		draftStore.setBody(LONG_BODY);
 		await expect.poll(() => scroller(container).scrollHeight).toBeGreaterThan(300);
 
-		const submit = container.querySelector('[data-testid="screen-1-draft-submit"]');
-		const tagInput = container.querySelector('[data-testid="screen-1-draft-tag-input"]');
+		const submit = container.querySelector('[data-testid="page.page-main.draft-submit"]');
+		const tagInput = container.querySelector('[data-testid="page.page-main.draft-tag-input"]');
 		expect(submit && isInViewport(submit)).toBe(true);
 		expect(tagInput && isInViewport(tagInput)).toBe(true);
 	});

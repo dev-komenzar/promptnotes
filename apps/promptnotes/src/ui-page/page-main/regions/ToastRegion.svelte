@@ -16,7 +16,7 @@
 	widget-update-toast (右下) とは表示位置が排他なので衝突しない。
 -->
 <aside
-	data-testid="region-toast"
+	data-testid="page.page-main.region-toast"
 	aria-label="Notification toast stack"
 	aria-live="polite"
 	class="pointer-events-none fixed inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2"
@@ -24,10 +24,11 @@
 	<!-- screen-1.md#cross-toast-display: 新しい Toast を上に積む（最新が画面上側）。
 	     store.entries は新しい順（先頭 = 最新）なので flex-col で先頭を上に描画する。
 	     flex-col-reverse だと最新が最下段になり spec 違反（S6 で検出）。 -->
-	<div data-testid="screen-1-toast-stack" class="flex w-full max-w-sm flex-col gap-2 px-2">
+	<div data-testid="page.page-main.toast-stack" class="flex w-full max-w-sm flex-col gap-2 px-2">
 		{#each entries as entry (entry.id)}
 			<div
-				data-testid="screen-1-toast"
+				data-testid="page.page-main.toast"
+				data-key={entry.id}
 				data-toast-id={entry.id}
 				role="status"
 				class="pointer-events-auto flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900"
@@ -37,7 +38,7 @@
 				{#if entry.kind === 'deleted'}
 					<span class="shrink-0" aria-hidden="true">🗑️</span>
 					<span
-						data-testid="screen-1-toast-message"
+						data-testid="page.page-main.toast-message"
 						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
 						title={entry.preview}
 					>
@@ -45,7 +46,7 @@
 					</span>
 					<button
 						type="button"
-						data-testid="screen-1-toast-undo"
+						data-testid="page.page-main.toast-undo"
 						data-toast-id={entry.id}
 						class="shrink-0 rounded border border-blue-200 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
 						aria-label="Undo"
@@ -56,7 +57,7 @@
 				{:else if entry.kind === 'copied'}
 					<span class="shrink-0" aria-hidden="true">✅</span>
 					<span
-						data-testid="screen-1-toast-message"
+						data-testid="page.page-main.toast-message"
 						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
 					>
 						Copied
@@ -64,7 +65,7 @@
 				{:else if entry.kind === 'copy-failed'}
 					<span class="shrink-0" aria-hidden="true">⚠️</span>
 					<span
-						data-testid="screen-1-toast-message"
+						data-testid="page.page-main.toast-message"
 						class="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200"
 					>
 						Copy failed (note saved)
@@ -72,7 +73,7 @@
 				{/if}
 				<button
 					type="button"
-					data-testid="screen-1-toast-close"
+					data-testid="page.page-main.toast-close"
 					data-toast-id={entry.id}
 					class="shrink-0 rounded px-1.5 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
 					aria-label="Close toast"

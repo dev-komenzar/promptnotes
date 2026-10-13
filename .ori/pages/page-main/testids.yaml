@@ -94,3 +94,12 @@ extra:
     purpose: ソート項目選択肢
     source: derive
     dynamic: data-key
+  - testid: page.page-main.restart-prompt
+    purpose: 再起動要求ダイアログ (s11/s22 が参照)
+    source: scenario:s11-storage-dir-change
+  - testid: page.page-main.restart-prompt-later
+    purpose: 再起動ダイアログの Later ボタン
+    source: scenario:s22-storage-dir-change-watcher-restart
+  - testid: page.page-main.restart-prompt-restart
+    purpose: 再起動ダイアログの Restart ボタン
+    source: scenario:s22-storage-dir-change-watcher-restart

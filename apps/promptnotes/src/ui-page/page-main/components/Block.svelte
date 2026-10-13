@@ -307,7 +307,8 @@
 	bind:this={blockEl}
 	role="article"
 	tabindex="0"
-	data-testid="screen-1-block"
+	data-testid="page.page-main.block"
+	data-key={note.id}
 	data-block-id={note.id}
 	data-block-state={blockState}
 	aria-label={`Note (created ${note.created_at})`}
@@ -329,7 +330,7 @@
 					<button
 						type="button"
 						data-block-no-edit
-						data-testid="screen-1-block-tag-chip"
+						data-testid="page.page-main.block-tag-chip"
 						class="hover:text-blue-600 dark:hover:text-blue-400"
 						aria-label={`Filter by tag ${tag}`}
 						onclick={(e) => {
@@ -343,7 +344,7 @@
 						<button
 							type="button"
 							data-block-no-edit
-							data-testid="screen-1-block-tag-remove"
+							data-testid="page.page-main.block-tag-remove"
 							class="text-neutral-400 hover:text-red-500"
 							aria-label={`Remove tag ${tag}`}
 							onclick={(e) => {
@@ -358,7 +359,7 @@
 				<input
 					type="text"
 					data-block-no-edit
-					data-testid="screen-1-block-tag-input"
+					data-testid="page.page-main.block-tag-input"
 					class="min-w-[6rem] rounded border border-neutral-200 bg-white px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-900"
 					placeholder="+ tag"
 					aria-label="New tag"
@@ -369,7 +370,7 @@
 			{/if}
 		</div>
 		<time
-			data-testid="screen-1-block-created-at"
+			data-testid="page.page-main.block-created-at"
 			class="shrink-0 text-right text-[10px] tabular-nums text-neutral-400"
 			datetime={note.created_at}
 			title={`updated_at: ${note.updated_at}`}
@@ -378,9 +379,9 @@
 		</time>
 	</header>
 	{#if tagError}
-		<p class="text-[10px] text-red-500" data-testid="screen-1-block-tag-error">{tagError}</p>
+		<p class="text-[10px] text-red-500" data-testid="page.page-main.block-tag-error">{tagError}</p>
 	{/if}
-	<div bind:this={host} data-testid="screen-1-block-body" class="w-full text-sm"></div>
+	<div bind:this={host} data-testid="page.page-main.block-body" class="w-full text-sm"></div>
 
 	<div
 		class="pointer-events-none absolute right-2 top-1 flex gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
@@ -388,7 +389,7 @@
 		<button
 			type="button"
 			data-block-no-edit
-			data-testid="screen-1-block-copy"
+			data-testid="page.page-main.block-copy"
 			class="rounded border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 grid place-items-center"
 			aria-label="Copy body"
 			onclick={(e) => {
@@ -401,7 +402,7 @@
 		<button
 			type="button"
 			data-block-no-edit
-			data-testid="screen-1-block-delete"
+			data-testid="page.page-main.block-delete"
 			class="rounded border border-red-200 bg-white px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-neutral-900 dark:hover:bg-red-900/20"
 			aria-label="Delete note"
 			onclick={(e) => {

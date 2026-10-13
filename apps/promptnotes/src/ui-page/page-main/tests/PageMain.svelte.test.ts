@@ -19,7 +19,12 @@ describe('page:page-main shell', () => {
 	it('spec#tp-mount — 4 region (toolbar / draft / feed / toast) を DOM に mount する', async () => {
 		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
-		for (const id of ['region-toolbar', 'region-draft', 'region-feed', 'region-toast']) {
+		for (const id of [
+			'page.page-main.region-toolbar',
+			'page.page-main.region-draft',
+			'page.page-main.region-feed',
+			'page.page-main.region-toast'
+		]) {
 			await expect.element(page.getByTestId(id)).toBeInTheDocument();
 		}
 	});
@@ -30,9 +35,9 @@ describe('page:page-main shell', () => {
 			listNotesFn: noopListNotes
 		});
 
-		const pageMain = container.querySelectorAll('[data-testid="page-main"]');
-		const feed = container.querySelectorAll('[data-testid="region-feed"]');
-		const draft = container.querySelectorAll('[data-testid="region-draft"]');
+		const pageMain = container.querySelectorAll('[data-testid="page.page-main"]');
+		const feed = container.querySelectorAll('[data-testid="page.page-main.region-feed"]');
+		const draft = container.querySelectorAll('[data-testid="page.page-main.region-draft"]');
 
 		expect(pageMain.length).toBe(1);
 		expect(feed.length).toBe(1);
@@ -43,12 +48,12 @@ describe('page:page-main shell', () => {
 		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
 		for (const id of [
-			'screen-1-toolbar-search-query',
-			'screen-1-toolbar-date-range',
-			'screen-1-toolbar-sort-field',
-			'screen-1-toolbar-sort-direction',
-			'screen-1-toolbar-settings-button',
-			'screen-1-toolbar-clear-all'
+			'page.page-main.toolbar-search-query',
+			'page.page-main.toolbar-date-range',
+			'page.page-main.toolbar-sort-field',
+			'page.page-main.toolbar-sort-direction',
+			'page.page-main.toolbar-settings-button',
+			'page.page-main.toolbar-clear-all'
 		]) {
 			await expect.element(page.getByTestId(id)).toBeInTheDocument();
 		}
@@ -86,7 +91,7 @@ describe('page:page-main keyboard shortcuts', () => {
 	it('spec#cross-screen-shortcuts — Cmd/Ctrl+N で Draft にフォーカスする', async () => {
 		render(PageMain, { loadSettingsFn: noopLoadSettings, listNotesFn: noopListNotes });
 
-		await expect.element(page.getByTestId('screen-1-draft-body')).toBeInTheDocument();
+		await expect.element(page.getByTestId('page.page-main.draft-body')).toBeInTheDocument();
 
 		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }));
 
@@ -94,13 +99,13 @@ describe('page:page-main keyboard shortcuts', () => {
 			.poll(() => {
 				const active = document.activeElement;
 				if (!active) return false;
-				const draftBody = document.querySelector('[data-testid="screen-1-draft-body"]');
+				const draftBody = document.querySelector('[data-testid="page.page-main.draft-body"]');
 				if (!draftBody) return false;
 				return draftBody.contains(active) && active.classList.contains('cm-content');
 			})
 			.toBe(true);
 
 		// Cmd/Ctrl+N はノートを作成しないことを確認
-		await expect.element(page.getByTestId('screen-1-block')).not.toBeInTheDocument();
+		await expect.element(page.getByTestId('page.page-main.block')).not.toBeInTheDocument();
 	});
 });
