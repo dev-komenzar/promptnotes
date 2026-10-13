@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
+import { copyNoteBody } from '$lib/note-capture/slices/copy-note-body';
 import DraftRegion from '../regions/DraftRegion.svelte';
+import { toastStore } from '../stores/toasts.svelte';
 import { submitShortcutHint } from '../submit-shortcut-hint';
 
 vi.mock('$lib/note-capture/slices/copy-note-body', () => ({
@@ -127,5 +129,49 @@ describe('component:DraftRegion focus after submit', () => {
 			expect(feed.prependNote).toHaveBeenCalledTimes(1);
 		});
 		expect(activeInDraftBody()).toBe(true);
+	});
+});
+
+describe('component:DraftRegion clipboard copy after submit', () => {
+	function createdStore() {
+		const store = makeFakeStore();
+		store.submit.mockResolvedValue({
+			outcome: 'created',
+			id: '20260620120000',
+			created_at: '2026-06-20T12:00:00Z'
+		});
+		return store;
+	}
+
+	it('spec#tp-copy-on-create — 作成成功後に copy-note-body を呼び Copied toast を出す', async () => {
+		toastStore.reset();
+		const feed = makeFakeFeed();
+		render(DraftRegion, { store: createdStore() as never, feed: feed as never });
+
+		await page.getByRole('button', { name: /Add new note/ }).click();
+
+		await vi.waitFor(() => {
+			expect(toastStore.entries.map((e) => e.kind)).toEqual(['copied']);
+		});
+		expect(copyNoteBody).toHaveBeenCalledWith('20260620120000');
+		expect(feed.prependNote).toHaveBeenCalledTimes(1);
+		toastStore.reset();
+	});
+
+	it('spec#tp-copy-failed-toast — clipboard 書き込み失敗で Copy failed toast を出し、ノート作成は成功している', async () => {
+		toastStore.reset();
+		vi.mocked(copyNoteBody).mockRejectedValueOnce(new Error('clipboard'));
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const feed = makeFakeFeed();
+		render(DraftRegion, { store: createdStore() as never, feed: feed as never });
+
+		await page.getByRole('button', { name: /Add new note/ }).click();
+
+		await vi.waitFor(() => {
+			expect(toastStore.entries.map((e) => e.kind)).toEqual(['copy-failed']);
+		});
+		expect(feed.prependNote).toHaveBeenCalledTimes(1);
+		errorSpy.mockRestore();
+		toastStore.reset();
 	});
 });
