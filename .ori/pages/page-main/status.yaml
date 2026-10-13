@@ -62,6 +62,12 @@ dirty:
     detected_at: 2026-10-13T06:54:47.586Z
     affected_phase: derive
     reason: edit
+  - source:
+      path: .ori/domain/ui-fields/screen-1.md
+      sectionId: screen-1
+    detected_at: 2026-10-13T07:02:36.898Z
+    affected_phase: derive
+    reason: edit
 finalized_at: 2026-10-13
 followup:
   - ori-6lvx

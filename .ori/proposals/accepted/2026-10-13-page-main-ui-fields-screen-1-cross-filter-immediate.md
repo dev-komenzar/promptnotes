@@ -3,7 +3,9 @@ target: domain/ui-fields/screen-1.md#cross-filter-immediate
 by: pages/page-main
 reason: 検索入力欄の表示値と IME 変換中の filter 送信について規定が無く、正規化値の書き戻しで日本語 IME 入力が壊れた (ori-fdhh)
 created: 2026-10-13
-status: pending
+status: accepted
+accepted_at: 2026-10-13
+accepted_by: human (takuya.kometan@gmail.com)
 ---
 
 # Proposal: 検索入力欄の表示値は raw 入力とし、IME 変換中は filter を送信しない
