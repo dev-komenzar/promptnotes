@@ -3,6 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # beads (bd) 専用の nixpkgs。.beads の Dolt DB schema は bd の version に
+    # 追従して不可逆に migrate されるため、本体 nixpkgs (bun / webkitgtk / FOD hash
+    # に影響) とは独立に bd だけを上げられるよう分離する。
+    nixpkgs-beads.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -10,13 +14,15 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, nixpkgs-beads, flake-utils, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
+
+        beads = nixpkgs-beads.legacyPackages.${system}.beads;
 
         rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
@@ -70,8 +76,7 @@
           pkg-config
           patchelf
           apm-cli
-          beads
-        ] ++ languageServers;
+        ] ++ [ beads ] ++ languageServers;
 
         # apm CLI は PyInstaller でバンドルされており、ctypes / sqlite3 などの
         # Python 標準モジュールが libffi / libsqlite3 / zlib 等の共有ライブラリを
