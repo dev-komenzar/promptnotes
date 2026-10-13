@@ -127,7 +127,7 @@
 
 <dialog
 	bind:this={dialogEl}
-	data-testid="widget-settings-modal"
+	data-testid="widget.widget-settings-modal.root"
 	aria-labelledby="widget-settings-modal-title"
 	class="rounded-lg border border-neutral-200 bg-white p-0 text-neutral-900 shadow-xl backdrop:bg-transparent dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
 	oncancel={handleDialogCancel}
@@ -144,7 +144,7 @@
 			<div class="flex items-center gap-2">
 				<input
 					id="screen-2-storage-dir"
-					data-testid="screen-2-storage-dir"
+					data-testid="widget.widget-settings-modal.storage-dir"
 					type="text"
 					readonly
 					value={store.storageDir}
@@ -153,7 +153,6 @@
 				/>
 				<button
 					type="button"
-					data-testid="screen-2-storage-dir-pick"
 					class="shrink-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 					onclick={pickFolder}
 				>
@@ -164,7 +163,6 @@
 				{@const pathMsg = pathErrorMessage(store.saveState.error)}
 				{#if pathMsg}
 					<p
-						data-testid="screen-2-storage-dir-error"
 						class="text-xs text-red-600 dark:text-red-400"
 					>
 						{pathMsg}
@@ -178,14 +176,15 @@
 			<div
 				role="radiogroup"
 				aria-label="Theme"
-				data-testid="screen-2-theme"
+				data-testid="widget.widget-settings-modal.theme"
 				class="inline-flex w-fit overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
 			>
 				{#each THEMES as t (t.value)}
 					{@const active = store.theme === t.value}
 					<button
 						type="button"
-						data-testid={`screen-2-theme-${t.value}`}
+						data-testid="widget.widget-settings-modal.theme-option"
+						data-key={t.value}
 						class={[
 							'px-3 py-1 text-xs transition-colors',
 							active
@@ -205,7 +204,6 @@
 			{@const persistMsg = persistErrorMessage(store.saveState.error)}
 			{#if persistMsg}
 				<p
-					data-testid="widget-settings-modal-persist-error"
 					class="text-xs text-red-600 dark:text-red-400"
 				>
 					{persistMsg}
@@ -216,7 +214,7 @@
 		<footer class="flex items-center justify-end gap-2 pt-2">
 			{#if store.appVersion}
 				<span
-					data-testid="screen-2-app-version"
+					data-testid="widget.widget-settings-modal.app-version"
 					class="mr-auto text-xs text-neutral-500 dark:text-neutral-400"
 				>
 					v{store.appVersion}
@@ -224,7 +222,7 @@
 			{/if}
 			<button
 				type="button"
-				data-testid="screen-2-cancel"
+				data-testid="widget.widget-settings-modal.cancel"
 				class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 				onclick={handleCancel}
 			>
@@ -232,7 +230,7 @@
 			</button>
 			<button
 				type="submit"
-				data-testid="screen-2-save"
+				data-testid="widget.widget-settings-modal.save"
 				disabled={store.saveState.kind === 'saving'}
 				class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
 			>

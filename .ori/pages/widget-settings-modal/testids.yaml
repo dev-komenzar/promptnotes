@@ -1,0 +1,24 @@
+# page testid 契約 (SSoT: ddd-vsa-hex/pattern.md §UI selector / testid 規約)
+# derived: @ori-generated — testids.js sync が ui-fields から再生成する。手で編集しない
+# extra:   ori-derive / ori-generate が testids.js add-extra で追記する (変更・削除は人間のみ)
+derived:
+  - testid: widget.widget-settings-modal.app-version
+    field: screen-2-app-version
+  - testid: widget.widget-settings-modal.cancel
+    field: screen-2-cancel
+  - testid: widget.widget-settings-modal.save
+    field: screen-2-save
+  - testid: widget.widget-settings-modal.storage-dir
+    field: screen-2-storage-dir
+  - testid: widget.widget-settings-modal.storage-dir-reset
+    field: screen-2-storage-dir-reset
+  - testid: widget.widget-settings-modal.theme
+    field: screen-2-theme
+extra:
+  - testid: widget.widget-settings-modal.root
+    purpose: 設定モーダルの dialog root
+    source: scenario:s11-storage-dir-change
+  - testid: widget.widget-settings-modal.theme-option
+    purpose: テーマ選択肢 (data-key=light|dark|system)
+    source: scenario:s11-storage-dir-change
+    dynamic: data-key
