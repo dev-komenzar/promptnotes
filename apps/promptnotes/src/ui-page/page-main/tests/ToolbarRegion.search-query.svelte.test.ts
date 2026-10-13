@@ -117,6 +117,40 @@ describe('page:page-main toolbar search query (bug:ori-fdhh)', () => {
 		expect(setQueryRaws()).toEqual(['Foo', 'Foo ']);
 	});
 
+	it('spec#invariants-cross-region (ori-fdhh proposal) — Esc で composition をキャンセルすると変換前の値に戻り、追加送信しない', async () => {
+		render(ToolbarRegion, {});
+		const el = searchInput();
+
+		input(el, 'abc', false);
+		composition(el, 'compositionstart');
+		input(el, 'abcか', true);
+		// Esc: 未確定文字が破棄され、変換前の値で composition が終わる
+		input(el, 'abc', true);
+		composition(el, 'compositionend');
+		await wait(80);
+
+		expect(el.value).toBe('abc');
+		expect(setQueryRaws()).toEqual(['abc']);
+	});
+
+	it('spec#invariants-cross-region (ori-fdhh proposal) — 確定値が直前の送信値と同じなら再送しない', async () => {
+		render(ToolbarRegion, {});
+		const el = searchInput();
+
+		composition(el, 'compositionstart');
+		input(el, 'かな', true);
+		composition(el, 'compositionend');
+		// 同じ確定値で再度 composition を確定 (WebKit 順の確定 input も含む)
+		composition(el, 'compositionstart');
+		input(el, 'かな', true);
+		composition(el, 'compositionend');
+		input(el, 'かな', false);
+		await wait(80);
+
+		expect(el.value).toBe('かな');
+		expect(setQueryRaws()).toEqual(['かな']);
+	});
+
 	it('spec#hosted-slices update-feed-filter — Clear all で入力欄が空になり clear_all を送る', async () => {
 		render(ToolbarRegion, {});
 		const el = searchInput();
