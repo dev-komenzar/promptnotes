@@ -1,0 +1,96 @@
+# page testid 契約 (SSoT: ddd-vsa-hex/pattern.md §UI selector / testid 規約)
+# derived: @ori-generated — testids.js sync が ui-fields から再生成する。手で編集しない
+# extra:   ori-derive / ori-generate が testids.js add-extra で追記する (変更・削除は人間のみ)
+derived:
+  - testid: page.page-main.block-body
+    field: screen-1-block-body
+  - testid: page.page-main.block-copy
+    field: screen-1-block-copy
+  - testid: page.page-main.block-created-at
+    field: screen-1-block-created-at
+  - testid: page.page-main.block-delete
+    field: screen-1-block-delete
+  - testid: page.page-main.block-tag-chip
+    field: screen-1-block-tag-chip
+  - testid: page.page-main.block-tag-input
+    field: screen-1-block-tag-input
+  - testid: page.page-main.block-tag-remove
+    field: screen-1-block-tag-remove
+  - testid: page.page-main.block-updated-at
+    field: screen-1-block-updated-at
+  - testid: page.page-main.draft-body
+    field: screen-1-draft-body
+  - testid: page.page-main.draft-submit
+    field: screen-1-draft-submit
+  - testid: page.page-main.draft-tag-chip
+    field: screen-1-draft-tag-chip
+  - testid: page.page-main.draft-tag-input
+    field: screen-1-draft-tag-input
+  - testid: page.page-main.draft-tag-remove
+    field: screen-1-draft-tag-remove
+  - testid: page.page-main.toast-close
+    field: screen-1-toast-close
+  - testid: page.page-main.toast-message
+    field: screen-1-toast-message
+  - testid: page.page-main.toast-stack
+    field: screen-1-toast-stack
+  - testid: page.page-main.toast-undo
+    field: screen-1-toast-undo
+  - testid: page.page-main.toolbar-date-range
+    field: screen-1-toolbar-date-range
+  - testid: page.page-main.toolbar-search-query
+    field: screen-1-toolbar-search-query
+  - testid: page.page-main.toolbar-settings-button
+    field: screen-1-toolbar-settings-button
+  - testid: page.page-main.toolbar-sort-direction
+    field: screen-1-toolbar-sort-direction
+  - testid: page.page-main.toolbar-sort-field
+    field: screen-1-toolbar-sort-field
+extra:
+  - testid: page.page-main
+    purpose: page-main の root
+    source: derive
+  - testid: page.page-main.region-toolbar
+    purpose: Toolbar region
+    source: derive
+  - testid: page.page-main.region-draft
+    purpose: Draft region
+    source: derive
+  - testid: page.page-main.region-feed
+    purpose: Feed region
+    source: derive
+  - testid: page.page-main.region-toast
+    purpose: Toast region
+    source: derive
+  - testid: page.page-main.block
+    purpose: Feed の Block (1 ノート = 1 要素)
+    source: derive
+    dynamic: data-key
+  - testid: page.page-main.block-tag-error
+    purpose: Block のタグ入力エラー表示
+    source: derive
+  - testid: page.page-main.draft-tag-error
+    purpose: Draft のタグ入力エラー表示
+    source: derive
+  - testid: page.page-main.feed-empty
+    purpose: Feed 空状態の表示
+    source: derive
+  - testid: page.page-main.toast
+    purpose: Toast 1 件 (種別ごと)
+    source: derive
+    dynamic: data-key
+  - testid: page.page-main.toolbar-tag-chip
+    purpose: Toolbar の絞り込みタグ chip
+    source: derive
+    dynamic: data-key
+  - testid: page.page-main.toolbar-clear-all
+    purpose: Toolbar の絞り込み全解除ボタン
+    source: derive
+  - testid: page.page-main.toolbar-date-range-preset
+    purpose: 期間プリセット選択肢
+    source: derive
+    dynamic: data-key
+  - testid: page.page-main.toolbar-sort-field-option
+    purpose: ソート項目選択肢
+    source: derive
+    dynamic: data-key
