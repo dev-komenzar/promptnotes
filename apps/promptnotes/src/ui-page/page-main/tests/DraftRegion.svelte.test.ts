@@ -14,7 +14,7 @@ function makeFakeFeed() {
 
 function activeInDraftBody(): boolean {
 	const el = document.activeElement;
-	return !!el?.closest('[data-testid="screen-1-draft-body"]');
+	return !!el?.closest('[data-testid="page.page-main.draft-body"]');
 }
 
 function makeFakeStore() {
