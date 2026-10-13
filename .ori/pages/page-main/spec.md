@@ -151,7 +151,7 @@ UI 実装はこの 3 点を曖昧化してはならない。
 
 ### tp-mount: 起動 smoke {#tp-mount}
 
-`bun tauri dev` で起動 → page-main が mount され、4 region（toolbar / draft / feed / toast）がすべて DOM に存在する（契約 testid `region-*`）。`load-settings` の失敗時も `Settings::defaults()` で続行し、UI は表示される（I-PM3）。
+`bun tauri dev` で起動 → page-main が mount され、4 region（toolbar / draft / feed / toast）がすべて DOM に存在する（各 region の契約 testid）。`load-settings` の失敗時も `Settings::defaults()` で続行し、UI は表示される（I-PM3）。
 
 ### tp-golden-create: Cmd+Enter で Note 作成 → Feed 表示 {#tp-golden-create}
 
@@ -210,7 +210,7 @@ Toolbar の sort field / direction を変更 → Feed の Block 順序が即時�
 
 ### tp-no-multi-pane: 単一ペイン制約 {#tp-no-multi-pane}
 
-DOM 構造に複数カラム grid / 並列 viewport が存在しないこと（I-PM4 / I-PM6）。feed region の契約 testid（`page.page-main.region-feed`）を持つ要素がちょうど 1 つであること。
+DOM 構造に複数カラム grid / 並列 viewport が存在しないこと（I-PM4 / I-PM6）。feed region の契約 testid を持つ要素がちょうど 1 つであること。
 
 ### tp-no-raw-invoke: 生 invoke 禁止 {#tp-no-raw-invoke}
 
@@ -223,7 +223,7 @@ I-PM19 を DraftRegion の browser component test（vitest client project / Play
 - viewport を十分高く（例: 800px）した状態で、viewport を超える行数（例: 200 行）の本文を Draft に入れる → 本文エディタの高さが `0.7 × viewport 高さ` 以下に収まり、CodeMirror scroller が `scrollHeight > clientHeight`（内部スクロール可能）である
 - 短い本文（1 行）では本文エディタは最大高さまで伸びない（内容に応じた高さ）
 - 長い本文の末尾にカーソルがある状態で、カーソル行がエディタの可視範囲内にある
-- viewport が低い（例: 300px）状態で長い本文を入れても、`screen-1-draft-submit` とタグ入力（`screen-1-draft-tag-input`）の bounding box が viewport 内に収まる
+- viewport が低い（例: 300px）状態で長い本文を入れても、Draft の submit 要素（field `screen-1-draft-submit`）とタグ入力（field `screen-1-draft-tag-input`）の bounding box が viewport 内に収まる
 
 ### tp-a11y-basic: 基本 a11y {#tp-a11y-basic}
 

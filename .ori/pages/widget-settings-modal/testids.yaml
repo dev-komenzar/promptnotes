@@ -19,6 +19,6 @@ extra:
     purpose: 設定モーダルの dialog root
     source: scenario:s11-storage-dir-change
   - testid: widget.widget-settings-modal.theme-option
-    purpose: テーマ選択肢 (data-key=light|dark|system)
+    purpose: テーマ選択肢 (data-key=System|Light|Dark)
     source: scenario:s11-storage-dir-change
     dynamic: data-key

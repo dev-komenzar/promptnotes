@@ -76,7 +76,7 @@ extra:
     purpose: Feed 空状態の表示
     source: derive
   - testid: page.page-main.toast
-    purpose: Toast 1 件 (種別ごと)
+    purpose: Toast 1 件 (data-key=entry.id)
     source: derive
     dynamic: data-key
   - testid: page.page-main.toolbar-tag-chip

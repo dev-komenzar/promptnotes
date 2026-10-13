@@ -22,7 +22,7 @@ function renderPage() {
 
 function draftBody(container: HTMLElement): HTMLElement {
 	const el = container.querySelector<HTMLElement>('[data-testid="page.page-main.draft-body"]');
-	if (!el) throw new Error('screen-1-draft-body not found');
+	if (!el) throw new Error('page.page-main.draft-body not found');
 	return el;
 }
 
