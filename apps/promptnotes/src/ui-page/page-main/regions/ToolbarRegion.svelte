@@ -19,19 +19,35 @@
 		{ key: 'last_90_days', label: 'Last 90d', range: { kind: 'last_90_days' } }
 	];
 
+	// 入力欄の表示値はユーザーの raw 入力のみを正とする。filter.query (NFKC + lowercase +
+	// trim 済み) で書き戻すと IME composition が壊れるため同期しない (ori-fdhh)。
 	let queryDraft = $state('');
+	let composing = false;
+	let lastSentQuery = '';
 
-	$effect(() => {
-		const next = feedStore.filter.query ?? '';
-		if (next !== queryDraft) {
-			queryDraft = next;
-		}
-	});
+	function sendQuery(value: string) {
+		// compositionend と確定 input の発火順は WebView 依存。同値の重複送信を抑止する。
+		if (value === lastSentQuery) return;
+		lastSentQuery = value;
+		void feedStore.setQuery(value);
+	}
 
 	function handleQueryInput(event: Event) {
 		const value = (event.currentTarget as HTMLInputElement).value;
 		queryDraft = value;
-		void feedStore.setQuery(value);
+		if (composing || (event as InputEvent).isComposing) return;
+		sendQuery(value);
+	}
+
+	function handleCompositionStart() {
+		composing = true;
+	}
+
+	function handleCompositionEnd(event: CompositionEvent) {
+		composing = false;
+		const value = (event.currentTarget as HTMLInputElement).value;
+		queryDraft = value;
+		sendQuery(value);
 	}
 
 	function selectDateRange(range: DateRangeFilter) {
@@ -54,6 +70,7 @@
 
 	function clearAll() {
 		queryDraft = '';
+		lastSentQuery = '';
 		void feedStore.clearAll();
 	}
 
@@ -78,6 +95,8 @@
 			aria-label="Search"
 			value={queryDraft}
 			oninput={handleQueryInput}
+			oncompositionstart={handleCompositionStart}
+			oncompositionend={handleCompositionEnd}
 		/>
 	</label>
 

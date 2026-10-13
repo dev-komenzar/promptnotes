@@ -114,3 +114,27 @@ verdict=PASS。軽微な指摘はこの PR 内で対応した (Pass 2 は不要)
 - L3 → 対応: 長文テストに `document.documentElement.scrollHeight <= innerHeight` を追加
 - L1 → 見送り: `sticky top-0` は既存実装で無害。今回の範囲外
 - L4 → 見送り: I-PM19 に「タグ行と submit 行は常に viewport 内、本文エディタのみが縮む」を既に明記済み
+
+# Review: page-main search query IME (ori-fdhh) {#review-search-ime}
+
+## Pass 1 {#search-ime-pass-1}
+
+### Structural gates {#search-ime-pass-1-gates}
+
+- (a) boundary test: PASS (`bun run test` 23 files / 184 tests、うち `src/ui-page/page-main/tests/ToolbarRegion.search-query.svelte.test.ts` 6 tests)
+- (b) arch lint:     PASS (`bun run lint` = prettier --check + eslint、exit 0。`bun run check` 0 errors / 0 warnings)
+- (c) public_entry:  N/A (page。slice 内部への import 追加なし)
+- (d) testid 契約:   FAIL (4 件)。ただし main 3ab2c38 でも同じ 4 件が出る既存違反で、本変更とは無関係 (testids.yaml 未 sync / ToolbarRegion の date-range 動的 testid / sort-field 形式違反)。bd `ori-1jjr` (testid-violation, page:page-main) で別途追跡し、semantic review は続行した
+
+### Semantic findings (reviewer: ori-reviewer, fresh context) {#search-ime-pass-1-findings}
+
+- **LOW** regions/ToolbarRegion.svelte:39 — composing 中も `queryDraft = value` を代入している。early return をその前に置けば defense-in-depth になる
+- **LOW** tests/ToolbarRegion.search-query.svelte.test.ts — composition cancel (Esc) と「確定値 = 直前送信値」の dedupe を守る regression test が無い
+- **LOW** notes.md — pending proposal を spec 側にも残すと誤実装の再発を防げる
+
+### Disposition {#search-ime-pass-1-disposition}
+
+- verdict=PASS
+- LOW 1: 採用しない。`queryDraft` を DOM 値と常に一致させておくと、compositionend 前に再描画が起きても stale 値で上書きされない。この同期がむしろ安全側
+- LOW 2: 任意の hardening として残す (blocker ではない)
+- LOW 3: proposal workflow (`/ori-review-proposals`) に委ねる。spec.md は派生文書なので直接編集しない
