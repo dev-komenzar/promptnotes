@@ -115,7 +115,10 @@ PromptNotes のメインウィンドウ。spec の **シングルペイン制約
 - 入力欄（本文 + 下書きタグ）を即時クリア
 - 下書きタグを `raw_tags` として `create-note` に渡す
 - 新規 Block がフィード最上部に挿入（作成日時 + タグチップ付き）
-- フォーカスは新規 Block に移動（FOCUSED 状態、Q5: Esc で IDLE へ）
+- フォーカスは **Draft 本文エディタに残す**（連続入力のため）。新規 Block は IDLE のまま（FOCUSED にしない）、ハイライト・自動スクロールもしない
+  - `+ Add` ボタンで確定した場合も `focusDraft()` で本文エディタへフォーカスを戻す
+  - 確定失敗時・空 Draft での確定（no-op）でもフォーカスは Draft に残す（ボタン経路では確定処理の後に Draft へ戻す）
+  - 改訂 2026-10-13: 旧記述は「新規 Block へフォーカス移動（FOCUSED）」だったが、連続入力を優先し Draft 維持へ変更（bd ori-exek）
 
 ### Toast の表示制約 {#cross-toast-display}
 

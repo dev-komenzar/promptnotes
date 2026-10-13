@@ -169,7 +169,7 @@ describe('page:page-main feed store', () => {
 		expect(store.sort).toStrictEqual({ field: 'updated_at', direction: 'asc' });
 	});
 
-	it('spec#I-PM9 — prependNote は新 Note を先頭に挿入し focus を移す', () => {
+	it('spec#I-PM9 — prependNote は新 Note を先頭に挿入するが focus は移さない', () => {
 		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
 
 		store.prependNote({
@@ -188,7 +188,7 @@ describe('page:page-main feed store', () => {
 		});
 
 		expect(store.notes.map((n) => n.id)).toStrictEqual(['note-2', 'note-1']);
-		expect(store.focusedNoteId).toBe('note-2');
+		expect(store.focusedNoteId).toBeNull();
 	});
 
 	it('spec#I-PM11 — visibleNotes は filter / sort を即時反映する (query)', () => {

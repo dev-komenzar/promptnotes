@@ -39,7 +39,7 @@ typical / edge / error の各シナリオを Given/When/Then で walkthrough し
 - `storageDir/20260620120000.md` が書き出される（frontmatter: `tags: []`, `createdAt`, `updatedAt`）
 - event **NoteCreated** `{ note_id: 20260620120000, created_at: t0, initial_tags: ∅ }` 発行
 - NoteFeed: 表示 1 件、フィード最上部に新規ブロック
-- UI: Draft 入力欄がクリア、新規ブロックへフォーカス遷移
+- UI: Draft 入力欄がクリア、フォーカスは Draft 本文エディタに残る（新規ブロックは IDLE のまま。screen-1.md#cross-draft-submit）
 
 ## Scenario S2: 既存 Note 編集後 500ms debounce で AutoSave {#s2-autosave-debounce}
 

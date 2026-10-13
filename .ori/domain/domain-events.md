@@ -40,7 +40,7 @@ struct NoteCreated {
 #### Subscribers {#note-created-subscribers}
 
 - **Note Feed (Shared Kernel)**: フィード最上部に新規ブロックを差し込む
-- **UI 層**: Draft 入力欄をクリア + 新規ブロックへフォーカス遷移
+- **UI 層**: Draft 入力欄をクリア（フォーカスは Draft に残す。新規ブロックは IDLE のまま。screen-1.md#cross-draft-submit）
 
 #### Timing {#note-created-timing}
 

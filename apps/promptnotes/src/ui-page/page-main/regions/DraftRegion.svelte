@@ -47,7 +47,7 @@
 			// Fire-and-forget clipboard copy (post-condition from create-note workflow)
 			copyNoteBody(outcome.id)
 				.then(() => toastStore.pushCopied())
-				.catch(() => toastStore.pushCopyFailed());
+				.catch((err: unknown) => console.error('draft submit failed', err));
 		}
 		// 成否にかかわらずタグ入力欄をリセット
 		tagInputDraft = '';
@@ -80,7 +80,10 @@
 	}
 
 	function handleButtonClick(): void {
-		void runSubmit();
+		// spec#cross-draft-submit: ボタンで確定しても連続入力できるよう Draft 本文へフォーカスを戻す
+		runSubmit()
+			.catch((err: unknown) => console.error('draft submit failed', err))
+			.finally(() => focusDraft());
 	}
 
 	onMount(() => {

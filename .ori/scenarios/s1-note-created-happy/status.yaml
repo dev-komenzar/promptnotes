@@ -13,4 +13,10 @@ phases:
   generate: closed
   review: closed
   finalize: closed
-dirty: []
+dirty:
+  - source:
+      path: .ori/domain/validation.md
+      sectionId: s1-note-created-happy
+    detected_at: 2026-10-13T06:54:47.586Z
+    affected_phase: derive
+    reason: edit

@@ -254,7 +254,7 @@ TS 側は tauri-specta-generated bindings (`apps/promptnotes/src/lib/note-captur
 本 slice は **command (write side)** のみを扱う。以下は別 slice / layer の責務：
 
 - Draft 入力欄のクリア（UI 層が `NoteCreated` を subscribe）
-- 新規 Block の挿入とフォーカス遷移（screen-1 widget / page の responsibilities、cross-draft-submit ルール）
+- 新規 Block の挿入と submit 後のフォーカス維持（フォーカスは Draft に残し新規 Block は IDLE。screen-1 widget / page の responsibilities、cross-draft-submit ルール）
 - Note Feed 側の表示更新（Note Feed BC が Shared Kernel 経由で再描画）
 - `.md` フォーマットの厳密化（infrastructure テスト or 別 decision）
 - 作成成功後のクリップボードコピーとトースト表示（UI 層 `page-main` の責務。domain/workflows/create-note.md#post-conditions 参照）
