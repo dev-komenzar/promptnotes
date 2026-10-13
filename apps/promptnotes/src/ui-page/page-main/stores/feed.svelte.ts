@@ -179,8 +179,8 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	}
 
 	function prependNote(note: NoteSummary): void {
+		// spec#I-PM9: 新 Block は IDLE のまま。フォーカスは Draft に残す (focusedNoteId は変えない)
 		notes = [note, ...notes];
-		focusedNoteId = note.id;
 	}
 
 	/**

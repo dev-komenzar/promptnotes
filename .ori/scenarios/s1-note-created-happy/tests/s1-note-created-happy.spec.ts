@@ -45,6 +45,18 @@ describe('scenario:s1-note-created-happy', () => {
     // Then 3: Draft 入力欄がクリア
     const draftText = await draftEditor.getText();
     expect(draftText.trim()).toBe('');
+
+    // Then 4: フォーカスは Draft 本文エディタに残り、新規 Block は IDLE のまま
+    // (spec.md#then / domain screen-1.md#cross-draft-submit)
+    const focus = await browser.execute(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        inDraft: !!el?.closest('[data-testid="screen-1-draft-body"]'),
+        inBlock: !!el?.closest('[data-block-id]')
+      };
+    });
+    expect(focus.inDraft).toBe(true);
+    expect(focus.inBlock).toBe(false);
   });
 
   // ---- 境界条件: 空ボディ ----

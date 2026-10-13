@@ -42,7 +42,7 @@ coherence:
 - `storageDir/<note_id>.md` が書き出される（frontmatter: `tags: []`, `createdAt`, `updatedAt`）
 - event **NoteCreated** `{ note_id, created_at: t0, initial_tags: ∅ }` 発行
 - NoteFeed: 表示 1 件、フィード最上部に新規ブロック
-- UI: Draft 入力欄がクリア、新規ブロックへフォーカス遷移
+- UI: Draft 入力欄がクリア、フォーカスは Draft 本文エディタに残る（新規ブロックは IDLE のまま。screen-1.md#cross-draft-submit）
 
 ## テスト観点 {#test-points}
 
@@ -57,7 +57,8 @@ coherence:
 
 - [ ] Draft 入力欄が Cmd+Enter 後にクリアされる
 - [ ] NoteFeed に新規 Note が 1 件表示される
-- [ ] フォーカスが新規作成された Note ブロックに遷移する
+- [ ] フォーカスが Draft 本文エディタに残る（`document.activeElement` が `screen-1-draft-body` 内）
+- [ ] 新規作成された Note ブロックは IDLE のまま（`document.activeElement` が `[data-block-id]` 内にない）
 - [ ] 既存 Note が 0 件の場合、作成後は 1 件表示
 
 ### 境界条件 {#boundary-conditions}

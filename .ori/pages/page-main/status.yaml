@@ -48,8 +48,20 @@ phases:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-06-29
-    notes: dirty cleared; 2 follow-up issues created (2026-10-13 testid 契約移行: ori-1jjr、機能欠落 block-updated-at は ori-6lvx)
-dirty: []
+    notes: "dirty cleared; 2 follow-up issues created (2026-10-13 testid 契約移行: ori-1jjr、機能欠落 block-updated-at は ori-6lvx)"
+dirty:
+  - source:
+      path: .ori/domain/ui-fields/screen-1.md
+      sectionId: screen-1
+    detected_at: 2026-10-13T06:54:47.586Z
+    affected_phase: derive
+    reason: edit
+  - source:
+      path: .ori/domain/domain-events.md
+      sectionId: theme-changed
+    detected_at: 2026-10-13T06:54:47.586Z
+    affected_phase: derive
+    reason: edit
 finalized_at: 2026-10-13
 followup:
   - ori-6lvx

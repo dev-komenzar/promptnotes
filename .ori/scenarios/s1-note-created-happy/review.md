@@ -75,3 +75,9 @@
 - Cmd+N 乖離は実装 + テストで解消。RESOLVED。
 - 残 LOW (新規 Block focus) は non-blocking のため差し戻し不要。
 - Verdict: **PASS**
+
+### 追記 2026-10-13 {#pass-2-addendum-2026-10-13}
+
+ori-exek により spec が「submit 後は Draft にフォーカス維持（新規 Block は IDLE）」へ変更された。
+上記 Pass 2 の残 LOW（新規 Block の focus 未 assert）は前提ごと陳腐化。新しい Then の
+assertion（activeElement が `screen-1-draft-body` 内 / `[data-block-id]` 外）は ori-exek.3 で追加済み。

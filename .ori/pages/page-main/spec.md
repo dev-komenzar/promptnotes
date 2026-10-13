@@ -124,7 +124,7 @@ UI 実装はこの 3 点を曖昧化してはならない。
 
 ### Cross-region 不変条件 {#invariants-cross-region}
 
-- **I-PM9（Draft submit → Feed 挿入）**: `create-note` 成功 → Draft 即時クリア + 新 Block を Feed 最上部に挿入 + 新 Block にフォーカス遷移（FOCUSED, `Esc` で IDLE）
+- **I-PM9（Draft submit → Feed 挿入）**: `create-note` 成功 → Draft 即時クリア + 新 Block を Feed 最上部に挿入 + **フォーカスは Draft 本文エディタに残す**（連続入力。新 Block は IDLE のまま、ハイライト・自動スクロールなし。`+ Add` ボタン確定後も `focusDraft()` で Draft へ戻す。確定失敗時・空 Draft の no-op でもフォーカスは Draft に残る。screen-1.md#cross-draft-submit）
 - **I-PM10（Block state machine の唯一性）**: 同時に EDITING な Block は高々 1 つ。別 Block クリックで前 EDITING は IDLE へ遷移（screen-1.md#cross-block-state）。EDITING 中の `↑/↓` はナビゲーションを起こさない
 - **I-PM10a（click-to-edit カーソル位置保持）**: IDLE / FOCUSED 状態の Block をクリックして EDITING に遷移する際、CodeMirror EditorView のカーソルはクリック位置に対応するドキュメントオフセットに配置される。カーソルが先頭 (position 0) に強制移動されてはならない。実装はクリック座標から `EditorView.posAtCoords()` で位置を解決するか、EditorState 再構築時に旧 selection を保持することで実現する
 - **I-PM11（filter / sort の即時反映）**: Toolbar の filter / sort 変更は debounce なしで Feed に反映。Sort 変更はアニメーション付き再配置（screen-1.md#cross-sort-immediate）
@@ -157,8 +157,8 @@ UI 実装はこの 3 点を曖昧化してはならない。
 
 1. Draft Input に `"hello"` を入力
 2. `Cmd+Enter` 押下
-3. Draft 即時クリア + Feed 最上部に新 Block 挿入 + 新 Block に FOCUSED フォーカス
-4. `Esc` で IDLE へ遷移
+3. Draft 即時クリア + Feed 最上部に新 Block 挿入 + フォーカスは Draft 本文エディタに残る（新 Block は IDLE）
+4. 続けて Draft に入力でき、再度 `Cmd+Enter` で連続して作成できる
 
 I-PM9 + create-note slice の I-CN3（空 body は NoOp）の page 側 propagation を検証。
 
