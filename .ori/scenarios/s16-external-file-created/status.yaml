@@ -2,15 +2,19 @@ scenario_id: s16-external-file-created
 derived_at: 2026-09-21T04:48:36.220Z
 beads:
   epic: ori-scenario-s16-external-file-created
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

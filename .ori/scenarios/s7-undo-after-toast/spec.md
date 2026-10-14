@@ -6,11 +6,11 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s7-undo-after-toast
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/ui-fields/screen-1.md#cross-toast-display
-      hash: 4bc0f83f71f3
+      hash: 18a41b79b1f8
     - path: domain/aggregates.md#notes-undo
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/workflows/delete-note.md
       hash: b727f18ad614
     - path: domain/workflows/restore-deleted-note.md

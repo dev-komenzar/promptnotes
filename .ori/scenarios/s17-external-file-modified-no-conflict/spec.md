@@ -6,19 +6,19 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s17-external-file-modified-no-conflict
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/detect-external-changes.md#detect-external-changes
       hash: a66910b0d892
     - path: domain/domain-events.md#external-file-change-events
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/domain-events.md#note-file-modified-externally
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/aggregates.md#note-feed-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/aggregates.md#note-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/glossary.md#glossary-timestamp
-      hash: 9405b16bb835
+      hash: ac3ff65cca45
 ---
 
 # s17-external-file-modified-no-conflict — Scenario Specification

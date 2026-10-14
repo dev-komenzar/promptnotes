@@ -6,25 +6,25 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s19-external-modify-while-editing
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/detect-external-changes.md#detect-external-changes
       hash: a66910b0d892
     - path: domain/domain-events.md#external-file-change-events
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/domain-events.md#note-file-modified-externally
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/aggregates.md#note-feed-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/aggregates.md#note-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/ui-fields/screen-4.md#screen-4
       hash: 4ee02719430d
     - path: domain/ui-fields/screen-1.md#screen-1
       hash: 18a41b79b1f8
     - path: domain/ui-fields/page-groups.md#widget-external-change-conflict
-      hash: 8986615249ac
+      hash: c9acbcb8a72d
     - path: domain/glossary.md#glossary-timestamp
-      hash: 9405b16bb835
+      hash: ac3ff65cca45
 ---
 
 # s19-external-modify-while-editing — Scenario Specification

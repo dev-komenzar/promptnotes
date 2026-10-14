@@ -6,11 +6,11 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s8-query-normalize
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/update-feed-filter.md#update-feed-filter
       hash: 51cdf06a33f9
     - path: domain/aggregates.md#note-feed-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/ui-fields/screen-1.md#screen-1-toolbar-search-query
       hash: 18a41b79b1f8
 ---

@@ -6,21 +6,21 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s22-storage-dir-change-watcher-restart
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/detect-external-changes.md#detect-external-changes
       hash: a66910b0d892
     - path: domain/workflows/update-settings.md#update-settings
       hash: f420da94bd93
     - path: domain/aggregates.md#settings-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#storage-dir-changed
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/domain-events.md#note-file-modified-externally
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/domain-events.md#note-file-created-externally
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/ui-fields/screen-2.md#screen-2
-      hash: f1e4fd24bf05
+      hash: 7429e5750d23
 ---
 
 # s22-storage-dir-change-watcher-restart — Scenario Specification

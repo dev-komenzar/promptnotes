@@ -2,15 +2,19 @@ scenario_id: s10-tag-invalid-char
 derived_at: 2026-09-19T08:45:57.860Z
 beads:
   epic: ori-scenario-s10-tag-invalid-char
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

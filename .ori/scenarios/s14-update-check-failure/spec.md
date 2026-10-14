@@ -6,17 +6,17 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s14-update-check-failure
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/check-for-updates.md#check-for-updates
       hash: e2935ac617af
     - path: domain/aggregates.md#update-channel-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#new-version-detected
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/ui-fields/screen-3.md#screen-3
       hash: 147c00e5bcc8
     - path: domain/ui-fields/page-groups.md#widget-update-toast
-      hash: 8986615249ac
+      hash: c9acbcb8a72d
 ---
 
 # s14-update-check-failure — Scenario Specification

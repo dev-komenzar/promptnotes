@@ -6,15 +6,15 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s13-quit-flush
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/flush-note.md#flush-note
       hash: 06ace0dff2ff
     - path: domain/workflows/auto-save-note.md#auto-save-note
       hash: 642c5094fd1a
     - path: domain/aggregates.md#note-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#note-body-edited
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/ui-fields/screen-1.md#screen-1
       hash: 18a41b79b1f8
 ---

@@ -2,15 +2,19 @@ scenario_id: s7-undo-after-toast
 derived_at: 2026-09-19T07:32:49.666Z
 beads:
   epic: ori-scenario-s7-undo-after-toast
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

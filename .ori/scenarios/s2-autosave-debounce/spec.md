@@ -3,13 +3,13 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s2-autosave-debounce
-      hash: s2-autosave-debounce
+      hash: a4490b2d3809
     - path: domain/workflows/auto-save-note.md
-      hash: auto-save-note
+      hash: 642c5094fd1a
     - path: domain/aggregates.md#note-aggregate
-      hash: note-aggregate
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#note-body-edited
-      hash: note-body-edited
+      hash: 86acb64f8149
 ---
 
 # s2-autosave-debounce — Scenario Specification

@@ -2,15 +2,19 @@ scenario_id: s15-same-second-edits
 derived_at: 2026-09-21T04:33:10.339Z
 beads:
   epic: ori-scenario-s15-same-second-edits
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

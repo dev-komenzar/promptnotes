@@ -2,15 +2,19 @@ scenario_id: s22-storage-dir-change-watcher-restart
 derived_at: 2026-09-21T08:29:52.519Z
 beads:
   epic: ori-scenario-s22-storage-dir-change-watcher-restart
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []
