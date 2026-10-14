@@ -34,6 +34,24 @@ export default defineConfig(
 		}
 	},
 	{
+		// widget-settings-modal は生 invoke / app / path API を直接使わない (I-SM7 / I-SM9 / I-SM12)
+		files: ['src/ui-widget/settings-modal/**'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['@tauri-apps/api/core', '@tauri-apps/api/app', '@tauri-apps/api/path'],
+							message:
+								'settings-modal から Tauri API を直接 import しない。slice の bindings 経由で呼ぶこと。'
+						}
+					]
+				}
+			]
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

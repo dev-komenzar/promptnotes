@@ -53,3 +53,39 @@ describe('widget:widget-settings-modal spec#invariants-storage-dir-reset', () =>
 		await expect.element(resetButton()).toBeDisabled();
 	});
 });
+
+describe('widget:widget-settings-modal spec#tp-sm-storage-dir-validation', () => {
+	async function saveRejectedWith(error: unknown) {
+		const updateSettingsFn = vi.fn().mockRejectedValue(error);
+		render(WidgetSettingsModal, {
+			initial: makeSettings(),
+			onClose: vi.fn(),
+			updateSettingsFn,
+			getAppVersionFn: vi.fn().mockResolvedValue('0.2.2'),
+			getDefaultStorageDirFn: vi.fn().mockResolvedValue(DEFAULT_DIR)
+		});
+		// dirty にして diff-less short-circuit (I-SM6) を避ける
+		await expect.element(resetButton()).toBeEnabled();
+		await resetButton().click();
+		await page.getByRole('button', { name: 'Save' }).click();
+		expect(updateSettingsFn).toHaveBeenCalledTimes(1);
+	}
+
+	it('invalid_path / not_absolute — 「絶対パスを指定してください」を表示する', async () => {
+		await saveRejectedWith({ kind: 'invalid_path', path: 'relative', reason: 'not_absolute' });
+
+		await expect.element(page.getByText('絶対パスを指定してください')).toBeVisible();
+	});
+
+	it('invalid_path / contains_config_path — 設定ディレクトリ配下エラーを表示する', async () => {
+		await saveRejectedWith({
+			kind: 'invalid_path',
+			path: '/cfg/x',
+			reason: 'contains_config_path'
+		});
+
+		await expect
+			.element(page.getByText('設定ディレクトリ配下のパスは指定できません'))
+			.toBeVisible();
+	});
+});
