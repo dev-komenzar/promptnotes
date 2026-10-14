@@ -59,6 +59,7 @@ pub fn run() {
             note_feed::slices::list_feed::commands::list_notes,
             note_feed::slices::detect_external_changes::commands::start_file_watcher,
             note_feed::slices::detect_external_changes::commands::stop_file_watcher,
+            user_preferences::slices::get_default_storage_dir::commands::get_default_storage_dir,
             user_preferences::slices::load_settings::commands::load_settings,
             user_preferences::slices::update_settings::commands::update_settings,
             update_distribution::slices::check_for_updates::commands::check_for_updates,

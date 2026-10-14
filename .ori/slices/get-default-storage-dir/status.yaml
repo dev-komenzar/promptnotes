@@ -1,0 +1,25 @@
+slice_id: get-default-storage-dir
+derived_at: 2026-10-14
+beads:
+  issue: ori-fo5n
+  current_phase: review
+  completion:
+    - derive
+    - test-red
+    - impl-green
+phases:
+  derive:
+    status: closed
+    completed_at: 2026-10-14
+    notes: ori-fo5n で手動 derive (ori CLI 未整備のため /ori-flow を通していない)
+  test-red:
+    status: closed
+    completed_at: 2026-10-14
+  impl-green:
+    status: closed
+    completed_at: 2026-10-14
+    notes: TP-D1/D2, TP-R1..R3, TP-T1 (Rust) + TP-B1 (TS) が pass
+  review:
+    status: open
+    notes: ori-reviewer は未実施。PR レビューで代替
+dirty: []

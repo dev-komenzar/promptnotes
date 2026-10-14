@@ -1,0 +1,13 @@
+slice_id: "get-default-storage-dir"
+type: "query"
+derives_from:
+  - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
+  - domain/aggregates.md#settings-aggregate
+  - domain/bounded-contexts.md#user-preferences
+relations: []
+implementation:
+  language: rust
+  primary_bc: user-preferences
+  generates:
+    - apps/promptnotes/src-tauri/src/user_preferences/slices/get_default_storage_dir/
+    - apps/promptnotes/src/lib/user-preferences/slices/get-default-storage-dir/

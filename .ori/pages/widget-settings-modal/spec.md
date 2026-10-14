@@ -4,17 +4,19 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-07
+  last_derived: 2026-10-14
   derives_from:
     - domain/ui-fields/screen-2.md#screen-2
     - domain/ui-fields/page-groups.md#widget-settings-modal
     - domain/workflows/update-settings.md#update-settings
     - domain/workflows/get-app-version.md#get-app-version
+    - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
   hash:
-    domain/ui-fields/screen-2.md#.*: 2b2217c5c875
+    domain/ui-fields/screen-2.md#.*: 7429e5750d23
     domain/ui-fields/page-groups.md#.*: c9acbcb8a72d
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: c3a5c313f0f5
+    domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
 ---
 
 # widget-settings-modal — Widget Specification {#widget-settings-modal-spec}
@@ -31,7 +33,8 @@ workflow の **唯一の trigger UI** となる。
 - **mount lifecycle**: on-demand（page-main の toolbar 歯車 / `Cmd+,` で mount、
   save / cancel / Esc で unmount）
 - **parent**: page-main（lifecycle は page-main に従属、I-PM2）
-- **hosts**: `update-settings`（唯一の command）/ `get-app-version`（表示用 query）
+- **hosts**: `update-settings`（唯一の command）/ `get-app-version`（表示用 query）/
+  `get-default-storage-dir`（リセット用の既定値 query）
 
 ## ホストする slices {#hosted-slices}
 
@@ -39,6 +42,7 @@ workflow の **唯一の trigger UI** となる。
 |--|--|--|--|
 | `screen-2-save` | [update-settings](../../slices/update-settings/spec.md) | primary button | `storage_dir` / `theme` 差分を永続化 + 0〜2 件 event |
 | `screen-2-app-version` | [get-app-version](../../slices/get-app-version/spec.md) | modal mount 時に 1 回 | なし（読み取り専用 query） |
+| `screen-2-storage-dir-reset` | [get-default-storage-dir](../../slices/get-default-storage-dir/spec.md) | modal mount 時に 1 回 | なし（読み取り専用 query） |
 
 `screen-2-storage-dir` の folder picker は OS ネイティブ dialog（`@tauri-apps/plugin-dialog`）
 を起動するが、これは widget の form 状態を組み立てるための副作用であり slice ではない。
@@ -49,13 +53,22 @@ workflow の **唯一の trigger UI** となる。
 > **行ごと非表示**（エラー表示はしない）。表示値は Save / Cancel / theme プレビューの影響を受けない。
 > 差分判定（`cross-no-diff`）の対象外。
 
+> domain/ui-fields/screen-2.md#cross-storage-dir-reset より:
+> - モーダル mount 時に `get-default-storage-dir` を 1 回呼び、OS 慣習パス（I-S3）を得る
+> - 「デフォルトに戻す」押下で、**編集中の** `screen-2-storage-dir` の値をその path に置き換える
+> - 永続化と `StorageDirChanged` の発行は「保存」押下時に `update-settings` が行う。
+>   リセットボタン単独では保存しない。キャンセル / Esc で破棄される
+> - mount 時の値が default と同じなら、リセットしても差分なし（`cross-no-diff` に従う）
+> - default の取得完了前、または取得自体が失敗した場合は、ボタンを **disabled** にする
+
 ## 入出力 {#io}
 
 - **入力 (props)**: `initial: SettingsDto`（mount 時の settings）、`onClose` / `onSaved` callback、
-  test 用の注入点 `updateSettingsFn` / `getAppVersionFn` / `openDialogFn`
+  test 用の注入点 `updateSettingsFn` / `getAppVersionFn` / `getDefaultStorageDirFn` / `openDialogFn`
 - **出力 (slice 呼出)**:
   - `updateSettings(input: UpdateSettingsInput)` — save 時、差分のみ
   - `getAppVersion(): Promise<string>` — mount 時に 1 回
+  - `getDefaultStorageDir(): Promise<string>` — mount 時に 1 回
 - **表示 (read-only)**: `screen-2-app-version` に `v{version}`（例: `v0.2.2`）
 
 ## 境界契約 {#boundary-contract}
@@ -64,9 +77,11 @@ workflow の **唯一の trigger UI** となる。
 - contact point:
   - `apps/promptnotes/src/lib/user-preferences/slices/update-settings/index.ts`（`updateSettings`）
   - `apps/promptnotes/src/lib/update-distribution/slices/get-app-version/index.ts`（`getAppVersion`）
+  - `apps/promptnotes/src/lib/user-preferences/slices/get-default-storage-dir/index.ts`（`getDefaultStorageDir`）
 - public_entry: `apps/promptnotes/src/ui-widget/settings-modal/WidgetSettingsModal.svelte`（page-main から mount）
 - 禁止: `ui-widget/settings-modal/` から `@tauri-apps/api/core` の `invoke` / `@tauri-apps/api/app` の
-  `getVersion` を直接 import すること（I-SM7 / I-SM9。get-app-version spec#boundary-contract の C-GAV5）
+  `getVersion` を直接 import すること（I-SM7 / I-SM9。get-app-version spec#boundary-contract の C-GAV5）。
+  `@tauri-apps/api/path` で default path を独自に計算すること（I-SM12。get-default-storage-dir の C-GDSD3）
 
 ## レイアウト {#layout}
 
@@ -93,6 +108,8 @@ workflow の **唯一の trigger UI** となる。
 - 背景の dim 等の装飾はしない（screen-2.md#notes-os-native-modal）
 - `screen-2-app-version` はモーダル下部（ボタン行の左）に控えめな secondary text で表示。
   取得前 / 失敗時は要素ごと描画しない
+- `screen-2-storage-dir-reset` は保存ディレクトリ行の直下に secondary button で表示。
+  default 取得前 / 失敗時は要素を残したまま `disabled`
 
 ## 不変条件 {#invariants}
 
@@ -132,6 +149,17 @@ workflow の **唯一の trigger UI** となる。
   エラー表示・save 阻害はしない
 - **I-SM11（form 状態と独立）**: 表示値は draft state に含めず、`dirty` 判定 / save payload /
   cancel rollback の対象外
+
+### デフォルトに戻す {#invariants-storage-dir-reset}
+
+- **I-SM12（draft の置換のみ）**: default path は `get-default-storage-dir` slice の
+  `getDefaultStorageDir()` からのみ取得し、modal mount ごとに **1 回だけ** 呼ぶ。
+  ボタン押下は draft の `storage_dir` を default path に置き換えるだけで、`update-settings` は呼ばない。
+  永続化と `StorageDirChanged` は save 時に既存の I-SM3 の経路で行い、cancel / Esc では破棄する（I-SM2）
+- **I-SM13（取得できないときは disabled）**: 取得前 / reject 時はボタンを `disabled` にし、押下しても
+  draft を変えない。エラー表示・save 阻害はしない
+- **I-SM14（default と同じなら差分なし）**: リセット後の draft が mount 時の `storage_dir` と同じなら
+  `dirty` は false のままで、save は workflow を呼ばずに close する（I-SM6）
 
 ## テスト観点 (vitest) {#test-points}
 
@@ -197,6 +225,33 @@ eslint static check で `apps/promptnotes/src/ui-widget/settings-modal/` から
 
 バージョン取得後に何も編集せず save → `updateSettings` は呼ばれず close（I-SM6 / I-SM11）。
 
+### tp-sm-reset-sets-draft: リセットで draft を default に置換 {#tp-sm-reset-sets-draft}
+
+`getDefaultStorageDirFn` が default path で resolve → リセットボタン押下 →
+`storage_dir` の表示が default path になり、`dirty` が true になる。この時点で `updateSettings` は
+呼ばれず、save で `updateSettings({ storage_dir: <default> })` が 1 回呼ばれる。
+`getDefaultStorageDirFn` の呼出は **1 回**（I-SM12）。
+
+### tp-sm-reset-same-as-default-no-diff: default と同じなら差分なし {#tp-sm-reset-same-as-default-no-diff}
+
+mount 時の `storage_dir` が default と同じ → リセット → save で `updateSettings` は呼ばれず close。
+別 path を選んだ後にリセットして mount 時の値に戻った場合も `dirty` は false（I-SM14）。
+
+### tp-sm-reset-disabled-before-resolve: 取得前は disabled {#tp-sm-reset-disabled-before-resolve}
+
+`getDefaultStorageDirFn` が未 resolve の間、store の `defaultStorageDir` は `null`、リセットは no-op、
+component のボタンは `disabled`（I-SM13）。
+
+### tp-sm-reset-disabled-on-error: 取得失敗は disabled {#tp-sm-reset-disabled-on-error}
+
+`getDefaultStorageDirFn` が reject → `defaultStorageDir` は `null` のまま、例外は外に漏れず、
+`saveState` は `idle` のまま。リセットは no-op で、component のボタンは `disabled`（I-SM13）。
+
+### tp-sm-reset-clears-error: リセットで inline error を消す {#tp-sm-reset-clears-error}
+
+save が `invalid_path` で失敗して inline error が出ている状態でリセット → `saveState` は `idle` に戻る
+（folder picker で選び直したときと同じ扱い）。
+
 ## 実装ノート {#impl-notes}
 
 ### Svelte 5 + `<dialog>` element {#impl-svelte-dialog}
@@ -211,9 +266,11 @@ eslint static check で `apps/promptnotes/src/ui-widget/settings-modal/` から
 - `createSettingsModalStore(initialSettings, deps)` factory を切り、
   draft state / save / cancel logic を **vitest server (node)** で単体テスト可能にする
 - deps: `updateSettingsFn` (slice の `updateSettings` 関数) / `getAppVersionFn`
-  (slice の `getAppVersion` 関数) を注入
+  (slice の `getAppVersion` 関数) / `getDefaultStorageDirFn` (slice の `getDefaultStorageDir` 関数) を注入
 - store に `appVersion: string | null` と `loadAppVersion(): Promise<void>`（reject を握り潰す）を持たせ、
   component の mount 時に `loadAppVersion()` を 1 回呼ぶ
+- 同様に `defaultStorageDir: string | null` / `loadDefaultStorageDir(): Promise<void>`（reject を握り潰す）/
+  `resetStorageDir()`（未取得なら no-op）を持たせ、deps に `getDefaultStorageDirFn` を追加する
 - component (`*.svelte`) は store の薄い presentation layer
 
 ### ディレクトリ構成 {#impl-layout-dir}
@@ -223,7 +280,8 @@ apps/promptnotes/src/ui-widget/settings-modal/
 ├── WidgetSettingsModal.svelte    # presentation (dialog + form)
 ├── store.svelte.ts               # createSettingsModalStore factory
 └── tests/
-    └── store.test.ts             # form / save / cancel の unit test (server)
+    ├── store.test.ts             # form / save / cancel / reset の unit test (server)
+    └── WidgetSettingsModal.svelte.test.ts  # reset ボタンの enabled / disabled (client)
 ```
 
 ### 非責務 {#impl-non-responsibility}

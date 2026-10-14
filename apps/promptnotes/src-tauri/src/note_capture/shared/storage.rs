@@ -12,8 +12,8 @@ use std::path::PathBuf;
 
 use tauri::{AppHandle, Manager, Runtime};
 
+use crate::user_preferences::shared::default_storage_dir::resolve_default_storage_dir;
 use crate::user_preferences::shared::test_support::storage_dir_override;
-use crate::user_preferences::shared::types::StorageDir;
 use crate::user_preferences::slices::load_settings::application::LoadSettingsUseCase;
 use crate::user_preferences::slices::load_settings::domain::LoadSettingsCommand;
 use crate::user_preferences::slices::load_settings::infrastructure::{FixedOsDirs, StdFileSystem};
@@ -24,19 +24,6 @@ fn resolve_config_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .ok()
         .map(|p| p.join("settings.json"))
         .unwrap_or_else(|| env::temp_dir().join("promptnotes/settings.json"))
-}
-
-fn resolve_default_storage_dir<R: Runtime>(app: &AppHandle<R>) -> StorageDir {
-    let candidate = app
-        .path()
-        .app_data_dir()
-        .ok()
-        .map(|p| p.join("notes"))
-        .unwrap_or_else(|| env::temp_dir().join("promptnotes/notes"));
-    StorageDir::try_from(candidate).unwrap_or_else(|_| {
-        StorageDir::try_from(env::temp_dir())
-            .expect("std::env::temp_dir() is absolute by OS contract")
-    })
 }
 
 /// Read `settings.json` via `LoadSettingsUseCase` and return the resolved

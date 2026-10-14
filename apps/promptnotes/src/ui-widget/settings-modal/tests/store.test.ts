@@ -209,4 +209,106 @@ describe('widget:widget-settings-modal store', () => {
 		expect(outcome).toStrictEqual({ kind: 'closed' });
 		expect(updateSettingsFn).not.toHaveBeenCalled();
 	});
+
+	describe('storage-dir-reset', () => {
+		const DEFAULT_DIR = '/home/foo/.local/share/promptnotes/notes';
+
+		it('spec#tp-sm-reset-sets-draft (I-SM12) — loadDefaultStorageDir 後の reset で draft が default になり、save で storage_dir を送る', async () => {
+			const getDefaultStorageDirFn = vi.fn().mockResolvedValue(DEFAULT_DIR);
+			const updateSettingsFn = vi
+				.fn()
+				.mockResolvedValue(makeSettings({ storage_dir: DEFAULT_DIR }));
+			const store = createSettingsModalStore(makeSettings(), {
+				updateSettingsFn,
+				getDefaultStorageDirFn
+			});
+
+			await store.loadDefaultStorageDir();
+			store.resetStorageDir();
+
+			expect(getDefaultStorageDirFn).toHaveBeenCalledTimes(1);
+			expect(store.storageDir).toBe(DEFAULT_DIR);
+			expect(store.dirty).toBe(true);
+			expect(updateSettingsFn).not.toHaveBeenCalled();
+
+			await store.save();
+
+			expect(updateSettingsFn).toHaveBeenCalledTimes(1);
+			expect(updateSettingsFn).toHaveBeenCalledWith({ storage_dir: DEFAULT_DIR });
+		});
+
+		it('spec#tp-sm-reset-same-as-default-no-diff (I-SM14) — 現在値が default と同じなら reset 後も差分なしで close のみ', async () => {
+			const updateSettingsFn = vi.fn();
+			const store = createSettingsModalStore(makeSettings({ storage_dir: DEFAULT_DIR }), {
+				updateSettingsFn,
+				getDefaultStorageDirFn: vi.fn().mockResolvedValue(DEFAULT_DIR)
+			});
+
+			await store.loadDefaultStorageDir();
+			store.resetStorageDir();
+			const outcome = await store.save();
+
+			expect(store.dirty).toBe(false);
+			expect(outcome).toStrictEqual({ kind: 'closed' });
+			expect(updateSettingsFn).not.toHaveBeenCalled();
+		});
+
+		it('spec#tp-sm-reset-same-as-default-no-diff (I-SM14) — 別 path を選んだ後に reset で baseline に戻れば差分なし', async () => {
+			const store = createSettingsModalStore(makeSettings({ storage_dir: DEFAULT_DIR }), {
+				updateSettingsFn: vi.fn(),
+				getDefaultStorageDirFn: vi.fn().mockResolvedValue(DEFAULT_DIR)
+			});
+
+			await store.loadDefaultStorageDir();
+			store.setStorageDir('/picked/elsewhere');
+			store.resetStorageDir();
+
+			expect(store.dirty).toBe(false);
+		});
+
+		it('spec#tp-sm-reset-disabled-before-resolve (I-SM13) — 取得完了前は defaultStorageDir=null で reset は no-op', () => {
+			const store = createSettingsModalStore(makeSettings(), {
+				updateSettingsFn: vi.fn(),
+				getDefaultStorageDirFn: vi.fn().mockReturnValue(new Promise<string>(() => {}))
+			});
+
+			void store.loadDefaultStorageDir();
+			store.resetStorageDir();
+
+			expect(store.defaultStorageDir).toBeNull();
+			expect(store.storageDir).toBe('/Users/foo/Documents/PromptNotes');
+			expect(store.dirty).toBe(false);
+		});
+
+		it('spec#tp-sm-reset-disabled-on-error (I-SM13) — 取得失敗は defaultStorageDir=null のまま例外を漏らさず、reset は no-op', async () => {
+			const store = createSettingsModalStore(makeSettings(), {
+				updateSettingsFn: vi.fn(),
+				getDefaultStorageDirFn: vi.fn().mockRejectedValue(new Error('ipc failed'))
+			});
+
+			await expect(store.loadDefaultStorageDir()).resolves.toBeUndefined();
+			store.resetStorageDir();
+
+			expect(store.defaultStorageDir).toBeNull();
+			expect(store.storageDir).toBe('/Users/foo/Documents/PromptNotes');
+			expect(store.saveState).toStrictEqual({ kind: 'idle' });
+		});
+
+		it('spec#tp-sm-reset-clears-error — save error 後の reset で inline error が消える', async () => {
+			const error = { kind: 'invalid_path', path: 'rel', reason: 'not_absolute' } as const;
+			const store = createSettingsModalStore(makeSettings(), {
+				updateSettingsFn: vi.fn().mockRejectedValue(error),
+				getDefaultStorageDirFn: vi.fn().mockResolvedValue(DEFAULT_DIR)
+			});
+
+			await store.loadDefaultStorageDir();
+			store.setStorageDir('rel');
+			await store.save();
+			expect(store.saveState.kind).toBe('error');
+
+			store.resetStorageDir();
+
+			expect(store.saveState).toStrictEqual({ kind: 'idle' });
+		});
+	});
 });
