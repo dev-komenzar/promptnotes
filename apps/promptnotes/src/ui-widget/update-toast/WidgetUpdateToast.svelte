@@ -40,7 +40,7 @@
 {#if store.payload}
 	{@const p = store.payload}
 	<div
-		data-testid="widget-update-toast"
+		data-testid="widget.widget-update-toast.root"
 		role="status"
 		aria-live="polite"
 		class="pointer-events-none fixed right-4 bottom-4 z-50"
@@ -51,11 +51,12 @@
 			<div class="flex items-start justify-between gap-2">
 				<p>
 					New version
-					<span data-testid="screen-3-latest-version" class="font-semibold">{p.latest_version}</span
+					<span data-testid="widget.widget-update-toast.latest-version" class="font-semibold"
+						>{p.latest_version}</span
 					>
 					is available
 					<span
-						data-testid="screen-3-current-version"
+						data-testid="widget.widget-update-toast.current-version"
 						class="text-xs text-neutral-500 dark:text-neutral-400"
 					>
 						(current: {p.current_version})
@@ -63,7 +64,7 @@
 				</p>
 				<button
 					type="button"
-					data-testid="screen-3-dismiss"
+					data-testid="widget.widget-update-toast.dismiss"
 					aria-label="Close"
 					class="-mt-0.5 -mr-0.5 shrink-0 rounded p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
 					onclick={handleDismiss}
@@ -74,7 +75,7 @@
 
 			{#if p.release_notes.trim().length > 0}
 				<p
-					data-testid="screen-3-release-notes-summary"
+					data-testid="widget.widget-update-toast.release-notes-summary"
 					class="line-clamp-2 text-xs text-neutral-600 dark:text-neutral-400"
 				>
 					{truncate(p.release_notes)}
@@ -84,7 +85,7 @@
 			<div class="flex justify-end">
 				<button
 					type="button"
-					data-testid="screen-3-view-release"
+					data-testid="widget.widget-update-toast.view-release"
 					class="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
 					onclick={handleViewRelease}
 				>

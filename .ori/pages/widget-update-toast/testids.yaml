@@ -1,0 +1,18 @@
+# page testid 契約 (SSoT: ddd-vsa-hex/pattern.md §UI selector / testid 規約)
+# derived: @ori-generated — testids.js sync が ui-fields から再生成する。手で編集しない
+# extra:   ori-derive / ori-generate が testids.js add-extra で追記する (変更・削除は人間のみ)
+derived:
+  - testid: widget.widget-update-toast.current-version
+    field: screen-3-current-version
+  - testid: widget.widget-update-toast.dismiss
+    field: screen-3-dismiss
+  - testid: widget.widget-update-toast.latest-version
+    field: screen-3-latest-version
+  - testid: widget.widget-update-toast.release-notes-summary
+    field: screen-3-release-notes-summary
+  - testid: widget.widget-update-toast.view-release
+    field: screen-3-view-release
+extra:
+  - testid: widget.widget-update-toast.root
+    purpose: 更新通知 toast の root
+    source: derive

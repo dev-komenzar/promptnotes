@@ -51,7 +51,7 @@
 {#if store.conflictPayload}
 	<dialog
 		bind:this={dialogEl}
-		data-testid="widget-external-change-conflict"
+		data-testid="widget.widget-external-change-conflict.root"
 		aria-labelledby="widget-conflict-title"
 		class="rounded-lg border border-neutral-200 bg-white p-0 text-neutral-900 shadow-xl backdrop:bg-transparent dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
 		oncancel={handleDialogCancel}
@@ -60,7 +60,7 @@
 			<h1
 				id="widget-conflict-title"
 				class="text-base font-semibold"
-				data-testid="screen-4-note-title"
+				data-testid="widget.widget-external-change-conflict.note-title"
 			>
 				{store.conflictPayload.note_title}
 			</h1>
@@ -76,7 +76,7 @@
 						Your Version
 					</span>
 					<textarea
-						data-testid="screen-4-body-local"
+						data-testid="widget.widget-external-change-conflict.body-local"
 						readonly
 						disabled
 						value={localBody}
@@ -90,7 +90,7 @@
 						External Version
 					</span>
 					<textarea
-						data-testid="screen-4-body-external"
+						data-testid="widget.widget-external-change-conflict.body-external"
 						readonly
 						disabled
 						value={store.conflictPayload.note_body}
@@ -100,14 +100,18 @@
 				</section>
 			</div>
 
-			<fieldset data-testid="screen-4-resolution-choice" class="flex flex-col gap-1.5">
+			<fieldset
+				data-testid="widget.widget-external-change-conflict.resolution-choice"
+				class="flex flex-col gap-1.5"
+			>
 				<legend class="text-sm font-medium">解決方法</legend>
 				<label class="flex items-center gap-2 text-sm">
 					<input
 						type="radio"
 						name="conflict-resolution"
 						value="ApplyExternal"
-						data-testid="screen-4-resolution-apply-external"
+						data-testid="widget.widget-external-change-conflict.resolution-option"
+						data-key="ApplyExternal"
 						checked={store.resolution === 'ApplyExternal'}
 						onchange={() => store.selectResolution('ApplyExternal')}
 						class="accent-blue-600"
@@ -119,7 +123,8 @@
 						type="radio"
 						name="conflict-resolution"
 						value="KeepEditing"
-						data-testid="screen-4-resolution-keep-editing"
+						data-testid="widget.widget-external-change-conflict.resolution-option"
+						data-key="KeepEditing"
 						checked={store.resolution === 'KeepEditing'}
 						onchange={() => store.selectResolution('KeepEditing')}
 						class="accent-blue-600"
@@ -131,7 +136,7 @@
 			<footer class="flex justify-end gap-2 pt-2">
 				<button
 					type="button"
-					data-testid="screen-4-cancel"
+					data-testid="widget.widget-external-change-conflict.cancel"
 					class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 					onclick={handleCancel}
 				>
@@ -139,7 +144,7 @@
 				</button>
 				<button
 					type="button"
-					data-testid="screen-4-confirm"
+					data-testid="widget.widget-external-change-conflict.confirm"
 					class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
 					onclick={handleApply}
 				>

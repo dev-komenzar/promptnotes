@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-10-14
   derives_from:
     - domain/ui-fields/screen-4.md#screen-4
     - domain/ui-fields/page-groups.md#widget-external-change-conflict
@@ -37,9 +37,9 @@ screen-4 を実体化する **event-driven modal overlay widget**。
 | field | 型 | 用途 |
 |--|--|--|
 | `note_id` | `NoteId` | 競合判定のキー。現在 EDITING 状態の note_id と比較 |
-| `disk_body_hash` | `BodyHash` | `Note::is_stale(&disk_body_hash)` で競合判定。`screen-4-hash-external` にデバッグ表示 |
+| `disk_body_hash` | `BodyHash` | `Note::is_stale(&disk_body_hash)` で競合判定。`widget.widget-external-change-conflict.hash-external` にデバッグ表示 |
 | `note` | `Note` | ディスクから parse された完全な Note。ApplyExternal 選択時に Editor へ差し替え |
-| `file_path` | `PathBuf` | ファイル名抽出用（`screen-4-note-title` に `YYYYMMDDhhmmss.md` 表示） |
+| `file_path` | `PathBuf` | ファイル名抽出用（`widget.widget-external-change-conflict.note-title` に `YYYYMMDDhhmmss.md` 表示） |
 | `detected_at` | `Timestamp` | 検知時刻（UI 表示には使わない） |
 
 ### 競合判定フロー {#conflict-detection-flow}
@@ -81,6 +81,7 @@ screen-4.md#display-states-compare の `compare-layout` を実装:
 - 左右 2 カラムでローカル版 / 外部版の body を並列表示
 - `ConflictResolution` radio button: `ApplyExternal` / `KeepEditing`
 - Apply ボタンで選択内容を確定、Cancel / Esc / ×ボタンで KeepEditing と等価に閉じる
+- 各要素の data-testid は `.ori/pages/widget-external-change-conflict/testids.yaml` の契約値を literal で付与する（ui-field id を写さない。詳細は [実装ノート](#impl-testid)）
 
 ### 表示状態 {#display-states}
 
@@ -150,6 +151,13 @@ stub event bus に `NoteFileModifiedExternally` を emit するが、`disk_body_
 stub subscribeFn が reject しても `store.start()` は throw せず、`store.conflictPayload === null` のまま（I-WC2: silent failure）。
 
 ## 実装ノート {#impl-notes}
+
+### testid 契約 {#impl-testid}
+
+- testid は `.ori/pages/widget-external-change-conflict/testids.yaml` の契約値（derived + extra）を literal で付与する。`/ori-impl-green` 完了条件で `testids.js check widget-external-change-conflict` が検査する
+- root (`<dialog>`) は `widget.widget-external-change-conflict.root`
+- `ConflictResolution` の radio は固定 testid `widget.widget-external-change-conflict.resolution-option` + `data-key`（`ApplyExternal` / `KeepEditing`）で表し、testid に値を埋め込まない
+
 
 ### ConflictResolution store は createConflictDialogStore で testable に {#impl-store}
 
