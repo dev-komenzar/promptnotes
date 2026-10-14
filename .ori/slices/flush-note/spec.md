@@ -6,8 +6,8 @@ coherence:
     domain/workflows/flush-note.md#.*: 06ace0dff2ff
     domain/aggregates.md#.*: c2eaa083eaf0
     domain/bounded-contexts.md#.*: 957e7f4a4930
-    domain/domain-events.md#.*: 71db66eafe03
-    domain/validation.md#.*: 4a02c17cc025
+    domain/domain-events.md#.*: 86acb64f8149
+    domain/validation.md#.*: a4490b2d3809
 ori:
   schema:
     propagation_level: file

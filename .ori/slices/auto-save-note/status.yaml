@@ -41,31 +41,7 @@ phases:
     issue: ori-review-auto-save-note
     completed_at: 2026-06-30
     notes: 3 structural gates PASS; no semantic review (I-N9 doc only)
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: note-body-edited
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s2-autosave-debounce
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s9-idempotent-autosave
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
 followup:
   open_questions:

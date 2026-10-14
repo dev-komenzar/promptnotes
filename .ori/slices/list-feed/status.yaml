@@ -50,25 +50,7 @@ phases:
     issue: ori-finalize-list-feed
     completed_at: 2026-06-30
     notes: dirty cleared; visible_notes() now param removal complete
-dirty:
-  - source:
-      path: .ori/domain/workflows/list-feed.md
-      sectionId: list-feed
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-feed-aggregate
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s12-startup-state
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
 followup: []
 proposals:

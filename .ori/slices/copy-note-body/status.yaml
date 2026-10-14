@@ -19,11 +19,5 @@ beads:
     - phase: finalize
       issue: ori-finalize-copy-note-body
 phases: {}
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

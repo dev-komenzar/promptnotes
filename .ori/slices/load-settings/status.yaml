@@ -40,17 +40,5 @@ phases:
     passes: 2
     verdict: PASS
     passing_tests: 25
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: settings-aggregate
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s12-startup-state
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

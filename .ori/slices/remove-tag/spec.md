@@ -6,7 +6,7 @@ coherence:
     domain/workflows/remove-tag.md#.*: b27eb7d105b1
     domain/aggregates.md#.*: c2eaa083eaf0
     domain/bounded-contexts.md#.*: 957e7f4a4930
-    domain/domain-events.md#.*: 71db66eafe03
+    domain/domain-events.md#.*: 86acb64f8149
 ori:
   schema:
     propagation_level: file

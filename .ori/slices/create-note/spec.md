@@ -5,9 +5,9 @@ coherence:
   hash:
     domain/workflows/create-note.md#.*: 6d0fdc24ceb7
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/domain-events.md#.*: 71db66eafe03
+    domain/domain-events.md#.*: 86acb64f8149
     domain/bounded-contexts.md#.*: 957e7f4a4930
-    domain/ui-fields/screen-1.md#.*: 4bc0f83f71f3
+    domain/ui-fields/screen-1.md#.*: 18a41b79b1f8
 ori:
   schema:
     propagation_level: file

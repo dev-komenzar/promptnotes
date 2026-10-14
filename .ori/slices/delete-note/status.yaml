@@ -1,28 +1,4 @@
 slice_id: delete-note
 derived_at: 2026-06-30
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: note-deleted-to-trash
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s5-delete-undo-in-window
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s6-delete-replace
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

@@ -38,13 +38,7 @@ phases:
     status: closed
     issue: ori-8os
     completed_at: 2026-06-27
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/page-groups.md
-      sectionId: widget-update-toast
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-27
 followup:
   - id: ori-2lm.8

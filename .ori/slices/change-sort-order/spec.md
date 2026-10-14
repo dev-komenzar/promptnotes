@@ -5,7 +5,7 @@ coherence:
   hash:
     domain/workflows/change-sort-order.md#.*: 137e642d209c
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/domain-events.md#.*: 71db66eafe03
+    domain/domain-events.md#.*: 86acb64f8149
 ori:
   schema:
     propagation_level: file

@@ -19,29 +19,5 @@ beads:
     - phase: finalize
       issue: ori-hpo.7
 phases: {}
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-feed-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: settings-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: notes-sort-side-effect
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: sort-preference-changed
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
