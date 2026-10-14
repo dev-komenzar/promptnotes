@@ -105,8 +105,9 @@ async function enterEditing(id: string): Promise<void> {
 // The modal <dialog> lives in the browser top layer; the native WebDriver pointer click is flaky
 // in this headless WebKitGTK window (window-focus management), so the resolution controls are
 // dispatched through a DOM click. The conflict trigger itself stays a real external file write.
-async function clickDialogControl(testid: string): Promise<void> {
-  const selector = `${DIALOG} [data-testid="${testid}"]`;
+async function clickDialogControl(testid: string, key?: string): Promise<void> {
+  const keyAttr = key === undefined ? '' : `[data-key="${key}"]`;
+  const selector = `${DIALOG} [data-testid="${testid}"]${keyAttr}`;
   await $(selector).waitForExist({ timeout: 5_000 });
   await browser.execute((sel) => {
     const target = document.querySelector(sel) as HTMLElement | null;
@@ -188,7 +189,7 @@ describe('scenario:s19-external-modify-while-editing', () => {
     // When: さらに外部変更を起こしてダイアログを再表示させ、「外部変更を適用」を選んで確定する
     writeNoteMd(NOTE_A, BODY_EXTERNAL_2);
     await waitForDialog();
-    await clickDialogControl('widget.widget-external-change-conflict.resolution-option"][data-key="ApplyExternal');
+    await clickDialogControl('widget.widget-external-change-conflict.resolution-option', 'ApplyExternal');
     await clickDialogControl('widget.widget-external-change-conflict.confirm');
 
     // Then: ダイアログが閉じ、Editor が外部版で置換され、Block は IDLE に遷移する

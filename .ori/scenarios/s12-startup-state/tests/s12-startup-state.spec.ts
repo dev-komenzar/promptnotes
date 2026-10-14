@@ -50,8 +50,9 @@ async function blockIds(): Promise<string[]> {
   }
 }
 
-async function ariaPressed(testid: string): Promise<string | null> {
-  return $('[data-testid="' + testid + '"]').getAttribute('aria-pressed');
+async function ariaPressed(testid: string, key?: string): Promise<string | null> {
+  const keyAttr = key === undefined ? '' : `[data-key="${key}"]`;
+  return $(`[data-testid="${testid}"]${keyAttr}`).getAttribute('aria-pressed');
 }
 
 describe('scenario:s12-startup-state', () => {
@@ -71,7 +72,7 @@ describe('scenario:s12-startup-state', () => {
     expect((await blockIds()).slice()).not.toEqual(CREATED_AT_ASC);
 
     // Then: toolbar が復元後の sort (field=updated_at / direction=asc) を反映している
-    expect(await ariaPressed('page.page-main.toolbar-sort-field-option"][data-key="updated_at')).toBe('true');
+    expect(await ariaPressed('page.page-main.toolbar-sort-field-option', 'updated_at')).toBe('true');
     expect(await $('[data-testid="page.page-main.toolbar-sort-direction"]').getAttribute('aria-label')).toBe(
       'Ascending',
     );
@@ -79,7 +80,7 @@ describe('scenario:s12-startup-state', () => {
     // Then: filter は空 (query なし / date_range=All / tag なし)。
     // 前回セッションの "gpt" / "coding" は挥発のため持ち越されない (Q3 / I-F6 / I-F2)。
     expect(await $('[data-testid="page.page-main.toolbar-search-query"]').getValue()).toBe('');
-    expect(await ariaPressed('page.page-main.toolbar-date-range-preset"][data-key="all')).toBe('true');
+    expect(await ariaPressed('page.page-main.toolbar-date-range-preset', 'all')).toBe('true');
     expect(await $('[data-testid="page.page-main.toolbar-tag-chip"]').isExisting()).toBe(false);
 
     // Then: settings.json は seed 値のまま (起動が永続化を書き換えない)
