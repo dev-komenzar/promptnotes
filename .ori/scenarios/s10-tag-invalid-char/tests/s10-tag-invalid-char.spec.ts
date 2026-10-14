@@ -44,7 +44,7 @@ function block() {
 async function chipTexts(): Promise<string[]> {
   const texts = await browser.execute((id: string) => {
     const els = document.querySelectorAll(
-      `[data-block-id="${id}"] [data-testid="screen-1-block-tag-chip"]`,
+      `[data-block-id="${id}"] [data-testid="page.page-main.block-tag-chip"]`,
     );
     return Array.from(els).map((e) => (e.textContent ?? '').replace('#', '').trim());
   }, NOTE_ID);
@@ -53,7 +53,7 @@ async function chipTexts(): Promise<string[]> {
 
 async function addTag(raw: string): Promise<void> {
   const el = await block();
-  const input = await el.$('[data-testid="screen-1-block-tag-input"]');
+  const input = await el.$('[data-testid="page.page-main.block-tag-input"]');
   await input.waitForExist({ timeout: 3000 });
   await input.click();
   await input.setValue(raw);
@@ -131,7 +131,7 @@ describe('scenario:s10-tag-invalid-char', () => {
 
     await addTag('foo,bar');
 
-    const err = await $('[data-testid="screen-1-block-tag-error"]');
+    const err = await $('[data-testid="page.page-main.block-tag-error"]');
     await err.waitForExist({ timeout: 5000, timeoutMsg: 'tag error message did not appear' });
     expect(await err.getText()).toContain('invalid characters');
 

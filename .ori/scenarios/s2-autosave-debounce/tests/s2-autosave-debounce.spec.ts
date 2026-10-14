@@ -20,7 +20,7 @@ describe('scenario:s2-autosave-debounce', () => {
     const before = readFileSync(MD_PATH, 'utf-8');
     expect(before).toContain('hello');
 
-    const block = await $('[data-testid="screen-1-block"]');
+    const block = await $('[data-testid="page.page-main.block"]');
     await block.click();
     await browser.waitUntil(
       async () => (await block.getAttribute('data-block-state')) === 'EDITING',
@@ -54,7 +54,7 @@ describe('scenario:s2-autosave-debounce', () => {
   });
 
   it('no-op autosave: body を元に戻す編集試行では永続化されない (S9 idempotency)', async () => {
-    const block = await $('[data-testid="screen-1-block"]');
+    const block = await $('[data-testid="page.page-main.block"]');
     await block.click();
     await browser.waitUntil(
       async () => (await block.getAttribute('data-block-state')) === 'EDITING',

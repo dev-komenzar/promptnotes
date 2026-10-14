@@ -89,14 +89,14 @@ describe('scenario:s7-undo-after-toast', () => {
   const PATH_B = notePath(STORAGE_DIR, B);
 
   const deleteBtn = (id: string) =>
-    `[data-block-id="${id}"] [data-testid="screen-1-block-delete"]`;
+    `[data-block-id="${id}"] [data-testid="page.page-main.block-delete"]`;
   const undoBtn = (id: string) =>
-    `[data-testid="screen-1-toast-undo"][data-toast-id="${id}"]`;
+    `[data-testid="page.page-main.toast-undo"][data-toast-id="${id}"]`;
   const toast = (id: string) =>
-    `[data-testid="screen-1-toast"][data-toast-id="${id}"]`;
+    `[data-testid="page.page-main.toast"][data-toast-id="${id}"]`;
 
   before(async () => {
-    await browser.waitUntil(async () => (await count('[data-testid="screen-1-block"]')) >= 2, {
+    await browser.waitUntil(async () => (await count('[data-testid="page.page-main.block"]')) >= 2, {
       timeout: 10000,
       timeoutMsg: 'seeded notes A/B did not appear in feed',
     });
@@ -105,10 +105,10 @@ describe('scenario:s7-undo-after-toast', () => {
 
   it('rejects undo for an expired toast (NoUndoAvailable) while other toasts stay valid', async () => {
     // ---- Given: A と B が表示され、どちらも未削除 ----
-    expect(await count('[data-testid="screen-1-block"]')).toBe(2);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(2);
     expect(existsSync(PATH_A)).toBe(true);
     expect(existsSync(PATH_B)).toBe(true);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(0);
 
     // ---- t0: A を削除 ----
     await dispatchClick(deleteBtn(A));
@@ -116,7 +116,7 @@ describe('scenario:s7-undo-after-toast', () => {
 
     expect(existsSync(PATH_A)).toBe(false);
     expect(existsSync(trashPath(STORAGE_DIR, A))).toBe(true);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(1);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(1);
     expect(await count(toast(A))).toBe(1);
 
     // ---- t0 + 3s: A の Toast 表示中に B を削除 ----
@@ -125,8 +125,8 @@ describe('scenario:s7-undo-after-toast', () => {
     await browser.pause(500);
 
     expect(existsSync(PATH_B)).toBe(false);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(0);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(2);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(2);
     expect(await count(toast(A))).toBe(1);
     expect(await count(toast(B))).toBe(1);
 
@@ -158,8 +158,8 @@ describe('scenario:s7-undo-after-toast', () => {
     expect(existsSync(PATH_B)).toBe(true);
     expect(readFileSync(PATH_B, 'utf-8')).toContain('bravo');
     expect(await count(toast(B))).toBe(0);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(0);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(1);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(1);
 
     // A は依然として復元されていない
     expect(existsSync(PATH_A)).toBe(false);

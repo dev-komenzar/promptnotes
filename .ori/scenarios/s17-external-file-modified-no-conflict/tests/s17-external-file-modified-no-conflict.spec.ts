@@ -100,7 +100,7 @@ describe('scenario:s17-external-file-modified-no-conflict', () => {
     await waitForBlockBody(NOTE_A, BODY_MODIFIED);
 
     // UI 通知は不要 (トーストが出ない)
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
   });
 
   it('step 2 — validation#s17-external-file-modified-no-conflict: 再 parse された Note の内容が正しい', async () => {
@@ -137,8 +137,8 @@ describe('scenario:s17-external-file-modified-no-conflict', () => {
     expect(await blockA.getAttribute('data-block-state')).toBe('IDLE');
 
     // Then: 競合ダイアログ・トーストいずれも表示されない
-    expect(await $('[data-testid="widget-external-change-conflict"]').isExisting()).toBe(false);
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect(await $('[data-testid="widget.widget-external-change-conflict.root"]').isExisting()).toBe(false);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
 
     // Then: 変更は保持されている (後続処理で巻き戻っていない)
     await waitForBlockBody(NOTE_A, BODY_MODIFIED_2);

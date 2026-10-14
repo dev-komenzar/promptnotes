@@ -71,16 +71,16 @@ describe('scenario:s12-startup-state', () => {
     expect((await blockIds()).slice()).not.toEqual(CREATED_AT_ASC);
 
     // Then: toolbar が復元後の sort (field=updated_at / direction=asc) を反映している
-    expect(await ariaPressed('screen-1-toolbar-sort-field-updated_at')).toBe('true');
-    expect(await $('[data-testid="screen-1-toolbar-sort-direction"]').getAttribute('aria-label')).toBe(
+    expect(await ariaPressed('page.page-main.toolbar-sort-field-option"][data-key="updated_at')).toBe('true');
+    expect(await $('[data-testid="page.page-main.toolbar-sort-direction"]').getAttribute('aria-label')).toBe(
       'Ascending',
     );
 
     // Then: filter は空 (query なし / date_range=All / tag なし)。
     // 前回セッションの "gpt" / "coding" は挥発のため持ち越されない (Q3 / I-F6 / I-F2)。
-    expect(await $('[data-testid="screen-1-toolbar-search-query"]').getValue()).toBe('');
-    expect(await ariaPressed('screen-1-toolbar-date-range-all')).toBe('true');
-    expect(await $('[data-testid="screen-1-toolbar-tag-chip"]').isExisting()).toBe(false);
+    expect(await $('[data-testid="page.page-main.toolbar-search-query"]').getValue()).toBe('');
+    expect(await ariaPressed('page.page-main.toolbar-date-range-preset"][data-key="all')).toBe('true');
+    expect(await $('[data-testid="page.page-main.toolbar-tag-chip"]').isExisting()).toBe(false);
 
     // Then: settings.json は seed 値のまま (起動が永続化を書き換えない)
     const settings = readSettings();

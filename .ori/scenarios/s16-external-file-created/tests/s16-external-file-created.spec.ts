@@ -111,7 +111,7 @@ describe('scenario:s16-external-file-created', () => {
     await waitForBlockIds([NOTE_NEW, NOTE_A]);
 
     // UI 通知は不要 (トーストが出ない)
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
   });
 
   it('step 2 — validation#s16-external-file-created: 反映された Note の内容が正しい', async () => {

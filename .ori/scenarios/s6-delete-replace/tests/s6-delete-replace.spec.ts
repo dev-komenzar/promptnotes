@@ -28,7 +28,7 @@ async function dispatchClick(selector: string): Promise<void> {
 async function toastTop(id: string): Promise<number> {
   const top = await browser.execute((noteId: string) => {
     const el = document.querySelector<HTMLElement>(
-      `[data-testid="screen-1-toast"][data-toast-id="${noteId}"]`
+      `[data-testid="page.page-main.toast"][data-toast-id="${noteId}"]`
     );
     return el ? el.getBoundingClientRect().top : Number.POSITIVE_INFINITY;
   }, id);
@@ -43,14 +43,14 @@ describe('scenario:s6-delete-replace', () => {
   const PATH_B = notePath(STORAGE_DIR, B);
 
   const deleteBtn = (id: string) =>
-    `[data-block-id="${id}"] [data-testid="screen-1-block-delete"]`;
+    `[data-block-id="${id}"] [data-testid="page.page-main.block-delete"]`;
   const undoBtn = (id: string) =>
-    `[data-testid="screen-1-toast-undo"][data-toast-id="${id}"]`;
+    `[data-testid="page.page-main.toast-undo"][data-toast-id="${id}"]`;
   const toast = (id: string) =>
-    `[data-testid="screen-1-toast"][data-toast-id="${id}"]`;
+    `[data-testid="page.page-main.toast"][data-toast-id="${id}"]`;
 
   before(async () => {
-    await browser.waitUntil(async () => (await count('[data-testid="screen-1-block"]')) >= 2, {
+    await browser.waitUntil(async () => (await count('[data-testid="page.page-main.block"]')) >= 2, {
       timeout: 10000,
       timeoutMsg: 'seeded notes A/B did not appear in feed',
     });
@@ -59,11 +59,11 @@ describe('scenario:s6-delete-replace', () => {
 
   it('stacks toasts on consecutive deletes and undoes each note independently', async () => {
     // ---- Given: A と B が表示され、どちらも未削除 ----
-    const countBefore = await count('[data-testid="screen-1-block"]');
+    const countBefore = await count('[data-testid="page.page-main.block"]');
     expect(countBefore).toBe(2);
     expect(existsSync(PATH_A)).toBe(true);
     expect(existsSync(PATH_B)).toBe(true);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(0);
 
     // ---- When 1 (t0): A を削除 ----
     await dispatchClick(deleteBtn(A));
@@ -71,8 +71,8 @@ describe('scenario:s6-delete-replace', () => {
 
     // ---- Then (t0) ----
     expect(existsSync(PATH_A)).toBe(false);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(1);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(1);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(1);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(1);
     expect(await count(toast(A))).toBe(1);
 
     // ---- When 2 (t1): A のトースト表示中に B を削除 ----
@@ -81,8 +81,8 @@ describe('scenario:s6-delete-replace', () => {
 
     // ---- Then (t1): A は置換されず、B が上に積まれる ----
     expect(existsSync(PATH_B)).toBe(false);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(0);
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(2);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(2);
     expect(await count(toast(A))).toBe(1);
     expect(await count(toast(B))).toBe(1);
 
@@ -103,7 +103,7 @@ describe('scenario:s6-delete-replace', () => {
     expect(existsSync(PATH_B)).toBe(false);
     expect(await count(toast(A))).toBe(0);
     expect(await count(toast(B))).toBe(1);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(1);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(1);
 
     // ---- When 4 (t3): B の Undo ----
     await dispatchClick(undoBtn(B));
@@ -112,7 +112,7 @@ describe('scenario:s6-delete-replace', () => {
     // ---- Then (t3): B も復元され、スタックが空になる ----
     expect(existsSync(PATH_B)).toBe(true);
     expect(readFileSync(PATH_B, 'utf-8')).toContain('bravo');
-    expect(await count('[data-testid="screen-1-toast"]')).toBe(0);
-    expect(await count('[data-testid="screen-1-block"]')).toBe(2);
+    expect(await count('[data-testid="page.page-main.toast"]')).toBe(0);
+    expect(await count('[data-testid="page.page-main.block"]')).toBe(2);
   });
 });
