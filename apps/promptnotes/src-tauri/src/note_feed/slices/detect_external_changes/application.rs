@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
@@ -118,7 +118,7 @@ impl DetectExternalChangesUseCase {
         Ok(WatcherHandle::new(stop_tx, handle))
     }
 
-    pub fn resolve_note_id(path: &PathBuf) -> Option<String> {
+    pub fn resolve_note_id(path: &Path) -> Option<String> {
         let stem = path.file_stem()?.to_str()?;
         if stem.len() == 14 && stem.chars().all(|c| c.is_ascii_digit()) {
             Some(stem.to_string())
