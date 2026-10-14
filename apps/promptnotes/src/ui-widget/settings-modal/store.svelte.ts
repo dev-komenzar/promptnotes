@@ -6,6 +6,7 @@ import {
 	type UpdateSettingsInput
 } from '$lib/user-preferences/slices/update-settings';
 import { getAppVersion as defaultGetAppVersion } from '$lib/update-distribution/slices/get-app-version';
+import { getDefaultStorageDir as defaultGetDefaultStorageDir } from '$lib/user-preferences/slices/get-default-storage-dir';
 
 /**
  * widget-settings-modal の draft state + save/cancel ロジックを保持する store。
@@ -14,11 +15,13 @@ import { getAppVersion as defaultGetAppVersion } from '$lib/update-distribution/
  * - I-SM3: save は `update-settings` slice を呼び、成功で `onSaved` を発火
  * - I-SM6: 差分なし save は workflow を呼ばずに close（C-US1 最適化）
  * - I-SM9〜11: app version は `get-app-version` slice から取得し、form state とは独立
+ * - I-SM12〜14: 「デフォルトに戻す」は `get-default-storage-dir` slice の値で draft を置き換えるだけ
  */
 
 export type SettingsModalStoreDeps = {
 	updateSettingsFn?: typeof defaultUpdateSettings;
 	getAppVersionFn?: typeof defaultGetAppVersion;
+	getDefaultStorageDirFn?: typeof defaultGetDefaultStorageDir;
 	/** I-SM5: theme 選択時の即時 preview callback（DOM 操作の注入点） */
 	onPreviewTheme?: (theme: Theme) => void;
 };
@@ -33,6 +36,7 @@ export type SettingsModalStore = ReturnType<typeof createSettingsModalStore>;
 export function createSettingsModalStore(initial: SettingsDto, deps: SettingsModalStoreDeps = {}) {
 	const updateSettingsFn = deps.updateSettingsFn ?? defaultUpdateSettings;
 	const getAppVersionFn = deps.getAppVersionFn ?? defaultGetAppVersion;
+	const getDefaultStorageDirFn = deps.getDefaultStorageDirFn ?? defaultGetDefaultStorageDir;
 
 	const baseline = $state<SettingsDto>({ ...initial });
 	let storageDir = $state(initial.storage_dir);
@@ -40,6 +44,8 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 	let saveState = $state<SaveState>({ kind: 'idle' });
 	// I-SM10: 取得前 / 失敗時は null（UI は行ごと非表示）
 	let appVersion = $state<string | null>(null);
+	// I-SM13: 取得前 / 失敗時は null（reset button は disabled）
+	let defaultStorageDir = $state<string | null>(null);
 
 	const dirty = $derived(storageDir !== baseline.storage_dir || theme !== baseline.theme);
 
@@ -68,6 +74,22 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 		} catch {
 			appVersion = null;
 		}
+	}
+
+	// I-SM12: mount 時に 1 回呼ぶ。I-SM13: reject は握り潰して null のまま。
+	async function loadDefaultStorageDir(): Promise<void> {
+		try {
+			defaultStorageDir = await getDefaultStorageDirFn();
+		} catch {
+			defaultStorageDir = null;
+		}
+	}
+
+	// I-SM12: draft の storage_dir を default に置き換えるだけ（永続化は save 時）。
+	// I-SM13: default 未取得なら no-op。
+	function resetStorageDir(): void {
+		if (defaultStorageDir === null) return;
+		setStorageDir(defaultStorageDir);
 	}
 
 	async function save(): Promise<
@@ -108,9 +130,14 @@ export function createSettingsModalStore(initial: SettingsDto, deps: SettingsMod
 		get appVersion() {
 			return appVersion;
 		},
+		get defaultStorageDir() {
+			return defaultStorageDir;
+		},
 		setStorageDir,
 		setTheme,
 		save,
-		loadAppVersion
+		loadAppVersion,
+		loadDefaultStorageDir,
+		resetStorageDir
 	};
 }

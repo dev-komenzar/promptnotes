@@ -1,5 +1,5 @@
 page_id: widget-settings-modal
-derived_at: 2026-10-07
+derived_at: 2026-10-14
 beads:
   epic: ori-page-widget-settings-modal
   current_phase: finalize
@@ -15,7 +15,7 @@ phases:
     status: closed
     issue: ori-derive-widget-settings-modal
     completed_at: 2026-10-07
-    notes: get-app-version 追加に伴う再 derive (screen-2-app-version / I-SM9..11)
+    notes: storage-dir-reset 追加に伴う手動再 derive (ori-fo5n, I-SM12..14 / get-default-storage-dir)
   plan:
     status: closed
     issue: ori-plan-widget-settings-modal

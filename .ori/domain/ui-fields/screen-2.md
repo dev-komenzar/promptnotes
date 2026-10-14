@@ -6,6 +6,7 @@ ori:
     - type-definitions:index
     - workflow:update-settings
     - workflow:get-app-version
+    - workflow:get-default-storage-dir
 ---
 
 # Screen 2: Settings Modal {#screen-2}
@@ -19,6 +20,8 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 `storage_dir` と `theme` を編集する。
 あわせて [get-app-version](../workflows/get-app-version.md) で取得した
 現在のアプリバージョンを読み取り専用で表示する。
+「デフォルトに戻す」は [get-default-storage-dir](../workflows/get-default-storage-dir.md)
+で取得した OS 慣習パスを使う。
 
 `sort_preference` は [change-sort-order](../workflows/change-sort-order.md) 経由
 （ツールバーのソートトグル）でも変更されるため、本モーダルでは扱わない方針
@@ -29,7 +32,7 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 | id | label | 型 | 必須 | UI | 備考 |
 |--|--|--|--|--|--|
 | `{#screen-2-storage-dir}` | 保存ディレクトリ | `PathBuf → StorageDir` | ✓ | folder picker + read-only path display | OS ネイティブのフォルダ選択ダイアログ。デフォルト = OS 慣習パス |
-| `{#screen-2-storage-dir-reset}` | デフォルトに戻す | (action) | - | button | OS 慣習パスにリセット |
+| `{#screen-2-storage-dir-reset}` | デフォルトに戻す | (action) | - | button | 編集中の保存ディレクトリを OS 慣習パスに置き換える（保存は「保存」押下時） |
 | `{#screen-2-theme}` | テーマ | `Theme` | ✓ | segmented control / radio | `System | Light | Dark` の 3 値 |
 | `{#screen-2-app-version}` | バージョン | `AppVersion` | - | read-only text | モーダル下部に `v{version}` 形式で表示（例: `v0.2.2`）。編集不可・保存対象外 |
 | `{#screen-2-cancel}` | キャンセル | (action) | - | secondary button | 変更を破棄してモーダル閉じる |
@@ -51,6 +54,17 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 - 直後に「設定を反映するにはアプリを再起動してください」というモーダル表示
   （即時マイグレーションはしない、I-S4 / S11）
 - ユーザは「今すぐ再起動」「あとで」の 2 択
+
+### storage_dir のデフォルトへのリセット {#cross-storage-dir-reset}
+
+- モーダル mount 時に `get-default-storage-dir` を 1 回呼び、OS 慣習パス（I-S3）を得る
+- 「デフォルトに戻す」押下で、**編集中の** `screen-2-storage-dir` の値をその path に置き換える
+  （folder picker で選んだときと同じ扱い）
+- 永続化と `StorageDirChanged` の発行は「保存」押下時に `update-settings` が行う。
+  リセットボタン単独では保存しない。キャンセル / Esc で破棄される
+- mount 時の値が default と同じなら、リセットしても差分なし（`cross-no-diff` に従う）
+- default の取得完了前、または取得自体が失敗した場合は、ボタンを **disabled** にする
+  （エラー表示はしない。設定編集の妨げにしない）
 
 ### theme 変更の即時反映 {#cross-theme-immediate}
 

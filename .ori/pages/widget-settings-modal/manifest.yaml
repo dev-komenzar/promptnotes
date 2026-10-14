@@ -6,11 +6,13 @@ derives_from:
   - domain/ui-fields/page-groups.md#widget-settings-modal
   - domain/workflows/update-settings.md#update-settings
   - domain/workflows/get-app-version.md#get-app-version
+  - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
 relations:
   - kind: hosts
     slices:
       - update-settings
       - get-app-version
+      - get-default-storage-dir
   - kind: mounted-by
     page: page-main
 implementation:

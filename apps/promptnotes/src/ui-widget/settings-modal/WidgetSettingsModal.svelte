@@ -22,6 +22,11 @@
 				? F
 				: never
 			: never;
+		getDefaultStorageDirFn?: Parameters<typeof createSettingsModalStore>[1] extends infer D
+			? D extends { getDefaultStorageDirFn?: infer F }
+				? F
+				: never
+			: never;
 		openDialogFn?: typeof openDialog;
 	};
 
@@ -31,6 +36,7 @@
 		onSaved,
 		updateSettingsFn,
 		getAppVersionFn,
+		getDefaultStorageDirFn,
 		openDialogFn = openDialog
 	}: Props = $props();
 
@@ -40,6 +46,7 @@
 		createSettingsModalStore(initial, {
 			updateSettingsFn,
 			getAppVersionFn,
+			getDefaultStorageDirFn,
 			onPreviewTheme: previewTheme
 		})
 	);
@@ -53,6 +60,11 @@
 	// I-SM9: mount ごとに 1 回だけ取得
 	$effect(() => {
 		untrack(() => void store.loadAppVersion());
+	});
+
+	// I-SM12: mount ごとに 1 回だけ取得
+	$effect(() => {
+		untrack(() => void store.loadDefaultStorageDir());
 	});
 
 	const THEMES: Array<{ value: Theme; label: string }> = [
@@ -159,6 +171,15 @@
 					Browse…
 				</button>
 			</div>
+			<button
+				type="button"
+				data-testid="widget.widget-settings-modal.storage-dir-reset"
+				class="w-fit rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+				disabled={store.defaultStorageDir === null}
+				onclick={store.resetStorageDir}
+			>
+				Reset to default
+			</button>
 			{#if store.saveState.kind === 'error'}
 				{@const pathMsg = pathErrorMessage(store.saveState.error)}
 				{#if pathMsg}

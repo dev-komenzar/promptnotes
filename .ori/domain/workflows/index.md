@@ -10,7 +10,7 @@ ori:
 
 # Workflows Index {#workflows-index}
 
-PromptNotes の 16 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
+PromptNotes の 17 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
 別ファイルに記述（review しやすさのため）。
 
 <!-- ori:auto-table:start -->
@@ -33,6 +33,7 @@ PromptNotes の 16 workflow を BC 別に列挙。各 workflow は DMMF pipeline
 | [detect-external-changes](detect-external-changes.md) | アプリ起動時 / StorageDirChanged | NoteFileCreated/Modified/DeletedExternally | NoteFeed + Note | Note Feed |
 | [update-settings](update-settings.md) | 設定モーダル保存 | StorageDirChanged / ThemeChanged | Settings | User Preferences |
 | [load-settings](load-settings.md) | アプリ起動時 | (なし) | Settings | User Preferences |
+| [get-default-storage-dir](get-default-storage-dir.md) | 設定モーダル表示時 | (なし) | Settings | User Preferences |
 | [check-for-updates](check-for-updates.md) | アプリ起動時 | NewVersionDetected (条件付) | UpdateChannel | Update Distribution |
 | [get-app-version](get-app-version.md) | 設定モーダル表示時 | (なし) | UpdateChannel | Update Distribution |
 
