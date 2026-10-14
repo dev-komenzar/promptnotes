@@ -45,8 +45,10 @@ impl Clock for SystemClock {
     }
 }
 
+type EventHandler = Box<dyn Fn(DomainEvent) + Send>;
+
 struct AppEventBus {
-    handlers: Mutex<Vec<Box<dyn Fn(DomainEvent) + Send>>>,
+    handlers: Mutex<Vec<EventHandler>>,
 }
 
 impl AppEventBus {
@@ -56,7 +58,7 @@ impl AppEventBus {
         }
     }
 
-    fn subscribe(&self, handler: Box<dyn Fn(DomainEvent) + Send>) {
+    fn subscribe(&self, handler: EventHandler) {
         self.handlers
             .lock()
             .expect("event bus poisoned")
@@ -85,6 +87,12 @@ pub struct WatcherState {
 impl WatcherState {
     pub fn new() -> Self {
         Self { handle: None }
+    }
+}
+
+impl Default for WatcherState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

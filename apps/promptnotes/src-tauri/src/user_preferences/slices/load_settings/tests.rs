@@ -176,6 +176,7 @@ fn tp_h2_happy_path_calls_ensure_dir_once() {
 /// LoadSettingsUseCase::new は `(FileSystem, OsDirs)` の 2 引数のみで構築できる必要がある。
 #[test]
 fn tp_h3_use_case_constructor_takes_no_event_bus() {
+    #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
     let _: fn(
         Rc<FakeFileSystem>,
         Rc<FakeOsDirs>,
@@ -510,6 +511,7 @@ fn tp_i4_idempotent_no_double_ensure_dir_on_second_run() {
 fn tp_as1_execute_returns_settings_not_result_or_option() {
     // 関数ポインタ型として束縛できれば、戻り値が `Settings` 1 個であることが
     // compile-time に保証される。Result<Settings, _> / Option<Settings> では型不一致。
+    #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
     let _: fn(
         &LoadSettingsUseCase<Rc<FakeFileSystem>, Rc<FakeOsDirs>>,
         LoadSettingsCommand,

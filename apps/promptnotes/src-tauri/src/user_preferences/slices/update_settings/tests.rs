@@ -332,6 +332,7 @@ fn tp_s11_1_storage_dir_change_persists_and_emits() {
 /// type-level に固定する。
 #[test]
 fn tp_s11_2_use_case_has_no_note_repository_dependency() {
+    #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
     let _: fn(
         Rc<FakeRepo>,
         Rc<FakeBus>,

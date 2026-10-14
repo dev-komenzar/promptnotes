@@ -394,6 +394,7 @@ fn tp_s13_2_use_case_signature_takes_one_command_not_many() {
     fn _pin<R: NoteRepository, C: Clock, E: EventBus, D: DebounceTimer>(
         uc: &FlushNoteUseCase<R, C, E, D>,
     ) {
+        #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
         let _f: fn(
             &FlushNoteUseCase<R, C, E, D>,
             FlushNoteCommand,
@@ -797,6 +798,7 @@ fn tp_inv1_inv2_returned_note_preserves_id_and_monotonic_timestamps() {
 #[test]
 fn tp_as1_use_case_signature_is_pinned() {
     fn _pin<R: NoteRepository, C: Clock, E: EventBus, D: DebounceTimer>() {
+        #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
         let _f: fn(
             &FlushNoteUseCase<R, C, E, D>,
             FlushNoteCommand,

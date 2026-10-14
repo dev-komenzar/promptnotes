@@ -261,6 +261,7 @@ fn tp_s14_2_network_error_publishes_no_event() {
 fn tp_s14_3_execute_returns_update_channel_not_result() {
     // 関数ポインタとして束縛できれば戻り型が compile-time に固定される。
     // Result<UpdateChannel, _> では型不一致でこの test が落ちる。
+    #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
     let _: fn(
         &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
         CheckForUpdatesCommand,
@@ -429,6 +430,7 @@ fn tp_i3_none_release_implies_no_event() {
 /// TP-S14-3 と物理的に同じ確認だが、spec の別 perspective なので個別に書く。
 #[test]
 fn tp_t1_execute_signature_has_no_result() {
+    #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
     let _: fn(
         &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
         CheckForUpdatesCommand,
