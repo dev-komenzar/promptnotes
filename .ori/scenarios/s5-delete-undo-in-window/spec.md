@@ -6,7 +6,7 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s5-delete-undo-in-window
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
 ---
 
 # s5-delete-undo-in-window — Scenario Specification

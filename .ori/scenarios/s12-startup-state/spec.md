@@ -6,7 +6,7 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s12-startup-state
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/load-settings.md#load-settings
       hash: 0c241b32210d
     - path: domain/workflows/list-feed.md#list-feed
@@ -16,11 +16,11 @@ coherence:
     - path: domain/workflows/update-feed-filter.md#update-feed-filter
       hash: 51cdf06a33f9
     - path: domain/aggregates.md#settings-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/aggregates.md#note-feed-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#sort-preference-changed
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/ui-fields/screen-1.md#screen-1
       hash: 18a41b79b1f8
 ---

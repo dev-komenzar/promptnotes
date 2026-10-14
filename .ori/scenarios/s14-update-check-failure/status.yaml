@@ -2,15 +2,19 @@ scenario_id: s14-update-check-failure
 derived_at: 2026-09-19T10:44:31.401Z
 beads:
   epic: ori-scenario-s14-update-check-failure
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []

@@ -6,13 +6,13 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s10-tag-invalid-char
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/assign-tag.md#assign-tag
       hash: 4efe2dfe63c4
     - path: domain/aggregates.md#note-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#note-tags-changed
-      hash: 71db66eafe03
+      hash: 86acb64f8149
 ---
 
 # s10-tag-invalid-char — Scenario Specification

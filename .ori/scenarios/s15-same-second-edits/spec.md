@@ -6,17 +6,17 @@ coherence:
   source: derived
   upstream:
     - path: domain/validation.md#s15-same-second-edits
-      hash: 4a02c17cc025
+      hash: a4490b2d3809
     - path: domain/workflows/auto-save-note.md#auto-save-note
       hash: 642c5094fd1a
     - path: domain/aggregates.md#note-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/domain-events.md#note-body-edited
-      hash: 71db66eafe03
+      hash: 86acb64f8149
     - path: domain/aggregates.md#note-feed-aggregate
-      hash: 56f7a54a8ab2
+      hash: c2eaa083eaf0
     - path: domain/glossary.md#glossary-timestamp
-      hash: 9405b16bb835
+      hash: ac3ff65cca45
 ---
 
 # s15-same-second-edits — Scenario Specification

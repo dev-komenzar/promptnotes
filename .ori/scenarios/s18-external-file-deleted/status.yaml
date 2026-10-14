@@ -2,15 +2,19 @@ scenario_id: s18-external-file-deleted
 derived_at: 2026-09-21T05:48:28.743Z
 beads:
   epic: ori-scenario-s18-external-file-deleted
-  current_phase: finalize
+  current_phase: null
   completion:
     - derive
     - generate
     - review
     - finalize
 phases:
-  derive: closed
-  generate: closed
-  review: closed
-  finalize: closed
+  derive:
+    state: done
+  generate:
+    state: done
+  review:
+    state: done
+  finalize:
+    state: done
 dirty: []
