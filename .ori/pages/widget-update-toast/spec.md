@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-06-26
+  last_derived: 2026-10-14
   derives_from:
     - domain/ui-fields/screen-3.md#screen-3
     - domain/ui-fields/page-groups.md#widget-update-toast
@@ -35,10 +35,10 @@ screen-3 を実体化する **startup conditional overlay widget**。
 
 | field | 型 | 用途 |
 |--|--|--|
-| `current_version` | `Version` | `screen-3-current-version` に表示 |
-| `latest_version` | `Version` | `screen-3-latest-version` に強調表示 |
-| `release_url` | `String` | `screen-3-view-release` クリックで OS ブラウザに渡す |
-| `release_notes` | `String` | `screen-3-release-notes-summary` を 2 行 / 約 140 文字で truncate |
+| `current_version` | `Version` | `widget.widget-update-toast.current-version` に表示 |
+| `latest_version` | `Version` | `widget.widget-update-toast.latest-version` に強調表示 |
+| `release_url` | `String` | `widget.widget-update-toast.view-release` クリックで OS ブラウザに渡す |
+| `release_notes` | `String` | `widget.widget-update-toast.release-notes-summary` を 2 行 / 約 140 文字で truncate |
 
 Tauri event channel 名は `new_version_detected`（snake_case、Rust serde default 規約）。
 実 emit 側 (`apps/promptnotes/src-tauri/src/lib.rs` の startup hook) は
@@ -61,6 +61,7 @@ Tauri event channel 名は `new_version_detected`（snake_case、Rust serde defa
 - 画面右下に固定表示（screen-3 cross-position-duration）
 - 削除トースト (screen-1-toast) は中央下のため衝突しない
 - 自動消失なし — ユーザの dismiss / view-release アクションでのみ hidden
+- 各要素の data-testid は `.ori/pages/widget-update-toast/testids.yaml` の契約値を literal で付与する（ui-field id を写さない。詳細は [実装ノート](#impl-testid)）
 
 ## 不変条件 {#invariants}
 
@@ -76,10 +77,10 @@ Tauri event channel 名は `new_version_detected`（snake_case、Rust serde defa
 
 ### dismiss / view-release {#invariants-dismiss-view}
 
-- **I-UT4（dismiss は hidden のみ）**: `screen-3-dismiss` クリックで toast hidden
+- **I-UT4（dismiss は hidden のみ）**: `widget.widget-update-toast.dismiss` クリックで toast hidden
   （`payload = null`）。次回起動の `check-for-updates` で再 emit されれば再表示
   （cross-dismiss-view）
-- **I-UT5（view-release は open + 表示維持）**: `screen-3-view-release` クリックで
+- **I-UT5（view-release は open + 表示維持）**: `widget.widget-update-toast.view-release` クリックで
   `release_url` を OS デフォルトブラウザで開き、toast はそのまま残す（cross-dismiss-view）
 
 ### 経路境界 {#invariants-boundary}
@@ -121,6 +122,12 @@ stub listenFn が reject しても `store.start()` は throw せず、`store.pay
 のまま（I-UT2 / S14: silent failure）。
 
 ## 実装ノート {#impl-notes}
+
+### testid 契約 {#impl-testid}
+
+- testid は `.ori/pages/widget-update-toast/testids.yaml` の契約値（derived + extra）を literal で付与する。`/ori-impl-green` 完了条件で `testids.js check widget-update-toast` が検査する
+- root は `widget.widget-update-toast.root`
+
 
 ### Subscription store は createUpdateToastStore で testable に {#impl-store}
 

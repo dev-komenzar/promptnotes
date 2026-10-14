@@ -1,0 +1,28 @@
+# page testid 契約 (SSoT: ddd-vsa-hex/pattern.md §UI selector / testid 規約)
+# derived: @ori-generated — testids.js sync が ui-fields から再生成する。手で編集しない
+# extra:   ori-derive / ori-generate が testids.js add-extra で追記する (変更・削除は人間のみ)
+derived:
+  - testid: widget.widget-external-change-conflict.body-external
+    field: screen-4-body-external
+  - testid: widget.widget-external-change-conflict.body-local
+    field: screen-4-body-local
+  - testid: widget.widget-external-change-conflict.cancel
+    field: screen-4-cancel
+  - testid: widget.widget-external-change-conflict.confirm
+    field: screen-4-confirm
+  - testid: widget.widget-external-change-conflict.hash-external
+    field: screen-4-hash-external
+  - testid: widget.widget-external-change-conflict.hash-local
+    field: screen-4-hash-local
+  - testid: widget.widget-external-change-conflict.note-title
+    field: screen-4-note-title
+  - testid: widget.widget-external-change-conflict.resolution-choice
+    field: screen-4-resolution-choice
+extra:
+  - testid: widget.widget-external-change-conflict.root
+    purpose: 競合解決ダイアログの dialog root
+    source: derive
+  - testid: widget.widget-external-change-conflict.resolution-option
+    purpose: ConflictResolution の radio (data-key=ApplyExternal|KeepEditing)
+    source: derive
+    dynamic: data-key
