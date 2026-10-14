@@ -221,6 +221,14 @@ I-PM20 / I-PM11 を ToolbarRegion の browser component test（vitest client pro
 - 大文字や末尾空白を含む入力（例: `Foo `）が入力欄にそのまま残る（正規化値で上書きしない）
 - Clear all で入力欄が空になり `clear_all` を送る
 
+### tp-block-updated-at: 更新日時 tooltip {#tp-block-updated-at}
+
+screen-1.md#screen-1-block-updated-at を Block の browser component test で検証する:
+
+- メタ行右端の `createdAt`（field `screen-1-block-created-at`）に pointer を hover すると、`updatedAt` を表示する read-only tooltip（field `screen-1-block-updated-at`）が可視になり、本文が `note.updated_at` と一致する
+- hover していない間、tooltip は DOM 上に存在しない
+- tooltip は read-only で、クリックしても Block は EDITING に遷移しない
+
 ### tp-no-multi-pane: 単一ペイン制約 {#tp-no-multi-pane}
 
 DOM 構造に複数カラム grid / 並列 viewport が存在しないこと（I-PM4 / I-PM6）。feed region の契約 testid を持つ要素がちょうど 1 つであること。

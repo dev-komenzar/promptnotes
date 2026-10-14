@@ -52,5 +52,4 @@ phases:
     notes: "dirty cleared; 2 follow-up issues created (2026-10-13 testid 契約移行: ori-1jjr、機能欠落 block-updated-at は ori-6lvx)"
 dirty: []
 finalized_at: 2026-10-13
-followup:
-  - ori-6lvx
+followup: []

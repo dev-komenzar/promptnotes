@@ -55,6 +55,7 @@
 	let tagInputDraft = $state('');
 	let tagError = $state<string | null>(null);
 	let pendingClickPos: number | null = $state(null);
+	let createdAtHovered = $state(false);
 
 	const blockState = $derived<BlockState>(focus.stateOf(note.id));
 
@@ -369,14 +370,30 @@
 				/>
 			{/if}
 		</div>
-		<time
-			data-testid="page.page-main.block-created-at"
-			class="shrink-0 text-right text-[10px] tabular-nums text-neutral-400"
-			datetime={note.created_at}
-			title={`updated_at: ${note.updated_at}`}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<span
+			class="relative shrink-0"
+			onmouseenter={() => (createdAtHovered = true)}
+			onmouseleave={() => (createdAtHovered = false)}
 		>
-			{note.created_at}
-		</time>
+			<time
+				data-testid="page.page-main.block-created-at"
+				class="block text-right text-[10px] tabular-nums text-neutral-400"
+				datetime={note.created_at}
+			>
+				{note.created_at}
+			</time>
+			{#if createdAtHovered}
+				<span
+					data-block-no-edit
+					data-testid="page.page-main.block-updated-at"
+					role="tooltip"
+					class="absolute right-0 top-full z-10 mt-0.5 whitespace-nowrap rounded border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] tabular-nums text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+				>
+					{note.updated_at}
+				</span>
+			{/if}
+		</span>
 	</header>
 	{#if tagError}
 		<p class="text-[10px] text-red-500" data-testid="page.page-main.block-tag-error">{tagError}</p>
