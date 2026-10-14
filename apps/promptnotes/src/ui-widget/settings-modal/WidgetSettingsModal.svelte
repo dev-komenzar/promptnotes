@@ -93,8 +93,8 @@
 	function pathErrorMessage(error: UpdateSettingsError): string | null {
 		if (error.kind !== 'invalid_path') return null;
 		return error.reason === 'not_absolute'
-			? 'Path must be absolute.'
-			: 'Path inside the config directory is not allowed.';
+			? '絶対パスを指定してください'
+			: '設定ディレクトリ配下のパスは指定できません';
 	}
 
 	function persistErrorMessage(error: UpdateSettingsError): string | null {
