@@ -30,7 +30,7 @@ describe('scenario:s5-delete-undo-in-window', () => {
   const NOTE_PATH = notePath(STORAGE_DIR, NOTE_ID);
 
   before(async () => {
-    await browser.waitUntil(async () => (await count('[data-testid="screen-1-block"]')) >= 1, {
+    await browser.waitUntil(async () => (await count('[data-testid="page.page-main.block"]')) >= 1, {
       timeout: 10000,
       timeoutMsg: 'seeded note did not appear in feed',
     });
@@ -39,7 +39,7 @@ describe('scenario:s5-delete-undo-in-window', () => {
 
   it('deletes a note (moves to OS trash) then undoes restore within the toast window', async () => {
     // ---- Step 1: confirm initial state ----
-    const countBefore = await count('[data-testid="screen-1-block"]');
+    const countBefore = await count('[data-testid="page.page-main.block"]');
     expect(countBefore).toBeGreaterThanOrEqual(1);
     expect(existsSync(NOTE_PATH)).toBe(true);
 
@@ -47,25 +47,25 @@ describe('scenario:s5-delete-undo-in-window', () => {
     // delete ボタンは hover 時のみ操作可能（opacity-0 / pointer-events-none）。
     // WebKitWebDriver の moveTo は CSS :hover を安定して発火しないため、
     // 対象 button に click イベントを直接 dispatch する。
-    await dispatchClick('screen-1-block-delete');
+    await dispatchClick('page.page-main.block-delete');
     await browser.pause(1000);
 
     expect(existsSync(NOTE_PATH)).toBe(false);
-    const countAfterDelete = await count('[data-testid="screen-1-block"]');
+    const countAfterDelete = await count('[data-testid="page.page-main.block"]');
     expect(countAfterDelete).toBe(countBefore - 1);
-    const toastCount = await count('[data-testid="screen-1-toast"]');
+    const toastCount = await count('[data-testid="page.page-main.toast"]');
     expect(toastCount).toBeGreaterThanOrEqual(1);
 
     // ---- Step 3: undo the delete ----
-    await dispatchClick('screen-1-toast-undo');
+    await dispatchClick('page.page-main.toast-undo');
     await browser.pause(1000);
 
     expect(existsSync(NOTE_PATH)).toBe(true);
     const restored = readFileSync(NOTE_PATH, 'utf-8');
     expect(restored).toContain(NOTE_BODY);
-    const countAfterUndo = await count('[data-testid="screen-1-block"]');
+    const countAfterUndo = await count('[data-testid="page.page-main.block"]');
     expect(countAfterUndo).toBe(countBefore);
-    const remainingToasts = await count('[data-testid="screen-1-toast"]');
+    const remainingToasts = await count('[data-testid="page.page-main.toast"]');
     expect(remainingToasts).toBe(0);
   });
 });

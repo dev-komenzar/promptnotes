@@ -183,7 +183,7 @@ describe('scenario:s20-external-delete-while-editing', () => {
     expect(await blockState(NOTE_A)).toBe('EDITING');
 
     // 削除通知の過程で toast は出ない (screen-1 Notes)
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
   });
 
   it('step 2 — validation#s20-external-delete-while-editing: 通知が編集中 body を提示する', async () => {
@@ -223,7 +223,7 @@ describe('scenario:s20-external-delete-while-editing', () => {
     await waitForDialogGone();
     await waitForBlockGone(NOTE_A);
     expect(await blockIds()).toEqual([]);
-    expect(await $('[data-testid="screen-1-feed-empty"]').isExisting()).toBe(true);
+    expect(await $('[data-testid="page.page-main.feed-empty"]').isExisting()).toBe(true);
   });
 
   it('step 5 — validation#s20-external-delete-while-editing: IDLE 中の外部削除では通知を出さない', async () => {

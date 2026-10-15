@@ -11,7 +11,7 @@ describe('scenario:s1-note-created-happy', () => {
 
   it('step 1 — validation#s1-note-created-happy: Cmd+N → 入力 → Cmd+Enter で Note 作成と UI 反映', async () => {
     // Given: アプリ起動直後、保存先は OS 慣習パス、フィード 0 件、Draft 空
-    const draftEditor = await $('[data-testid="screen-1-draft-body"]');
+    const draftEditor = await $('[data-testid="page.page-main.draft-body"]');
     await draftEditor.waitForExist({ timeout: 15000 });
     await browser.pause(300);
 
@@ -22,7 +22,7 @@ describe('scenario:s1-note-created-happy', () => {
     // Then: フォーカスが Draft 本文 (CodeMirror .cm-content) に移っている
     const focusedInDraft = await browser.execute(() => {
       const el = document.activeElement as HTMLElement | null;
-      return !!(el && el.closest('[data-testid="screen-1-draft-body"]'));
+      return !!(el && el.closest('[data-testid="page.page-main.draft-body"]'));
     });
     expect(focusedInDraft).toBe(true);
 
@@ -35,7 +35,7 @@ describe('scenario:s1-note-created-happy', () => {
     await browser.pause(1500);
 
     // Then 1: NoteFeed に 1 件表示
-    const noteBlocks = await $$('[data-testid="screen-1-block"]');
+    const noteBlocks = await $$('[data-testid="page.page-main.block"]');
     expect(noteBlocks.length).toBe(1);
 
     // Then 2: body が "docs を書く" と一致
@@ -51,7 +51,7 @@ describe('scenario:s1-note-created-happy', () => {
     const focus = await browser.execute(() => {
       const el = document.activeElement as HTMLElement | null;
       return {
-        inDraft: !!el?.closest('[data-testid="screen-1-draft-body"]'),
+        inDraft: !!el?.closest('[data-testid="page.page-main.draft-body"]'),
         inBlock: !!el?.closest('[data-block-id]')
       };
     });
@@ -69,7 +69,7 @@ describe('scenario:s1-note-created-happy', () => {
     await browser.pause(500);
 
     // Then: NoteFeed 件数は変わらない（空ボディでは Note::create が呼ばれない）
-    const noteBlocks = await $$('[data-testid="screen-1-block"]');
+    const noteBlocks = await $$('[data-testid="page.page-main.block"]');
     expect(noteBlocks.length).toBeGreaterThanOrEqual(1);
   });
 });

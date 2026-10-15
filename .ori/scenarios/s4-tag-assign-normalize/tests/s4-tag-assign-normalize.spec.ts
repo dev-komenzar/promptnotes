@@ -39,7 +39,7 @@ function block() {
 async function chipTexts(): Promise<string[]> {
   const texts = await browser.execute((id: string) => {
     const els = document.querySelectorAll(
-      `[data-block-id="${id}"] [data-testid="screen-1-block-tag-chip"]`,
+      `[data-block-id="${id}"] [data-testid="page.page-main.block-tag-chip"]`,
     );
     return Array.from(els).map((e) => (e.textContent ?? '').replace('#', '').trim());
   }, NOTE_ID);
@@ -48,7 +48,7 @@ async function chipTexts(): Promise<string[]> {
 
 async function addTag(raw: string): Promise<void> {
   const el = await block();
-  const input = await el.$('[data-testid="screen-1-block-tag-input"]');
+  const input = await el.$('[data-testid="page.page-main.block-tag-input"]');
   await input.waitForExist({ timeout: 3000 });
   await input.click();
   await input.setValue(raw);
@@ -59,7 +59,7 @@ describe('scenario:s4-tag-assign-normalize', () => {
   before(async () => {
     const el = await block();
     await el.waitForExist({ timeout: 10000 });
-    await $('[data-testid="screen-1-block-tag-chip"]').waitForExist({ timeout: 10000 });
+    await $('[data-testid="page.page-main.block-tag-chip"]').waitForExist({ timeout: 10000 });
     await el.click();
     await browser.waitUntil(
       async () => (await el.getAttribute('data-block-state')) === 'EDITING',

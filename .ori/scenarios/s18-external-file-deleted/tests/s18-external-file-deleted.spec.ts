@@ -66,7 +66,7 @@ async function waitForBlockIds(expected: string[], timeoutMs = 10_000): Promise<
       const ids = await blockIds();
       if (ids.length !== expected.length || !ids.every((id, i) => id === expected[i])) return false;
       if (expected.length === 0) {
-        return await $('[data-testid="screen-1-feed-empty"]').isExisting();
+        return await $('[data-testid="page.page-main.feed-empty"]').isExisting();
       }
       return true;
     },
@@ -107,7 +107,7 @@ describe('scenario:s18-external-file-deleted', () => {
     expect(await $(`[data-block-id="${NOTE_A}"]`).isExisting()).toBe(false);
 
     // UI 通知は不要 (トーストが出ない)
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
   });
 
   it('step 2 — validation#s18-external-file-deleted: 除去後の read DTO が正しい', async () => {
@@ -143,6 +143,6 @@ describe('scenario:s18-external-file-deleted', () => {
     //       (弱い観測: 非 Note 名は list_all 側でも feed に現れない。notes.md#known-issues 参照)
     await browser.pause(1500);
     expect(await blockIds()).toEqual([]);
-    expect(await $('[data-testid="screen-1-feed-empty"]').isExisting()).toBe(true);
+    expect(await $('[data-testid="page.page-main.feed-empty"]').isExisting()).toBe(true);
   });
 });

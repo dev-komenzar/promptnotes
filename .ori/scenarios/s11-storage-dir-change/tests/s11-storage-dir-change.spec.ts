@@ -89,8 +89,8 @@ async function invokeUpdateSettings(input: Record<string, unknown>): Promise<Upd
 }
 
 async function openSettingsModal() {
-  await $('[data-testid="screen-1-toolbar-settings-button"]').click();
-  const modal = await $('[data-testid="widget-settings-modal"]');
+  await $('[data-testid="page.page-main.toolbar-settings-button"]').click();
+  const modal = await $('[data-testid="widget.widget-settings-modal.root"]');
   await modal.waitForExist({ timeout: 5000, timeoutMsg: 'settings modal did not open' });
   return modal;
 }
@@ -113,13 +113,13 @@ describe('scenario:s11-storage-dir-change', () => {
     const modal = await openSettingsModal();
 
     // Then: 保存ディレクトリに Given の old dir が表示される
-    const input = await $('[data-testid="screen-2-storage-dir"]');
+    const input = await $('[data-testid="widget.widget-settings-modal.storage-dir"]');
     await input.waitForExist({ timeout: 5000 });
     expect(await input.getValue()).toBe(OLD_DIR);
 
     // When: 対照として theme のみを UI から変更して保存する
-    await $('[data-testid="screen-2-theme-Dark"]').click();
-    await $('[data-testid="screen-2-save"]').click();
+    await $('[data-testid="widget.widget-settings-modal.theme-option"][data-key="Dark"]').click();
+    await $('[data-testid="widget.widget-settings-modal.save"]').click();
 
     // Then: theme が永続化され modal は閉じ、再起動モーダルは出ない (StorageDirChanged 非発行)
     await modal.waitForExist({ timeout: 5000, reverse: true, timeoutMsg: 'settings modal did not close' });
@@ -127,7 +127,7 @@ describe('scenario:s11-storage-dir-change', () => {
       timeout: 5000,
       timeoutMsg: 'theme was not persisted by the settings modal save',
     });
-    expect(await $('[data-testid="restart-prompt"]').isExisting()).toBe(false);
+    expect(await $('[data-testid="page.page-main.restart-prompt"]').isExisting()).toBe(false);
     expect(readSettings().storage_dir).toBe(OLD_DIR);
     expect((await blockIds()).slice().sort()).toEqual([...OLD_IDS].sort());
   });
@@ -150,12 +150,12 @@ describe('scenario:s11-storage-dir-change', () => {
     });
 
     // Then: 再起動を促すモーダルが表示される (I-S4 / StorageDirChanged subscriber)
-    const prompt = await $('[data-testid="restart-prompt"]');
+    const prompt = await $('[data-testid="page.page-main.restart-prompt"]');
     await prompt.waitForExist({ timeout: 5000, timeoutMsg: 'restart prompt did not appear' });
 
     // When: さらに modal から theme を変更して保存する (storage_dir 差分を含む Save 経路)
-    await $('[data-testid="screen-2-theme-Light"]').click();
-    await $('[data-testid="screen-2-save"]').click();
+    await $('[data-testid="widget.widget-settings-modal.theme-option"][data-key="Light"]').click();
+    await $('[data-testid="widget.widget-settings-modal.save"]').click();
     await modal.waitForExist({ timeout: 5000, reverse: true, timeoutMsg: 'settings modal did not close' });
     await browser.waitUntil(() => readSettings().theme === 'Light', {
       timeout: 5000,
@@ -170,7 +170,7 @@ describe('scenario:s11-storage-dir-change', () => {
 
   it('step 3 — validation#s11-storage-dir-change: 再起動後に new dir のスキャン結果が表示される', async () => {
     // When: 「今すぐ再起動」→ window.location.reload() で remount する
-    await $('[data-testid="restart-prompt-restart"]').click();
+    await $('[data-testid="page.page-main.restart-prompt-restart"]').click();
 
     // Then: 再読込後は new dir の Note 1 件が表示される
     await browser.waitUntil(

@@ -67,7 +67,7 @@ async function waitForBlockBody(id: string, expected: string, timeoutMs = 10_000
   });
 }
 
-const DIALOG = '[data-testid="widget-external-change-conflict"]';
+const DIALOG = '[data-testid="widget.widget-external-change-conflict.root"]';
 
 async function dialogExists(): Promise<boolean> {
   return await $(DIALOG).isExisting();
@@ -105,8 +105,9 @@ async function enterEditing(id: string): Promise<void> {
 // The modal <dialog> lives in the browser top layer; the native WebDriver pointer click is flaky
 // in this headless WebKitGTK window (window-focus management), so the resolution controls are
 // dispatched through a DOM click. The conflict trigger itself stays a real external file write.
-async function clickDialogControl(testid: string): Promise<void> {
-  const selector = `${DIALOG} [data-testid="${testid}"]`;
+async function clickDialogControl(testid: string, key?: string): Promise<void> {
+  const keyAttr = key === undefined ? '' : `[data-key="${key}"]`;
+  const selector = `${DIALOG} [data-testid="${testid}"]${keyAttr}`;
   await $(selector).waitForExist({ timeout: 5_000 });
   await browser.execute((sel) => {
     const target = document.querySelector(sel) as HTMLElement | null;
@@ -160,23 +161,23 @@ describe('scenario:s19-external-modify-while-editing', () => {
     expect(await blockState(NOTE_A)).toBe('EDITING');
 
     // 競合解消の過程で toast は出ない (screen-4 Notes)
-    expect((await $$('[data-testid="screen-1-toast"]')).length).toBe(0);
+    expect((await $$('[data-testid="page.page-main.toast"]')).length).toBe(0);
   });
 
   it('step 2 — validation#s19-external-modify-while-editing: ダイアログが local / external 両バージョンを提示する', async () => {
     // Then: note title / 編集中の内容 / 外部変更の内容 が compare-layout に表示される
-    const title = await $(`${DIALOG} [data-testid="screen-4-note-title"]`);
+    const title = await $(`${DIALOG} [data-testid="widget.widget-external-change-conflict.note-title"]`);
     expect((await title.getText()).trim()).toBe(`${NOTE_A}.md`);
 
-    const localView = await $(`${DIALOG} [data-testid="screen-4-body-local"]`);
-    const externalView = await $(`${DIALOG} [data-testid="screen-4-body-external"]`);
+    const localView = await $(`${DIALOG} [data-testid="widget.widget-external-change-conflict.body-local"]`);
+    const externalView = await $(`${DIALOG} [data-testid="widget.widget-external-change-conflict.body-external"]`);
     expect(await localView.getValue()).toBe(BODY_LOCAL);
     expect(await externalView.getValue()).toBe(BODY_EXTERNAL);
   });
 
   it('step 3 — validation#s19-external-modify-while-editing: KeepEditing (Cancel) で編集中の内容を保持する', async () => {
     // When: Cancel (KeepEditing と等価) を選択する
-    await clickDialogControl('screen-4-cancel');
+    await clickDialogControl('widget.widget-external-change-conflict.cancel');
 
     // Then: ダイアログが閉じ、編集中の内容は外部版に置換されず保持され、Block は EDITING のまま
     await waitForDialogGone();
@@ -188,8 +189,8 @@ describe('scenario:s19-external-modify-while-editing', () => {
     // When: さらに外部変更を起こしてダイアログを再表示させ、「外部変更を適用」を選んで確定する
     writeNoteMd(NOTE_A, BODY_EXTERNAL_2);
     await waitForDialog();
-    await clickDialogControl('screen-4-resolution-apply-external');
-    await clickDialogControl('screen-4-confirm');
+    await clickDialogControl('widget.widget-external-change-conflict.resolution-option', 'ApplyExternal');
+    await clickDialogControl('widget.widget-external-change-conflict.confirm');
 
     // Then: ダイアログが閉じ、Editor が外部版で置換され、Block は IDLE に遷移する
     await waitForDialogGone();

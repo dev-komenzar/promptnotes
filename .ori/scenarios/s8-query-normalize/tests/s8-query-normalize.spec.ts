@@ -85,8 +85,8 @@ describe('scenario:s8-query-normalize', () => {
   const PATH_B = notePath(STORAGE_DIR, B);
 
   const block = (id: string) => `[data-block-id="${id}"]`;
-  const ALL_BLOCKS = '[data-testid="screen-1-block"]';
-  const SEARCH = '[data-testid="screen-1-toolbar-search-query"]';
+  const ALL_BLOCKS = '[data-testid="page.page-main.block"]';
+  const SEARCH = '[data-testid="page.page-main.toolbar-search-query"]';
 
   before(async () => {
     await browser.waitUntil(async () => (await count(ALL_BLOCKS)) >= 2, {

@@ -67,7 +67,7 @@ describe('scenario:s14-update-check-failure', () => {
 
   it('step 2 — validation#s14-update-check-failure: NewVersionDetected 非発行 → 更新通知 Toast は表示されない', async () => {
     // Then: event 非発行のため widget-update-toast は DOM に存在しない (I-U3 / screen-3 / S14 silent)。
-    expect(await $('[data-testid="widget-update-toast"]').isExisting()).toBe(false);
+    expect(await $('[data-testid="widget.widget-update-toast.root"]').isExisting()).toBe(false);
   });
 
   it('step 3 — validation#s14-update-check-failure: 失敗してもユーザの作業を妨げない（フィードは生存）', async () => {
@@ -88,9 +88,9 @@ describe('scenario:s14-update-check-failure', () => {
     expect(res.latest_release).not.toBeNull();
     expect(res.latest_release?.version).toBe('9.9.9');
 
-    const toast = await $('[data-testid="widget-update-toast"]');
+    const toast = await $('[data-testid="widget.widget-update-toast.root"]');
     await toast.waitForExist({ timeout: 10000 });
-    expect(await $('[data-testid="screen-3-latest-version"]').getText()).toBe('9.9.9');
-    expect(await $('[data-testid="screen-3-current-version"]').getText()).toContain('0.2.2');
+    expect(await $('[data-testid="widget.widget-update-toast.latest-version"]').getText()).toBe('9.9.9');
+    expect(await $('[data-testid="widget.widget-update-toast.current-version"]').getText()).toContain('0.2.2');
   });
 });

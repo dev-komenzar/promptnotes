@@ -141,7 +141,7 @@ describe('scenario:s22-storage-dir-change-watcher-restart', () => {
     );
 
     // Then: storage_dir はまだ変更していないので再起動モーダルは出ない
-    expect(await $('[data-testid="restart-prompt"]').isExisting()).toBe(false);
+    expect(await $('[data-testid="page.page-main.restart-prompt"]').isExisting()).toBe(false);
   });
 
   it('step 2 — validation#s22-storage-dir-change-watcher-restart: storage_dir 変更で永続化 + 再起動モーダル + フィードは旧 dir のまま (S11 回帰)', async () => {
@@ -157,7 +157,7 @@ describe('scenario:s22-storage-dir-change-watcher-restart', () => {
     });
 
     // Then: 再起動を促すモーダルが表示される (I-S4 / StorageDirChanged subscriber)
-    await $('[data-testid="restart-prompt"]').waitForExist({
+    await $('[data-testid="page.page-main.restart-prompt"]').waitForExist({
       timeout: 5_000,
       timeoutMsg: 'restart prompt did not appear after storage_dir change',
     });
