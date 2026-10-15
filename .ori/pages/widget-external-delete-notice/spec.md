@@ -144,6 +144,12 @@ store を `start()` した直後、payload を 1 件も emit せずに observe �
 
 stub subscribeFn が reject しても `store.start()` は throw せず、`store.payload === null` のまま（I-DEL2）。
 
+### tp-del-no-implicit-close: Esc / cancel では閉じない {#tp-del-no-implicit-close}
+
+通知表示中の `<dialog>` に `cancel` event（cancelable）を dispatch すると `defaultPrevented` が `true` になり、
+`Escape` キー押下でも dialog は `open` のまま。`onSaveAsNew` / `onDiscard` はいずれも呼ばれない（I-DEL6）。
+component test（vitest **client** / browser）で検証する。
+
 ## 実装ノート {#impl-notes}
 
 ### testid 契約 {#impl-testid}
@@ -158,7 +164,9 @@ stub subscribeFn が reject しても `store.start()` は throw せず、`store.
   - `deps.currentNoteId?`: `() => NoteId | null`。現在 EDITING 状態の note_id
   - `deps.onSaveAsNew?` / `deps.onDiscard?`: 解決時の callback（page-main が実処理を注入）
 - component (`*.svelte`) は store の薄い presentation layer
-- vitest **server (node)** で全 deps を stub 注入して I-DEL1〜I-DEL5 を検証。I-DEL6 と E2E 経路は scenario s20 が検証
+- vitest **server (node)** で全 deps を stub 注入して I-DEL1〜I-DEL5 を検証（`tests/store.test.ts`）
+- I-DEL6 は component の責務（`<dialog>` の `cancel` を `preventDefault`）のため、vitest **client (browser)** の
+  component test（`tests/WidgetExternalDeleteNotice.svelte.test.ts`）で検証。E2E 経路は scenario s20 が検証
 
 ### ディレクトリ構成 {#impl-layout-dir}
 
@@ -167,7 +175,8 @@ apps/promptnotes/src/ui-widget/external-delete-notice/
 ├── WidgetExternalDeleteNotice.svelte    # presentation (modal dialog)
 ├── store.svelte.ts                      # createExternalDeleteNoticeStore factory
 └── tests/
-    └── store.test.ts                    # event-driven mount / resolution の unit test (server)
+    ├── store.test.ts                    # event-driven mount / resolution の unit test (server)
+    └── WidgetExternalDeleteNotice.svelte.test.ts  # I-DEL6 (暗黙クローズなし) の component test (client)
 ```
 
 ### page-main からの mount {#impl-mount-from-page-main}
