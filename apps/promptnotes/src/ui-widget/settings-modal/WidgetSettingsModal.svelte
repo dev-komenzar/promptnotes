@@ -94,7 +94,7 @@
 		if (error.kind !== 'invalid_path') return null;
 		return error.reason === 'not_absolute'
 			? '絶対パスを指定してください'
-			: '設定ディレクトリ配下のパスは指定できません';
+			: '設定ファイルを含むフォルダは指定できません';
 	}
 
 	function persistErrorMessage(error: UpdateSettingsError): string | null {

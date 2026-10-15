@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-14
+  last_derived: 2026-10-15
   derives_from:
     - domain/ui-fields/screen-4.md#screen-4
     - domain/ui-fields/page-groups.md#widget-external-change-conflict
@@ -37,7 +37,7 @@ screen-4 を実体化する **event-driven modal overlay widget**。
 | field | 型 | 用途 |
 |--|--|--|
 | `note_id` | `NoteId` | 競合判定のキー。現在 EDITING 状態の note_id と比較 |
-| `disk_body_hash` | `BodyHash` | `Note::is_stale(&disk_body_hash)` で競合判定。`widget.widget-external-change-conflict.hash-external` にデバッグ表示 |
+| `disk_body_hash` | `BodyHash` | `Note::is_stale(&disk_body_hash)` で競合判定 |
 | `note` | `Note` | ディスクから parse された完全な Note。ApplyExternal 選択時に Editor へ差し替え |
 | `file_path` | `PathBuf` | ファイル名抽出用（`widget.widget-external-change-conflict.note-title` に `YYYYMMDDhhmmss.md` 表示） |
 | `detected_at` | `Timestamp` | 検知時刻（UI 表示には使わない） |

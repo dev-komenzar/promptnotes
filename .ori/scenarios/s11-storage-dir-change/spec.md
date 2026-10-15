@@ -14,7 +14,7 @@ coherence:
     - path: domain/domain-events.md#storage-dir-changed
       hash: 86acb64f8149
     - path: domain/ui-fields/screen-2.md#screen-2
-      hash: 7429e5750d23
+      hash: 0a4971bac9fa
 ---
 
 # s11-storage-dir-change — Scenario Specification

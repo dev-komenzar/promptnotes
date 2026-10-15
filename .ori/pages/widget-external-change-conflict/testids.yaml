@@ -10,10 +10,6 @@ derived:
     field: screen-4-cancel
   - testid: widget.widget-external-change-conflict.confirm
     field: screen-4-confirm
-  - testid: widget.widget-external-change-conflict.hash-external
-    field: screen-4-hash-external
-  - testid: widget.widget-external-change-conflict.hash-local
-    field: screen-4-hash-local
   - testid: widget.widget-external-change-conflict.note-title
     field: screen-4-note-title
   - testid: widget.widget-external-change-conflict.resolution-choice

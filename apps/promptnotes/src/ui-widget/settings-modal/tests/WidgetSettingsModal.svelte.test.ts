@@ -77,7 +77,7 @@ describe('widget:widget-settings-modal spec#tp-sm-storage-dir-validation', () =>
 		await expect.element(page.getByText('絶対パスを指定してください')).toBeVisible();
 	});
 
-	it('invalid_path / contains_config_path — 設定ディレクトリ配下エラーを表示する', async () => {
+	it('invalid_path / contains_config_path — 設定ファイルを含むフォルダのエラーを表示する', async () => {
 		await saveRejectedWith({
 			kind: 'invalid_path',
 			path: '/cfg/x',
@@ -85,7 +85,7 @@ describe('widget:widget-settings-modal spec#tp-sm-storage-dir-validation', () =>
 		});
 
 		await expect
-			.element(page.getByText('設定ディレクトリ配下のパスは指定できません'))
+			.element(page.getByText('設定ファイルを含むフォルダは指定できません'))
 			.toBeVisible();
 	});
 });

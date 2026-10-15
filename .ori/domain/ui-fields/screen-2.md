@@ -47,6 +47,11 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 - `StorageDir::try_from_path` が `InvalidPath` を返した場合、
   `screen-2-storage-dir` の直下に inline error 表示
 - メッセージ: 「絶対パスを指定してください」
+- `update-settings` が `InvalidPath { reason: ContainsConfigPath }`（I-S2:
+  `config_path.starts_with(storage_dir)`、判定は update-settings slice の application 層）を
+  返した場合も、
+  同じく `screen-2-storage-dir` の直下に inline error 表示
+- メッセージ: 「設定ファイルを含むフォルダは指定できません」
 
 ### storage_dir 変更後の挙動 {#cross-storage-dir-restart}
 

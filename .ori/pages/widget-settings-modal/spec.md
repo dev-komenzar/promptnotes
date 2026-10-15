@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-14
+  last_derived: 2026-10-15
   derives_from:
     - domain/ui-fields/screen-2.md#screen-2
     - domain/ui-fields/page-groups.md#widget-settings-modal
@@ -12,7 +12,7 @@ coherence:
     - domain/workflows/get-app-version.md#get-app-version
     - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
   hash:
-    domain/ui-fields/screen-2.md#.*: 7429e5750d23
+    domain/ui-fields/screen-2.md#.*: 0a4971bac9fa
     domain/ui-fields/page-groups.md#.*: f5d0be02c55e
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: c3a5c313f0f5
@@ -200,6 +200,9 @@ or `updateSettings({})` で呼ばれて backend が no-op。modal は close さ�
 `updateSettings` reject で `kind === 'invalid_path'` の場合、
 「絶対パスを指定してください」メッセージを `screen-2-storage-dir` の下に表示する
 （screen-2.md#cross-storage-dir-validation）。
+
+`kind === 'invalid_path'` かつ `reason === 'contains_config_path'`（I-S2）の場合は
+「設定ファイルを含むフォルダは指定できません」を同位置に表示する。
 
 ### tp-sm-no-raw-invoke: 生 invoke 禁止 {#tp-sm-no-raw-invoke}
 
