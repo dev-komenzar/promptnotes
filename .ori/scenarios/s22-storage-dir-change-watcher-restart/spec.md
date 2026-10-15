@@ -20,7 +20,7 @@ coherence:
     - path: domain/domain-events.md#note-file-created-externally
       hash: 86acb64f8149
     - path: domain/ui-fields/screen-2.md#screen-2
-      hash: 7429e5750d23
+      hash: 451638dab2ec
 ---
 
 # s22-storage-dir-change-watcher-restart — Scenario Specification
