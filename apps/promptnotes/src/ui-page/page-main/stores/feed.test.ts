@@ -188,7 +188,6 @@ describe('page:page-main feed store', () => {
 		});
 
 		expect(store.notes.map((n) => n.id)).toStrictEqual(['note-2', 'note-1']);
-		expect(store.focusedNoteId).toBeNull();
 	});
 
 	it('spec#I-PM11 — visibleNotes は filter / sort を即時反映する (query)', () => {
@@ -324,30 +323,13 @@ describe('page:page-main feed store', () => {
 		expect(store.notes[0].body).toBe('edited');
 	});
 
-	it('applyDelete は note を削除し focus を外す', () => {
+	it('applyDelete は note を削除する', () => {
 		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
 		store.prependNote(makeNote('a'));
 		store.prependNote(makeNote('b'));
-		store.setFocus('b');
 
 		store.applyDelete('b');
 
 		expect(store.notes.map((n) => n.id)).toStrictEqual(['a']);
-		expect(store.focusedNoteId).toBeNull();
-	});
-
-	it('setFocus(null) は focus を解除する', () => {
-		const store = createFeedStore({ updateFilter: noopFilter(), changeSort: noopSort() });
-
-		store.prependNote({
-			id: 'note-1',
-			body: 'x',
-			tags: [],
-			created_at: '2026-06-26T00:00:00Z',
-			updated_at: '2026-06-26T00:00:00Z'
-		});
-		store.setFocus(null);
-
-		expect(store.focusedNoteId).toBeNull();
 	});
 });
