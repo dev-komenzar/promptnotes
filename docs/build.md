@@ -11,10 +11,10 @@
 |---|---|
 | 開発 | Linux (NixOS) メイン機で完結。日常の編集・テスト・build はここで行う |
 | Linux release build | Linux メイン機 (NixOS) で native build |
-| macOS release build | mac サブ機で build |
+| macOS release build | GitHub Actions の macOS runner (aarch64 / x86_64) で build。mac サブ機のローカルビルドは fallback |
 | Windows | **初期 MVP から除外**。マシンを保有していないため |
 | Linux 配布形式 | **AppImage, .deb, .rpm, Nix flake** の 4 形式 (決定: `ori-wuxk`)。Flatpak/Snap はコミュニティ要望があれば追加検討 |
-| CI | Linux は GitHub Actions (ubuntu-22.04) がプライマリ。macOS はローカルビルド。有料 runner は極力避ける |
+| CI | GitHub Actions (`.github/workflows/release.yml`) がプライマリ。Linux は ubuntu-22.04、macOS は macos-latest (public repo の標準 runner は無料)。有料 runner は極力避ける |
 | Apple Developer Program | **参加しない**。Developer ID / notarization なし。配布時に Gatekeeper warning が出る前提で運用 |
 
 **判断軸**:
@@ -85,7 +85,7 @@ bun run tauri build --bundles app,dmg
 devShell を使わずに素の `cargo test` / `cargo build` / `bun run tauri build` を実行すると、system 側に dev package が無い場合 build script が失敗する。
 代表例は `tao → dbus → libdbus-sys` の build script が pkg-config で `dbus-1` を見つけられず落ちるケース (Tauri 全体の依存であり updater 固有ではない)。
 
-devShell を使えない環境では、Tauri v2 prerequisites に加えて以下を system に入れる (CI `.github/workflows/build-appimage.yml` と同じ構成):
+devShell を使えない環境では、Tauri v2 prerequisites に加えて以下を system に入れる (CI `.github/workflows/release.yml` と同じ構成):
 
 ```bash
 # Ubuntu / Debian
@@ -259,7 +259,7 @@ bun run tauri build --bundles app,dmg
 
 ### 4.1 Linux build (NixOS メイン機)
 
-> Linux build entrypoint: [.github/workflows/build-appimage.yml](../.github/workflows/build-appimage.yml)
+> Release build entrypoint (Linux / macOS): [.github/workflows/release.yml](../.github/workflows/release.yml)
 
 ```bash
 # updater 署名用の秘密鍵を復号
@@ -300,7 +300,9 @@ Nix store のパスに解決され、NixOS / nix-darwin 環境で動作する。
 
 将来的には nixpkgs への提出や [crane-tauri](https://github.com/JPHutchins/crane-tauri) 導入による差分ビルド効率化を検討する。
 
-### 4.2 macOS build (mac サブ機)
+### 4.2 macOS build (mac サブ機、fallback)
+
+> 通常の release では macOS も CI がビルドする ([4.3](#43-release-の一連の流れ))。この手順は CI が使えない時の fallback。
 
 > 環境変数の取得手順の詳細は [3.3 build 時に使う](#build-時に使う) の「macOS (サブ機)」節を参照。以下は要点のみ。
 
@@ -336,7 +338,7 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz
 apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz.sig
 ```
 
-`latest.json` は `tauri build` では生成されない。macOS 分は [4.4](#44-latestjson-merge-protocol) の手順で CI が作った `latest.json` に追記する。
+`latest.json` は `tauri build` では生成されない。ローカルビルドした macOS 分は [4.4](#44-latestjson-merge-protocol) の手順で CI が作った `latest.json` に追記する。
 
 > **`failed to decode base64 key: Invalid symbol 10`**: 鍵ファイル末尾に改行 (LF = 10) が残っている。復号時に `| tr -d '\n'` を通して作り直すこと。
 
@@ -349,11 +351,15 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz.si
    - `flake.nix` (`packages.default` の `version`)
    - `.ori/scenarios/s14-update-check-failure/tests/*.spec.ts` (`current_version` の期待値)
 2. `git tag vX.Y.Z` & push
-3. Linux CI をトリガー: tag を push すると `.github/workflows/build-appimage.yml` が起動し、[tauri-action](https://github.com/tauri-apps/tauri-action) が AppImage / .deb / .rpm とそれぞれの `.sig`、latest.json (Linux 分) を draft Release に自動アップロード。既存タグを再ビルドする場合は `gh workflow run build-appimage.yml --ref main -f tag=vX.Y.Z`
-4. macOS ローカルビルド: mac サブ機で tag を checkout し [4.2](#42-macos-build-mac-サブ機) の手順で `bun run tauri build --bundles app,dmg` を実行。.dmg / .app.tar.gz / .app.tar.gz.sig を同一の draft Release にアップロード
-5. latest.json に macOS 分を追記: [4.4](#44-latestjson-merge-protocol) の手順に従い、CI が作った `latest.json` に `darwin-aarch64` を追加して上書きアップロード
-6. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
-7. publish
+3. CI をトリガー: tag を push すると `.github/workflows/release.yml` が起動する。既存タグを再ビルドする場合は `gh workflow run release.yml --ref main -f tag=vX.Y.Z`
+   - `create-release` job が draft Release を 1 つ作成 (同じ tag の Release があれば再利用)
+   - `build` job が matrix (Linux x86_64 / macOS aarch64 / macOS x86_64) で並列に走り、[tauri-action](https://github.com/tauri-apps/tauri-action) が各 bundle と `.sig` を upload し、`latest.json` に自 platform をマージする
+     - Linux: AppImage / .deb / .rpm
+     - macOS: .dmg / .app.tar.gz (`--bundles app,dmg`)
+   - `verify-updater-json` job が `latest.json` に `linux-x86_64` (`-appimage` / `-deb` / `-rpm`) / `darwin-aarch64` / `darwin-x86_64` が揃っているか検査する
+4. `verify-updater-json` が失敗した場合: `latest.json` のマージは各 job の read → merge → upload で行われるため、job の完了が重なると platform が欠けることがある。欠けた platform の `build` job を re-run すると再マージされる (re-run 後に `verify-updater-json` も re-run する)
+5. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
+6. publish
 
 > **Nix flake について**: flake は GitHub リポジトリ自体が配布経路のため、成果物のアップロードは不要。
 > `git tag` を打てばユーザは `nix run github:dev-komenzar/promptnotes/<tag>` で特定バージョンを参照できる。
@@ -366,13 +372,13 @@ AppImage は root 不要でファイル置換。.deb/.rpm は `dpkg -i` / `rpm -
 
 #### GitHub Releases へのアップロード手順
 
-##### Linux 成果物のアップロード
+##### CI 成果物のアップロード
 
-CI (tauri-action) が draft Release の作成と、AppImage / .deb / .rpm・各 `.sig`・`latest.json` のアップロードまで行う。手動アップロードは不要。
+CI (tauri-action) が Linux (AppImage / .deb / .rpm) と macOS (.dmg / .app.tar.gz) の各成果物・各 `.sig`・`latest.json` のアップロードまで行う。手動アップロードは不要。
 
 `latest.json` のダウンロード URL は `https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>` 形式になる (tauri-action の仕様)。updater は `Accept: application/octet-stream` を付けて取得するため、Release 公開後はこの URL で本体を取得できる (draft 中は 404)。
 
-##### macOS 成果物のアップロード
+##### macOS 成果物のアップロード (ローカルビルド fallback 時のみ)
 
 ```bash
 cd apps/promptnotes
@@ -400,7 +406,7 @@ macOS 向けには 2 種類の成果物が必要:
 
 `createUpdaterArtifacts: true` を設定している場合、Tauri build は各 bundle の updater 用署名 (`.sig`) を生成する。**`latest.json` は `tauri build` では生成されず**、[tauri-action](https://github.com/tauri-apps/tauri-action) が `.sig` から組み立てて Release にアップロードする。in-app updater は `releases/latest/download/latest.json` を取得して更新を検出する。
 
-macOS ローカルビルドは tauri-action を経由しないため、macOS 分は [4.4](#44-latestjson-merge-protocol) の手順で CI の `latest.json` に追記する。
+CI では Linux / macOS の各 job の tauri-action が `latest.json` に自 platform をマージするため、手作業は不要。macOS をローカルビルドした場合のみ tauri-action を経由しないため、[4.4](#44-latestjson-merge-protocol) の手順で CI の `latest.json` に追記する。
 
 ##### リリースの公開
 
@@ -459,6 +465,8 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 
 ### 4.4 latest.json merge protocol
 
+> **macOS をローカルビルドした時 (fallback) のみ必要**。通常の CI release では tauri-action がマージするため不要。
+
 CI (tauri-action) は Linux 分の `latest.json` を draft Release に置く。macOS ローカルビルド (`tauri build`) は `latest.json` を生成しないため、CI の `latest.json` に `darwin-aarch64` エントリを追記して上書きする。
 
 エントリの形式は `{"signature": "<.sig ファイルの中身>", "url": "<ダウンロード URL>"}`。signature はパスや URL ではなく **ファイルの中身** を入れる。
@@ -508,18 +516,19 @@ gh release upload "v${VERSION}" --clobber "$W/up/latest.json"
 
 ### 5.2 CI 移行の判断基準
 
-現状: Linux のリリースビルドは GitHub Actions (ubuntu-22.04) をプライマリパスとして使用している。macOS はローカルビルドを継続。
+現状: Linux / macOS とも GitHub Actions (`.github/workflows/release.yml`) をプライマリパスとして使用している (macOS 移行: `ori-7eit`)。
 
-以下のいずれかに該当したら macOS も CI へ移行する:
+macOS を CI へ移行した理由:
 
-- mac サブ機の電源を入れる頻度が月に数回以下になり、release のたびに起動が面倒
-- 共同開発者が増え、複数マシンで同時 release 検証が必要になった
-- Windows 対応を再開する
+- `tauri build` は `latest.json` を生成しないため、ローカルビルドでは 4.4 の手作業マージが毎回必要だった
+- public repo の macOS 標準 runner は無料
+- tauri-action の matrix に macOS を追加すれば `latest.json` は自動マージされる
 
-その場合は:
+運用:
 
-- macOS build は GitHub Actions の mac runner で tauri-action を使う (public repo の標準 runner は無料。tauri-action が既存の `latest.json` に platforms をマージするため 4.4 の手作業も不要になる)
-- private secret は GitHub Actions Secrets に移し、nix-sops repo は個人用として分離維持
+- updater 署名鍵は GitHub Actions Secrets (`TAURI_SIGNING_PRIVATE_KEY` / `_PASSWORD`) を Linux / macOS の job で共用する。nix-sops の鍵は個人用 / fallback ビルド用として維持
+- macOS x86_64 は Apple Silicon runner 上で `--target x86_64-apple-darwin` で cross build する (Intel runner は廃止方向のため)
+- Windows 対応を再開する場合も同じ matrix に追加する
 
 ### 5.3 配布戦略
 
