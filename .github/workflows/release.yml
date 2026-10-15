@@ -1,0 +1,168 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g. v0.2.1)'
+        required: false
+
+# Linux + macOS release build. Must have TAURI_SIGNING_PRIVATE_KEY and
+# _PASSWORD repository secrets configured (see ori-l2rv.1). Without them
+# the build fails because createUpdaterArtifacts requires the signing key.
+
+jobs:
+  # draft Release を 1 つだけ作り、matrix の各 job はその releaseId に upload する。
+  # 各 job に作らせると同時実行で draft が重複しうるため先に作っておく。
+  create-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.release.outputs.id }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Create (or reuse) draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(jq -r .version apps/promptnotes/src-tauri/tauri.conf.json)
+          TAG="v${VERSION}"
+          ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+            --jq ".[] | select(.tag_name == \"${TAG}\") | .id" | head -n1)
+          if [ -z "$ID" ]; then
+            ID=$(gh api -X POST "repos/${GITHUB_REPOSITORY}/releases" \
+              -f tag_name="$TAG" \
+              -f name="PromptNotes ${TAG}" \
+              -F draft=true \
+              -F generate_release_notes=true \
+              --jq .id)
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "id=${ID}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: create-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            cli: cargo-tauri-x86_64-unknown-linux-gnu.tgz
+            args: --bundles deb,appimage,rpm
+          # macOS は updater artifact (.app.tar.gz/.sig) のため app を必ず含める
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            cli: cargo-tauri-aarch64-apple-darwin.zip
+            args: --target aarch64-apple-darwin --bundles app,dmg
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            cli: cargo-tauri-aarch64-apple-darwin.zip
+            args: --target x86_64-apple-darwin --bundles app,dmg
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Tauri CLI
+        run: |
+          URL=https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.11.3/${{ matrix.cli }}
+          mkdir -p ~/.cargo/bin
+          case "${{ matrix.cli }}" in
+            *.tgz) curl -fsSL "$URL" | tar xzf - -C ~/.cargo/bin ;;
+            *.zip) curl -fsSL -o /tmp/cargo-tauri.zip "$URL" && unzip -o /tmp/cargo-tauri.zip -d ~/.cargo/bin ;;
+          esac
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/promptnotes/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            libdbus-1-dev \
+            pkg-config
+
+      - name: Install frontend dependencies
+        working-directory: apps/promptnotes
+        run: bun install --frozen-lockfile
+
+      # tauri-action が build → bundle / .sig / latest.json の upload までを行う。
+      # tauri build 単体は latest.json を生成しない。既存 Release に latest.json が
+      # あれば platforms をマージする。
+      - name: Build and upload bundles
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/promptnotes
+          tauriScript: bun run tauri
+          args: ${{ matrix.args }}
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+
+  # latest.json のマージは各 job の read → merge → upload で行われるため、
+  # 完了が重なると platform が欠けうる。欠けていたら fail させて該当 job を re-run する。
+  verify-updater-json:
+    needs: [create-release, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check latest.json platforms
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        run: |
+          ASSET_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets" --paginate \
+            --jq '.[] | select(.name == "latest.json") | .id')
+          if [ -z "$ASSET_ID" ]; then
+            echo "::error::latest.json not found in release ${RELEASE_ID}"
+            exit 1
+          fi
+          gh api -H "Accept: application/octet-stream" \
+            "repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" > latest.json
+          jq '.platforms | keys' latest.json
+          MISSING=0
+          for key in linux-x86_64 linux-x86_64-appimage linux-x86_64-deb linux-x86_64-rpm darwin-aarch64 darwin-x86_64; do
+            if ! jq -e --arg k "$key" '.platforms[$k]' latest.json > /dev/null; then
+              echo "::error::latest.json is missing platform ${key}"
+              MISSING=1
+            fi
+          done
+          exit $MISSING
