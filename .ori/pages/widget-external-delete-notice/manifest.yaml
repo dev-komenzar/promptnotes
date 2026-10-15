@@ -1,0 +1,17 @@
+page_id: "widget-external-delete-notice"
+type: widget
+parent_page: page-main
+derives_from:
+  - domain/ui-fields/screen-5.md#screen-5
+  - domain/ui-fields/page-groups.md#widget-external-delete-notice
+  - domain/workflows/detect-external-changes.md#detect-external-changes
+relations:
+  - kind: subscribes
+    event: domain/domain-events.md#note-file-deleted-externally
+  - kind: mounted-by
+    page: page-main
+implementation:
+  language: typescript
+  primary_bc: note-feed
+  generates:
+    - apps/promptnotes/src/ui-widget/external-delete-notice/

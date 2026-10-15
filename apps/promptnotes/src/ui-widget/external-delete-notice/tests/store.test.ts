@@ -51,7 +51,7 @@ function makeStore(deps: Partial<ExternalDeleteNoticeStoreDeps> = {}) {
 }
 
 describe('widget:widget-external-delete-notice store', () => {
-	it('is hidden before any event is received', async () => {
+	it('spec.md#tp-del-no-mount-without-event — is hidden before any event is received', async () => {
 		const cap = makeSubscribeCapture();
 		const store = makeStore({ subscribeFn: cap.subscribeFn });
 
@@ -61,7 +61,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('hidden');
 	});
 
-	it('shows the notice for the deleted EDITING note', async () => {
+	it('spec.md#tp-del-event-mounts-notice — shows the notice for the deleted EDITING note', async () => {
 		const cap = makeSubscribeCapture();
 		const store = makeStore({ subscribeFn: cap.subscribeFn });
 
@@ -73,7 +73,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('notice');
 	});
 
-	it('ignores events for a note that is not being edited', async () => {
+	it('spec.md#tp-del-not-editing-ignored — ignores events for a note that is not being edited', async () => {
 		const cap = makeSubscribeCapture();
 		const store = makeStore({ subscribeFn: cap.subscribeFn, currentNoteId: () => 'other' });
 
@@ -84,7 +84,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('hidden');
 	});
 
-	it('ignores duplicate events while the notice is open', async () => {
+	it('spec.md#tp-del-duplicate-ignored — ignores duplicate events while the notice is open', async () => {
 		const cap = makeSubscribeCapture();
 		const store = makeStore({ subscribeFn: cap.subscribeFn });
 
@@ -96,7 +96,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('notice');
 	});
 
-	it('saveAsNew invokes onSaveAsNew once and hides', async () => {
+	it('spec.md#tp-del-save-as-new — saveAsNew invokes onSaveAsNew once and hides', async () => {
 		const cap = makeSubscribeCapture();
 		const onSaveAsNew = vi.fn();
 		const store = makeStore({ subscribeFn: cap.subscribeFn, onSaveAsNew });
@@ -112,7 +112,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('hidden');
 	});
 
-	it('discard invokes onDiscard once and hides', async () => {
+	it('spec.md#tp-del-discard — discard invokes onDiscard once and hides', async () => {
 		const cap = makeSubscribeCapture();
 		const onDiscard = vi.fn();
 		const store = makeStore({ subscribeFn: cap.subscribeFn, onDiscard });
@@ -128,7 +128,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(store.state).toBe('hidden');
 	});
 
-	it('stop unsubscribes the listener exactly once', async () => {
+	it('spec.md#tp-del-stop-unsubscribes — stop unsubscribes the listener exactly once', async () => {
 		const cap = makeSubscribeCapture();
 		const store = makeStore({ subscribeFn: cap.subscribeFn });
 
@@ -138,7 +138,7 @@ describe('widget:widget-external-delete-notice store', () => {
 		expect(cap.unsubscribe).toHaveBeenCalledTimes(1);
 	});
 
-	it('is silent when subscribeFn rejects', async () => {
+	it('spec.md#tp-del-subscribe-failure-silent — is silent when subscribeFn rejects', async () => {
 		const failingSubscribe: NonNullable<
 			ExternalDeleteNoticeStoreDeps['subscribeFn']
 		> = async () => {

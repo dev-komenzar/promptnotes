@@ -46,7 +46,7 @@
 {#if store.payload}
 	<dialog
 		bind:this={dialogEl}
-		data-testid="widget-external-delete-notice"
+		data-testid="widget.widget-external-delete-notice.root"
 		aria-labelledby="widget-delete-notice-title"
 		class="rounded-lg border border-neutral-200 bg-white p-0 text-neutral-900 shadow-xl backdrop:bg-transparent dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
 		oncancel={handleDialogCancel}
@@ -55,19 +55,22 @@
 			<h1
 				id="widget-delete-notice-title"
 				class="text-base font-semibold"
-				data-testid="delete-notice-title"
+				data-testid="widget.widget-external-delete-notice.note-title"
 			>
 				{store.payload.note_title}
 			</h1>
 
-			<p class="text-sm text-neutral-600 dark:text-neutral-400" data-testid="delete-notice-message">
+			<p
+				class="text-sm text-neutral-600 dark:text-neutral-400"
+				data-testid="widget.widget-external-delete-notice.message"
+			>
 				編集中のノート「<span class="font-mono">{store.payload.note_title}</span
 				>」が外部で削除されました。
 				現在の内容で新規ファイルとして保存するか、破棄するかを選んでください。
 			</p>
 
 			<textarea
-				data-testid="delete-notice-body-local"
+				data-testid="widget.widget-external-delete-notice.body-local"
 				readonly
 				disabled
 				value={store.payload.note_body}
@@ -78,7 +81,7 @@
 			<footer class="flex justify-end gap-2 pt-2">
 				<button
 					type="button"
-					data-testid="delete-notice-discard"
+					data-testid="widget.widget-external-delete-notice.discard"
 					class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 					onclick={handleDiscard}
 				>
@@ -86,7 +89,7 @@
 				</button>
 				<button
 					type="button"
-					data-testid="delete-notice-save-as-new"
+					data-testid="widget.widget-external-delete-notice.save-as-new"
 					class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
 					onclick={handleSaveAsNew}
 				>

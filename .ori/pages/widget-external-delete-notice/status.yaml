@@ -1,0 +1,15 @@
+page_id: widget-external-delete-notice
+derived_at: 2026-10-15T00:00:00.000Z
+beads:
+  epic: ori-agkg.3
+  current_phase: null
+  completion:
+    - derive
+phases:
+  derive:
+    status: closed
+    issue: ori-agkg.3
+    completed_at: 2026-10-15
+    notes: screen-5 (外部削除通知) から derive。実装は s20 で先行済みのため testid を契約値へ移行
+dirty: []
+proposals: {}

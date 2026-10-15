@@ -1,0 +1,18 @@
+# page testid 契約 (SSoT: ddd-vsa-hex/pattern.md §UI selector / testid 規約)
+# derived: @ori-generated — testids.js sync が ui-fields から再生成する。手で編集しない
+# extra:   ori-derive / ori-generate が testids.js add-extra で追記する (変更・削除は人間のみ)
+derived:
+  - testid: widget.widget-external-delete-notice.body-local
+    field: screen-5-body-local
+  - testid: widget.widget-external-delete-notice.discard
+    field: screen-5-discard
+  - testid: widget.widget-external-delete-notice.message
+    field: screen-5-message
+  - testid: widget.widget-external-delete-notice.note-title
+    field: screen-5-note-title
+  - testid: widget.widget-external-delete-notice.save-as-new
+    field: screen-5-save-as-new
+extra:
+  - testid: widget.widget-external-delete-notice.root
+    purpose: 削除通知ダイアログの dialog root
+    source: derive
