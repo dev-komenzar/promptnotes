@@ -20,7 +20,11 @@ coherence:
     - path: domain/ui-fields/screen-1.md#screen-1
       hash: 18a41b79b1f8
     - path: domain/ui-fields/page-groups.md#widget-external-change-conflict
-      hash: c9acbcb8a72d
+      hash: f5d0be02c55e
+    - path: domain/ui-fields/page-groups.md#widget-external-delete-notice
+      hash: f5d0be02c55e
+    - path: domain/ui-fields/screen-5.md#screen-5
+      hash: 8ae9b5c9d594
     - path: domain/glossary.md#glossary-timestamp
       hash: ac3ff65cca45
 ---
@@ -150,18 +154,18 @@ OS ファイルウォッチャー → 500ms debounce → ファイル名（basen
 - **TP1（核・本 scenario の主目的）— EDITING 中の外部削除で削除通知が表示される**:
   Block A を EDITING にし `"hello local"` に編集（AutoSave 済み）した後、テストプロセスが
   `storage_dir/20260620120000.md` を外部削除する。`list_notes` の手動 invoke / 再起動を一切行わず、
-  `[data-testid="widget-external-delete-notice"]` が表示されるのを待つ。Block A は
+  `[data-testid="widget.widget-external-delete-notice.root"]` が表示されるのを待つ。Block A は
   `data-block-state="EDITING"` のまま（黙って消えない）。これが watcher 検知 →
   `NoteFileDeletedExternally` → frontend の EDITING 検出 → 削除通知、の縦断 pipeline が
   動いていることの間接観測になる
 - **TP2（核）— 通知が現在の編集中 body を提示する**:
-  表示された通知の `delete-notice-title` が `20260620120000.md`、
-  `delete-notice-body-local` の value が `"hello local"` であることを assert する
+  表示された通知の `widget.widget-external-delete-notice.note-title` が `20260620120000.md`、
+  `widget.widget-external-delete-notice.body-local` の value が `"hello local"` であることを assert する
 - **TP3（解決・Discard）— 破棄でフィードから除去される**:
-  再度 EDITING に入れて外部削除し通知を表示させ、`delete-notice-discard` をクリックすると、
+  再度 EDITING に入れて外部削除し通知を表示させ、`widget.widget-external-delete-notice.discard` をクリックすると、
   通知が非表示になり、フィードから Block A が消える（`remove_note` / I-F8）ことを assert する
 - **TP4（解決・Save as new file）— 再作成で IDLE へ**:
-  再度 EDITING に入れて外部削除し通知を表示させ、`delete-notice-save-as-new` をクリックすると、
+  再度 EDITING に入れて外部削除し通知を表示させ、`widget.widget-external-delete-notice.save-as-new` をクリックすると、
   通知が非表示になり、`storage_dir/20260620120000.md` が再作成され（FS 観測）、
   フィードに Block A が残り、Block A が IDLE に遷移することを assert する
 - **TP5（非編集時は通知なし）— IDLE の外部削除では通知が出ない**:
@@ -193,9 +197,9 @@ OS ファイルウォッチャー → 500ms debounce → ファイル名（basen
 - **UI 観測点**:
   - Block ステート: `Block.svelte` が `data-block-state={blockState}`（`IDLE|FOCUSED|EDITING`）
   - 編集中 body: `[data-block-id="<id>"] .cm-content`（CodeMirror）
-  - 削除通知: `[data-testid="widget-external-delete-notice"]`（`<dialog>`、`showModal()`）。
-    body 表示は `delete-notice-body-local`、note title は `delete-notice-title`、
-    解決ボタンは `delete-notice-save-as-new` / `delete-notice-discard`
+  - 削除通知: `[data-testid="widget.widget-external-delete-notice.root"]`（`<dialog>`、`showModal()`）。
+    body 表示は `widget.widget-external-delete-notice.body-local`、note title は `widget.widget-external-delete-notice.note-title`、
+    解決ボタンは `widget.widget-external-delete-notice.save-as-new` / `widget.widget-external-delete-notice.discard`
   - textarea の value は `getValue()` で読む
 - **event 観測の制約（重要）**: `start_file_watcher` は内部で `AppEventBus`（in-process）を生成し
   `DomainEvent::NoteFileDeletedExternally` を publish する。subscriber は
@@ -207,8 +211,8 @@ OS ファイルウォッチャー → 500ms debounce → ファイル名（basen
      削除通知 payload を widget へ届け、**ローカル body / Block を保持する**こと
      — 現状は無条件 `hydrateNotes(feed.notes)` で Block が黙って消える（= 本 scenario の RED）
   2. `widget-external-delete-notice` が EDITING 中の note の外部削除でのみ mount されること
-     （IDLE では S18 の Feed 自動更新のみ。page-groups の「conflict widget は deleted で
-     mount されない」とは別 widget）
+     （IDLE では S18 の Feed 自動更新のみ。page-groups の conflict widget とは別 widget。
+     `page-groups.md#widget-external-delete-notice`）
   3. **Discard** で `feedStore.applyDelete(noteId)` + `focusStore.clear()` を実行すること
   4. **Save as new file** で現在の編集中内容を `storage_dir/<A.id>.md` に再作成し、
      フィードを保持したまま Block を IDLE へ遷移させること
@@ -220,8 +224,8 @@ OS ファイルウォッチャー → 500ms debounce → ファイル名（basen
 - **AutoSave debounce と削除の順序**: validation Given は「AutoSave 未発火」だが、E2E では
   ローカル編集の pending write が外部削除を race するのを避けるため、タイプ後に AutoSave の
   永続化を待ってから外部削除を起こす（notes.md#known-issues に明記）
-- **ドメイン文書ギャップ**: `page-groups.md#widget-external-change-conflict` /
-  `screen-4.md#notes-lifecycle` は `NoteFileDeletedExternally` で conflict widget を mount しない
-  と規定するが、EDITING 中の外部削除に対する通知 UI（本 scenario の `widget-external-delete-notice`）
-  は Phase 11a で設計されていない。本 scenario は validation S20 を優先し、新 widget として
-  最小実装する。ui-fields への反映は `/ori-propose` 対象（notes.md#known-issues に明記）
+- **削除通知 widget の契約**: EDITING 中の外部削除に対する通知 UI は
+  `ui-fields/screen-5.md#screen-5` / `page-groups.md#widget-external-delete-notice` で
+  新 widget `widget-external-delete-notice` として定義済み（conflict widget = screen-4 とは別。
+  `screen-4.md#notes-lifecycle` は deleted を conflict widget の対象外とし、EDITING 中は screen-5 に委ねる）。
+  testid は `.ori/pages/widget-external-delete-notice/testids.yaml` の契約値を使う

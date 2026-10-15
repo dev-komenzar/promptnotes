@@ -13,7 +13,7 @@ coherence:
     - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
   hash:
     domain/ui-fields/screen-2.md#.*: 7429e5750d23
-    domain/ui-fields/page-groups.md#.*: c9acbcb8a72d
+    domain/ui-fields/page-groups.md#.*: f5d0be02c55e
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: c3a5c313f0f5
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78

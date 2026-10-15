@@ -98,7 +98,9 @@ enum ConflictResolution {
 - ライフサイクル: modal overlay（parent = page-main）
 - 解除条件: Apply / Cancel / Esc / ×ボタン
 - 同一 note_id の重複発火: 最初のダイアログが開いている間は後続 event を無視（debounce）
-- `NoteFileCreatedExternally` / `NoteFileDeletedExternally` はダイアログ不要（Feed が自動更新）
+- `NoteFileCreatedExternally` は本ダイアログ不要（Feed が自動更新）
+- `NoteFileDeletedExternally` も本ダイアログの対象外。EDITING 中なら [screen-5](screen-5.md) の削除通知を表示し、
+  EDITING 中でなければ Feed の自動更新のみ
 
 ### 型レベル検証 {#notes-type-verification}
 

@@ -9,8 +9,8 @@ ori:
 
 # Page Groups {#page-groups}
 
-PromptNotes の 4 screens を page 構成として整理する。
-spec の **シングルペイン制約** により page は 1 つのみ、残り 3 screens は
+PromptNotes の 5 screens を page 構成として整理する。
+spec の **シングルペイン制約** により page は 1 つのみ、残り 4 screens は
 **widget** として page に従属する形を採用。
 
 ## Chosen Strategy {#chosen-strategy}
@@ -24,7 +24,7 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 | A: workflow 単位 | 13 page (1 workflow = 1 page) | screen-1 が分裂し、シングルペイン制約と矛盾 |
 | B: ナビゲーション単位 | page-main (s1+s2), page-update (s3) | s2/s3 を page にすると「ペイン感」が出て spec の overlay 性を曖昧化 |
 | C: 役割単位 | 1 page (s1+s2+s3 全部) | overlay と root の区別が消える |
-| **D: root + widgets (採用)** | page-main = s1 / widget-settings-modal = s2 / widget-update-toast = s3 / widget-external-change-conflict = s4 | spec のシングルペイン + OS ネイティブ modal/toast の意図に合致 |
+| **D: root + widgets (採用)** | page-main = s1 / widget-settings-modal = s2 / widget-update-toast = s3 / widget-external-change-conflict = s4 / widget-external-delete-notice = s5 | spec のシングルペイン + OS ネイティブ modal/toast の意図に合致 |
 
 ### 採用理由 {#chosen-strategy-rationale}
 
@@ -49,6 +49,7 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
   - [widget-settings-modal](#widget-settings-modal) (on-demand)
   - [widget-update-toast](#widget-update-toast) (起動時自動 mount, 条件付)
   - [widget-external-change-conflict](#widget-external-change-conflict) (event 駆動, 条件付)
+  - [widget-external-delete-notice](#widget-external-delete-notice) (event 駆動, 条件付)
 
 ### widget-settings-modal {#widget-settings-modal}
 
@@ -80,7 +81,19 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 - **unmount trigger**: Apply / Cancel / Esc / ×ボタン
 - **依存する page**: page-main (modal overlay)
 - **failure mode**: 同一 `note_id` の重複 event は最初のダイアログが開いている間無視
-- **注意**: `NoteFileCreatedExternally` / `NoteFileDeletedExternally` では mount されない（Feed 自動更新で十分）
+- **注意**: `NoteFileCreatedExternally` / `NoteFileDeletedExternally` では mount されない。
+  `NoteFileCreatedExternally` は Feed 自動更新で十分。`NoteFileDeletedExternally` は EDITING 中なら
+  [widget-external-delete-notice](#widget-external-delete-notice) が削除通知を表示する
+
+### widget-external-delete-notice {#widget-external-delete-notice}
+
+- **kind**: ui-widget
+- **screens**: [screen-5](screen-5.md)
+- **対応 workflow**: detect-external-changes
+- **mount trigger**: `NoteFileDeletedExternally` event 受信 + 当該 `note_id` が EDITING 中
+- **unmount trigger**: 破棄 / 新規ファイルとして保存（2 択の明示選択のみ。Esc では閉じない）
+- **依存する page**: page-main (modal overlay)
+- **failure mode**: 同一 `note_id` の重複 event は通知が開いている間無視。EDITING 中でない Note の削除では mount されない（Feed 自動更新のみ、S18）
 
 ## Layering {#layering}
 
@@ -88,7 +101,8 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 page-main (root, ui-page)
 ├── widget-settings-modal (on-demand, ui-widget)
 ├── widget-update-toast (startup conditional, ui-widget)
-└── widget-external-change-conflict (event-driven, ui-widget)
+├── widget-external-change-conflict (event-driven, ui-widget)
+└── widget-external-delete-notice (event-driven, ui-widget)
 ```
 
 - page-main の中に **削除トーストスタック** ([screen-1-toast-stack](screen-1.md#fields-toast))

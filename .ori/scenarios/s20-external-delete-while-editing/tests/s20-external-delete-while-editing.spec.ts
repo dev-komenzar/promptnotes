@@ -84,7 +84,7 @@ async function waitForBlockGone(id: string, timeoutMs = 10_000): Promise<void> {
   );
 }
 
-const DIALOG = '[data-testid="widget-external-delete-notice"]';
+const DIALOG = '[data-testid="widget.widget-external-delete-notice.root"]';
 
 async function dialogExists(): Promise<boolean> {
   return await $(DIALOG).isExisting();
@@ -188,16 +188,16 @@ describe('scenario:s20-external-delete-while-editing', () => {
 
   it('step 2 — validation#s20-external-delete-while-editing: 通知が編集中 body を提示する', async () => {
     // Then: note title と現在の編集中 body が表示される
-    const title = await $(`${DIALOG} [data-testid="delete-notice-title"]`);
+    const title = await $(`${DIALOG} [data-testid="widget.widget-external-delete-notice.note-title"]`);
     expect((await title.getText()).trim()).toBe(`${NOTE_A}.md`);
 
-    const localView = await $(`${DIALOG} [data-testid="delete-notice-body-local"]`);
+    const localView = await $(`${DIALOG} [data-testid="widget.widget-external-delete-notice.body-local"]`);
     expect(await localView.getValue()).toBe(BODY_LOCAL);
   });
 
   it('step 3 — validation#s20-external-delete-while-editing: Save as new file で元の id のまま .md を再作成し IDLE へ', async () => {
     // When: 「新規ファイルとして保存」を選ぶ
-    await clickDialogControl('delete-notice-save-as-new');
+    await clickDialogControl('widget.widget-external-delete-notice.save-as-new');
 
     // Then: 通知が閉じ、storage_dir/<A.id>.md が編集中内容で再作成され、Block A は IDLE に遷移する
     await waitForDialogGone();
@@ -217,7 +217,7 @@ describe('scenario:s20-external-delete-while-editing', () => {
     await ensureEditing(NOTE_A);
     deleteNoteMd();
     await waitForDialog();
-    await clickDialogControl('delete-notice-discard');
+    await clickDialogControl('widget.widget-external-delete-notice.discard');
 
     // Then: 通知が閉じ、フィードから Block A が消える (remove_note / I-F8)
     await waitForDialogGone();

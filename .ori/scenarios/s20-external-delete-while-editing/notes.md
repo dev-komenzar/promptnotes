@@ -115,6 +115,13 @@ validation S20 は **EDITING 中の外部削除**に対する通知を要求し�
 別の新 widget `widget-external-delete-notice` として最小実装した。ui-fields への正式反映
 （screen-5 新設 or screen-4 への `deleted` display state 追加）は `/ori-propose` の follow-up。
 
+**解消 (2026-10-15, ori-agkg.3)**: ユーザー決定により新 widget として正式定義した。
+`ui-fields/screen-5.md` を新設し、`page-groups.md#widget-external-delete-notice` を追加、
+`screen-4.md#notes-lifecycle` / `page-groups.md#widget-external-change-conflict` の記述を
+「EDITING 中なら削除通知を表示」に修正。`.ori/pages/widget-external-delete-notice/`
+（spec + testids.yaml）を derive し、実装と本 scenario の testid を契約値
+（`widget.widget-external-delete-notice.*`）へ移行した。
+
 ## 回帰確認 {#regression}
 
 - frontend unit test: `bun run test` → **164 passed / 18 files**（s19 baseline 151/17 + 新規 13）
