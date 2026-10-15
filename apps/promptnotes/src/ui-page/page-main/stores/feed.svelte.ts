@@ -124,7 +124,6 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	let sort = $state<SortOrder>({ ...DEFAULT_SORT });
 	let lastError = $state<UpdateFeedFilterError | null>(null);
 	let notes = $state<NoteSummary[]>([]);
-	let focusedNoteId = $state<string | null>(null);
 
 	async function setQuery(raw: string): Promise<void> {
 		try {
@@ -179,24 +178,16 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 	}
 
 	function prependNote(note: NoteSummary): void {
-		// spec#I-PM9: 新 Block は IDLE のまま。フォーカスは Draft に残す (focusedNoteId は変えない)
+		// spec#I-PM9: 新 Block は IDLE のまま。フォーカスは Draft に残す (focus 状態は focusStore が持つ)
 		notes = [note, ...notes];
 	}
 
 	/**
 	 * Replace the in-memory note list with `next` (list-feed slice の startup hydration)。
 	 * 起動時 / 手動 Refresh で `listNotes()` の結果を流し込む唯一の経路。
-	 * focus は維持できない場合 (= 引数に含まれていない場合) は null にクリアする。
 	 */
 	function hydrateNotes(next: readonly NoteSummary[]): void {
 		notes = [...next];
-		if (focusedNoteId !== null && !notes.some((n) => n.id === focusedNoteId)) {
-			focusedNoteId = null;
-		}
-	}
-
-	function setFocus(id: string | null): void {
-		focusedNoteId = id;
 	}
 
 	function patchNote(id: string, patch: Partial<NoteSummary>): void {
@@ -221,7 +212,6 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 
 	function applyDelete(id: string): void {
 		notes = notes.filter((n) => n.id !== id);
-		if (focusedNoteId === id) focusedNoteId = null;
 	}
 
 	return {
@@ -240,9 +230,6 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		get visibleNotes() {
 			return applyFeedFilter(notes, filter, sort);
 		},
-		get focusedNoteId() {
-			return focusedNoteId;
-		},
 		setQuery,
 		setDateRange,
 		setTag,
@@ -252,7 +239,6 @@ export function createFeedStore(deps: FeedStoreDeps = {}) {
 		hydrateSort,
 		hydrateNotes,
 		prependNote,
-		setFocus,
 		applyAssignTag,
 		applyRemoveTag,
 		applyAutoSave,
