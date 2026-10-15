@@ -1,12 +1,6 @@
 slice_id: create-note
 derived_at: 2026-06-30
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/screen-1.md
-      sectionId: fields
-    detected_at: 2026-10-13T06:54:47.586Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
 followup:
   proposals_resolved:

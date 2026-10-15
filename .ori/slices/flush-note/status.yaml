@@ -33,31 +33,7 @@ phases:
   finalize:
     status: closed
     notes: dirty cleared
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: note-body-edited
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s3-flush-on-blur
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s13-quit-flush
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 followup:
   - id: ori-73q
     title: "Note Capture: Tauri 側 quit orchestration を実装 (S13 連続 Flush)"

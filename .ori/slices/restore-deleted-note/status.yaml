@@ -1,28 +1,4 @@
 slice_id: restore-deleted-note
 derived_at: 2026-06-30
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: note-restored-from-trash
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s5-delete-undo-in-window
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s7-undo-after-toast
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

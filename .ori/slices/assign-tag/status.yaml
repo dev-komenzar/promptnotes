@@ -1,31 +1,7 @@
 slice_id: assign-tag
 derived_at: 2026-06-30
 re_derived_at: 2026-06-30
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: note-tags-changed
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s4-tag-assign-normalize
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s10-tag-invalid-char
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
 followup:
   open_questions:

@@ -19,23 +19,5 @@ beads:
     - phase: finalize
       issue: ori-2lm.7
 phases: {}
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: update-channel-aggregate
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: new-version-detected
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s14-update-check-failure
-    detected_at: 2026-06-30T10:10:53.129Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30

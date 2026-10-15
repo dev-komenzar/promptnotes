@@ -19,17 +19,5 @@ beads:
     - phase: finalize
       issue: ori-64x.7
 phases: {}
-dirty:
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: note-feed-aggregate
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s8-query-normalize
-    detected_at: 2026-06-30T10:11:08.338Z
-    affected_phase: derive
-    reason: edit
+dirty: []
 finalized_at: 2026-06-30
