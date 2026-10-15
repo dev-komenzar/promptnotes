@@ -34,8 +34,6 @@ aggregates.md I-N9（`BodyHash` による競合検出）と I-F8（`NoteFeed` �
 | {#screen-4-note-title} | 競合ノート | `NoteId` (readonly) | ✓ | NoteId | readonly label | ファイル名 (`YYYYMMDDhhmmss.md`) 表示 |
 | {#screen-4-body-local} | 編集中の内容 | `NoteBody` | — | NoteBody | readonly textarea (disabled) | 現在の編集内容（変更前の snapshot） |
 | {#screen-4-body-external} | 外部変更の内容 | `NoteBody` | — | NoteBody | readonly textarea (disabled) | ディスクから読み込んだ内容（diff 表示推奨）|
-| {#screen-4-hash-local} | ローカルハッシュ | `BodyHash` | — | BodyHash | readonly label | SHA-256 hex（デバッグ用、常時非表示）|
-| {#screen-4-hash-external} | ディスクハッシュ | `BodyHash` | — | BodyHash | readonly label | `NoteFileModifiedExternally.disk_body_hash`（デバッグ用） |
 | {#screen-4-resolution-choice} | 解決方法 | `ConflictResolution` | ✓ | — | radio button group (2 択) | 後述の Cross-Field Rules 参照 |
 | {#screen-4-confirm} | 確定 | — | ✓ | — | primary button | 選択内容を確定（後述） |
 | {#screen-4-cancel} | キャンセル | — | — | — | secondary button | ダイアログを閉じる（編集中を保持 = KeepEditing と等価） |
