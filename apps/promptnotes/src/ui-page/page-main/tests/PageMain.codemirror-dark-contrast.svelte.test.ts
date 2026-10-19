@@ -21,6 +21,7 @@ const HIGHLIGHT_BODY = [
 	'',
 	'[label]: /url "title"'
 ].join('\n');
+const COLORED_TOKEN_TEXTS = ['https://example.com', '---', 'comment', '\\*', '[label]', '"title"'];
 
 function renderPage(theme: Theme, body = 'hello world') {
 	return render(PageMain, {
@@ -113,6 +114,7 @@ async function selectAll(editor: HTMLElement, focus: boolean): Promise<HTMLEleme
 
 function selectionContrast(editor: HTMLElement, selBg: HTMLElement): number {
 	const bg = composite([...backgroundsFromRoot(editor), getComputedStyle(selBg).backgroundColor]);
+	// drawSelection の選択レイヤは本文の下に描かれるため、選択上の文字色は contentDOM の color
 	const text = composite([getComputedStyle(viewOf(editor).contentDOM).color]);
 	return contrast(text, bg);
 }
@@ -204,8 +206,12 @@ describe('page:page-main dark theme CodeMirror contrast', () => {
 			const block = await blockEditor(container);
 
 			for (const editor of [draft, block]) {
-				// URL / label / 水平線 / コメント / escape / title の各トークンが描画済みであること
-				await expect.poll(() => coloredTokens(editor).length).toBeGreaterThanOrEqual(6);
+				// URL / label / 水平線 / コメント / escape / title の各トークンが色付きで描画済みであること
+				for (const text of COLORED_TOKEN_TEXTS) {
+					await expect
+						.poll(() => coloredTokens(editor).some((s) => s.textContent?.includes(text)))
+						.toBe(true);
+				}
 				for (const ratio of tokenContrasts(editor)) {
 					expect(ratio).toBeGreaterThanOrEqual(4.5);
 				}

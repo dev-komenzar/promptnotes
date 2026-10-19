@@ -187,3 +187,26 @@ verdict=PASS。軽微な指摘はこの PR 内で対応した (Pass 2 は不要)
 - reviewer: HIGH-1 / HIGH-2 とも妥当に修正されたことを確認。新たな乖離なし
 - 残る PARTIAL (tp-empty-body-noop で Feed が変わらないことの assert がない) は既存のもので、本改訂の gate ではない
 - verdict=PASS
+
+# Review: page-main dark CodeMirror contrast (ori-njeh, ori-figd) {#review-codemirror-dark-contrast}
+
+## Pass 1 {#codemirror-dark-contrast-pass-1}
+
+対象: I-PM16b / I-PM16c, `tp-theme-codemirror-contrast` (TP-T12〜T15), `impl-codemirror-dark`
+
+### Semantic findings (reviewer: ori-reviewer, fresh context) {#codemirror-dark-contrast-pass-1-findings}
+
+- spec ↔ 実装 ↔ test の乖離なし。CSS 詳細度は baseTheme より高く、light 回帰は TP-T14 / TP-T15 light で担保
+- LOW: TP-T15 がトークン数の下限のみで、トークン種別ごとの描画を確認していない
+- LOW: `#impl-codemirror-dark` の「light は defaultHighlightStyle をそのまま使う」が実装 (CSS 変数 fallback の別 HighlightStyle) と文言上ずれる
+- LOW: 選択上の文字色を contentDOM の color とする根拠がコメントに無い
+- LOW: TP-T14 が CodeMirror 既定色を hard-code している (upstream 更新時に要追従) / 変数名 hex の正規化 (現状実害なし)
+
+### Disposition {#codemirror-dark-contrast-pass-1-disposition}
+
+- TP-T15: URL / 水平線 / コメント / escape / label / title の各トークンが色付きで描画されることを個別に assert するよう修正
+- `#impl-codemirror-dark`: 実装方式 (`var(--cm-hl-<hex>, <hex>)` + light は fallback) に合わせて文言修正
+- test に drawSelection の選択レイヤが本文の下に描かれる旨のコメントを追加
+- TP-T14 の既定色 hard-code は「light で既定色のまま」の回帰確認として意図的に維持
+
+verdict: PASS

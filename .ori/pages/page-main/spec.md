@@ -362,7 +362,7 @@ page-main は実装範囲が大きいため、以下 5 sub-task に分割して�
 ### dark theme の CodeMirror 配色 {#impl-codemirror-dark}
 
 - I-PM16b: 選択背景は `routes/layout.css` の `.dark` 配下 CSS 上書きで与える（`.cm-cursor` / `caret-color` と同方式）。CodeMirror baseTheme の選択セレクタ（`.ͼ1.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground` 等）より詳細度を高くする
-- I-PM16c: CodeMirror の HighlightStyle は生成 class 名のため CSS から直接狙えない。`codemirror/setup.ts` で固定 class を付ける `tagHighlighter` を併用し、`routes/layout.css` の `.dark` 配下でその class の文字色を上書きする。light は `defaultHighlightStyle` をそのまま使う
+- I-PM16c: CodeMirror の HighlightStyle は生成 class 名のため CSS から直接狙えない。`codemirror/setup.ts` で `defaultHighlightStyle` の各文字色を `var(--cm-hl-<hex>, <hex>)` に置き換えた HighlightStyle を使い、`routes/layout.css` の `.dark` 配下でその CSS 変数を定義して上書きする。light は CSS 変数が未定義のため `defaultHighlightStyle` と同じ色に fallback する
 - widget 内ネイティブ textarea の `::selection` は範囲外
 
 ### 非責務 {#impl-non-responsibility}
