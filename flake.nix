@@ -282,8 +282,8 @@
             export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (apmRuntimeLibs ++ chromiumDeps)}"
             # 同様に system gvfs 等の GIO module 混入を防ぎ、flake の glib-networking + dconf に固定
             export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules:${pkgs.dconf.lib}/lib/gio/modules"
-            # Blank-window mitigation on some GPU/driver combos (uncomment if you see it)
-            # export WEBKIT_DISABLE_COMPOSITING_MODE=1
+            # NVIDIA + Wayland の Error 71 は main.rs が __NV_DISABLE_EXPLICIT_SYNC=1 を既定設定して回避済み。
+            # それでも落ちる場合の次の手 (高速描画経路を失う): export WEBKIT_DISABLE_DMABUF_RENDERER=1
           '' + ''
             echo "PromptNotes dev shell: Rust $(rustc --version | cut -d' ' -f2) / Bun $(bun --version) / Node $(node --version)"
           '';
