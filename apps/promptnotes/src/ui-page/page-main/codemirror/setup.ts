@@ -1,8 +1,21 @@
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { HighlightStyle, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { EditorState, Text, type Extension } from '@codemirror/state';
 import { EditorView, drawSelection, keymap } from '@codemirror/view';
+
+/**
+ * defaultHighlightStyle の文字色を `var(--cm-hl-<hex>, <hex>)` に置き換えた HighlightStyle。
+ * 変数未定義の light では既定配色のまま、dark は routes/layout.css の `.dark` で
+ * 変数を定義して上書きする (page-main spec I-PM16c)。
+ */
+const highlightStyle = HighlightStyle.define(
+	defaultHighlightStyle.specs.map((spec) =>
+		typeof spec.color === 'string'
+			? { ...spec, color: `var(--cm-hl-${spec.color.slice(1)}, ${spec.color})` }
+			: spec
+	)
+);
 
 const MARKDOWN_LIST_PREFIX = /^(\s*)(?:[-*+]\s|(\d+)\.\s)/;
 
@@ -109,7 +122,7 @@ export function createEditorState(options: {
 		history(),
 		drawSelection(),
 		markdown(),
-		syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+		syntaxHighlighting(highlightStyle, { fallback: true }),
 		submitBinding,
 		listContinuationKeymap,
 		boldBracketKeymap,

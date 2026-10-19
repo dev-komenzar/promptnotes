@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-13
+  last_derived: 2026-10-19
   derives_from:
     - domain/ui-fields/screen-1.md#screen-1
     - domain/ui-fields/page-groups.md#page-main
@@ -145,6 +145,8 @@ UI 実装はこの 3 点を曖昧化してはならない。
   - `Dark`: `dark` class を付与
   - `Light`: `dark` class を削除
   - `System`: `prefers-color-scheme: dark` media query の結果に従い、`dark` class を toggle する。**media query の変更を監視**し、変化時に即時反映する
+- **I-PM16b（dark 時の CodeMirror 選択範囲コントラスト）**: `<html>` に `dark` class が付与されている間、Draft / Block body の CodeMirror で選択範囲の背景色と本文文字色のコントラスト比が **4.5:1 以上**（WCAG AA）である。focused / unfocused の両状態で満たす。light では CodeMirror 既定の選択色を変更しない
+- **I-PM16c（dark 時の CodeMirror シンタックスハイライト配色）**: `<html>` に `dark` class が付与されている間、Draft / Block body の CodeMirror で色付きトークン（URL / link label / 水平線 / コメント / escape / link title 等、ハイライトスタイルが文字色を指定するトークン）の文字色とエディタ背景色のコントラスト比が **4.5:1 以上** である。light では既定のハイライト配色（`defaultHighlightStyle`）を変更しない
 - **I-PM17（ThemeChanged 購読）**: page-main は `settings:theme_changed` Tauri event を購読し、受信時に即座に `Settings.theme` を更新して DOM に反映する（domain-events.md#theme-changed-timing: 同期）
 - **I-PM18（初期 theme 適用）**: `load-settings` で取得した `Settings.theme` を page mount 時に DOM に反映する（I-PM3 の mount-time effect の一環）
 
@@ -253,7 +255,7 @@ I-PM19 を DraftRegion の browser component test（vitest client project / Play
 - Toolbar のアイコンボタンは `aria-label` 必須（`screen-1-toolbar-settings-button` 等）
 - 最低限の Tab フォーカス順序: Toolbar → Draft → Feed Blocks
 
-詳細な a11y 監査（コントラスト / SR ナビゲーション）は MVP 範囲外。
+詳細な a11y 監査（コントラスト / SR ナビゲーション）は MVP 範囲外。ただし dark theme 下の CodeMirror 選択範囲 / シンタックスハイライトのコントラストは例外として I-PM16b / I-PM16c・`tp-theme-codemirror-contrast` で検証する。
 
 ### tp-theme-apply: theme の DOM 反映 {#tp-theme-apply}
 
@@ -276,6 +278,17 @@ I-PM19 を DraftRegion の browser component test（vitest client project / Play
 - **TP-T9**: `settings:theme_changed` Tauri event で `new_theme: Light` を受信した場合、即座に `dark` class が削除される
 - **TP-T10**: `settings:theme_changed` Tauri event で `new_theme: System` を受信した場合、`prefers-color-scheme` media query の監視を再開し、現在値で `dark` class を toggle する
 - **TP-T11**: `settings:theme_changed` event 購読は非 Tauri 環境（browser / test）で silent fallback する（例外を投げない）
+
+### tp-theme-codemirror-contrast: dark theme の CodeMirror コントラスト {#tp-theme-codemirror-contrast}
+
+> domain/domain-events.md#theme-changed-subscribers より：「UI 層が CodeMirror テーマと CSS 変数を即時切り替え」
+
+コントラスト比は computed color から算出して assert する（色値そのものは assert しない）。
+
+- **TP-T12**: dark で Draft の選択背景と本文文字色のコントラスト比が 4.5:1 以上（focused / unfocused の両方）
+- **TP-T13**: dark で Block body の選択背景と本文文字色のコントラスト比が 4.5:1 以上
+- **TP-T14**: light では CodeMirror 既定の選択背景色のまま（回帰確認）
+- **TP-T15**: dark で Draft / Block body の色付きトークン（URL / link label / 水平線 / コメント 等）の文字色とエディタ背景色のコントラスト比が 4.5:1 以上。light では既定ハイライト配色のまま
 
 ## 実装ノート {#impl-notes}
 
@@ -345,6 +358,12 @@ page-main は実装範囲が大きいため、以下 5 sub-task に分割して�
 現状 list-feed slice が未実装（`bd show ori-64x.10` / `bd show ori-hpo.11`）のため、Feed の起動時 hydration は **後続 slice 起票後に対応**。page-main-shell では空の Feed で起動し、`create-note` 経由で session 内に作成した Note のみ表示する。
 
 将来 list-feed slice 実装後に Feed store の hydration source を差し替える前提。
+
+### dark theme の CodeMirror 配色 {#impl-codemirror-dark}
+
+- I-PM16b: 選択背景は `routes/layout.css` の `.dark` 配下 CSS 上書きで与える（`.cm-cursor` / `caret-color` と同方式）。CodeMirror baseTheme の選択セレクタ（`.ͼ1.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground` 等）より詳細度を高くする
+- I-PM16c: CodeMirror の HighlightStyle は生成 class 名のため CSS から直接狙えない。`codemirror/setup.ts` で `defaultHighlightStyle` の各文字色を `var(--cm-hl-<hex>, <hex>)` に置き換えた HighlightStyle を使い、`routes/layout.css` の `.dark` 配下でその CSS 変数を定義して上書きする。light は CSS 変数が未定義のため `defaultHighlightStyle` と同じ色に fallback する
+- widget 内ネイティブ textarea の `::selection` は範囲外
 
 ### 非責務 {#impl-non-responsibility}
 

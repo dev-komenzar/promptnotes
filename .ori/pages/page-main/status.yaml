@@ -16,7 +16,7 @@ phases:
     status: closed
     issue: ori-page-page-main
     completed_at: 2026-10-13
-    notes: "spec.md re-derived (2026-10-13 ori-pir2: I-PM20 + tp-search-query-input
+    notes: "spec.md re-derived (2026-10-19 ori-njeh/ori-figd: I-PM16b/16c + TP-T12〜T15 from domain-events.md#theme-changed-subscribers; 2026-10-13 ori-pir2: I-PM20 + tp-search-query-input
       from screen-1.md#cross-filter-immediate, #421 I-PM9 cross-draft-submit 反映確認; 2026-06-29: ThemeChanged subscriber
       I-PM16/17/18, TP-T1〜T11)"
   plan:
@@ -51,5 +51,5 @@ phases:
     completed_at: 2026-06-29
     notes: "dirty cleared; 2 follow-up issues created (2026-10-13 testid 契約移行: ori-1jjr、機能欠落 block-updated-at は ori-6lvx)"
 dirty: []
-finalized_at: 2026-10-13
+finalized_at: 2026-10-19
 followup: []
