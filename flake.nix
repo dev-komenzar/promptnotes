@@ -276,7 +276,12 @@
             export GSETTINGS_SCHEMA_DIR="${gsettingsSchemaDir}"
             # apm CLI (PyInstaller) + Playwright chromium headless shell need
             # libffi / libsqlite3 / libglib / libnss / libdrm / libxkbcommon / ...
-            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (apmRuntimeLibs ++ chromiumDeps)}:$LD_LIBRARY_PATH"
+            # 外側の LD_LIBRARY_PATH は連結しない: Orca IDE 等が system nixpkgs (glibc が新しい)
+            # の libsoup / pulseaudio を漏らすと RUNPATH より優先され、flake ビルドの
+            # app が GLIBC_2.43/2.44 not found で落ちる (ori-jv6v)。
+            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (apmRuntimeLibs ++ chromiumDeps)}"
+            # 同様に system gvfs 等の GIO module 混入を防ぎ、flake の glib-networking + dconf に固定
+            export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules:${pkgs.dconf.lib}/lib/gio/modules"
             # Blank-window mitigation on some GPU/driver combos (uncomment if you see it)
             # export WEBKIT_DISABLE_COMPOSITING_MODE=1
           '' + ''
