@@ -9,3 +9,37 @@
 .dark .cm-content {
 	caret-color: var(--color-neutral-100);
 }
+
+/*
+ * dark の選択背景 (page-main spec I-PM16b)。CodeMirror baseTheme の
+ * `.ͼ2.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground`
+ * (light 既定) より詳細度を高くする。
+ */
+.dark .cm-editor .cm-selectionLayer .cm-selectionBackground {
+	background: var(--color-neutral-700);
+}
+
+.dark .cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground {
+	background: var(--color-blue-900);
+}
+
+/*
+ * dark のシンタックスハイライト配色 (page-main spec I-PM16c)。
+ * 変数名は codemirror/setup.ts が defaultHighlightStyle の色 hex から生成する。
+ */
+.dark {
+	--cm-hl-404740: var(--color-neutral-400); /* meta */
+	--cm-hl-708: var(--color-purple-300); /* keyword */
+	--cm-hl-219: var(--color-blue-300); /* atom / bool / url / contentSeparator / labelName */
+	--cm-hl-164: var(--color-green-300); /* literal / inserted */
+	--cm-hl-a11: var(--color-red-300); /* string / deleted */
+	--cm-hl-e40: var(--color-orange-300); /* regexp / escape / special(string) */
+	--cm-hl-00f: var(--color-sky-300); /* definition(variableName) */
+	--cm-hl-30a: var(--color-violet-300); /* local(variableName) */
+	--cm-hl-085: var(--color-emerald-300); /* typeName / namespace */
+	--cm-hl-167: var(--color-teal-300); /* className */
+	--cm-hl-256: var(--color-cyan-300); /* special(variableName) / macroName */
+	--cm-hl-00c: var(--color-indigo-300); /* definition(propertyName) */
+	--cm-hl-940: var(--color-amber-300); /* comment */
+	--cm-hl-f00: var(--color-red-400); /* invalid */
+}
