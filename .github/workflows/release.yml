@@ -82,6 +82,12 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      # repo root の rust-toolchain.toml が channel を固定しているため、上の stable に
+      # 入れた target は build に使われない。固定 toolchain 側にも cross target を入れる。
+      - name: Add cross target to pinned toolchain
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
+
       - name: Install Tauri CLI
         run: |
           URL=https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.11.3/${{ matrix.cli }}
