@@ -152,7 +152,7 @@
         cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
           name = "promptnotes-cargo-deps";
           src = ./apps/promptnotes/src-tauri;
-          hash = "sha256-0VZK0RaCsat4KYoqDXngPMJUgKy8mE1S6S9Y4o7Fev0=";
+          hash = "sha256-7qQ48v39cMS3s/PQxKw94CK9QYYIjAXxKQl4N3PCxwc=";
         };
 
         # NixOS 個人利用向けの PromptNotes パッケージ。
