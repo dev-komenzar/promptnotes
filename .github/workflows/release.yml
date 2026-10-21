@@ -66,10 +66,6 @@ jobs:
             target: aarch64-apple-darwin
             cli: cargo-tauri-aarch64-apple-darwin.zip
             args: --target aarch64-apple-darwin --bundles app,dmg
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-            cli: cargo-tauri-aarch64-apple-darwin.zip
-            args: --target x86_64-apple-darwin --bundles app,dmg
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
@@ -165,7 +161,7 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" > latest.json
           jq '.platforms | keys' latest.json
           MISSING=0
-          for key in linux-x86_64 linux-x86_64-appimage linux-x86_64-deb linux-x86_64-rpm darwin-aarch64 darwin-x86_64; do
+          for key in linux-x86_64 linux-x86_64-appimage linux-x86_64-deb linux-x86_64-rpm darwin-aarch64; do
             if ! jq -e --arg k "$key" '.platforms[$k]' latest.json > /dev/null; then
               echo "::error::latest.json is missing platform ${key}"
               MISSING=1
