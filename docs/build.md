@@ -11,7 +11,7 @@
 |---|---|
 | 開発 | Linux (NixOS) メイン機で完結。日常の編集・テスト・build はここで行う |
 | Linux release build | Linux メイン機 (NixOS) で native build |
-| macOS release build | GitHub Actions の macOS runner (aarch64 / x86_64) で build。mac サブ機のローカルビルドは fallback |
+| macOS release build | GitHub Actions の macOS runner (aarch64 のみ。Intel Mac は配布対象外) で build。mac サブ機のローカルビルドは fallback |
 | Windows | **初期 MVP から除外**。マシンを保有していないため |
 | Linux 配布形式 | **AppImage, .deb, .rpm, Nix flake** の 4 形式 (決定: `ori-wuxk`)。Flatpak/Snap はコミュニティ要望があれば追加検討 |
 | CI | GitHub Actions (`.github/workflows/release.yml`) がプライマリ。Linux は ubuntu-22.04、macOS は macos-latest (public repo の標準 runner は無料)。有料 runner は極力避ける |
@@ -353,10 +353,10 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz.si
 2. `git tag vX.Y.Z` & push
 3. CI をトリガー: tag を push すると `.github/workflows/release.yml` が起動する。既存タグを再ビルドする場合は `gh workflow run release.yml --ref main -f tag=vX.Y.Z`
    - `create-release` job が draft Release を 1 つ作成 (同じ tag の Release があれば再利用)
-   - `build` job が matrix (Linux x86_64 / macOS aarch64 / macOS x86_64) で並列に走り、[tauri-action](https://github.com/tauri-apps/tauri-action) が各 bundle と `.sig` を upload し、`latest.json` に自 platform をマージする
+   - `build` job が matrix (Linux x86_64 / macOS aarch64) で並列に走り、[tauri-action](https://github.com/tauri-apps/tauri-action) が各 bundle と `.sig` を upload し、`latest.json` に自 platform をマージする
      - Linux: AppImage / .deb / .rpm
      - macOS: .dmg / .app.tar.gz (`--bundles app,dmg`)
-   - `verify-updater-json` job が `latest.json` に `linux-x86_64` (`-appimage` / `-deb` / `-rpm`) / `darwin-aarch64` / `darwin-x86_64` が揃っているか検査する
+   - `verify-updater-json` job が `latest.json` に `linux-x86_64` (`-appimage` / `-deb` / `-rpm`) / `darwin-aarch64` が揃っているか検査する
 4. `verify-updater-json` が失敗した場合: `latest.json` のマージは各 job の read → merge → upload で行われるため、job の完了が重なると platform が欠けることがある。欠けた platform の `build` job を re-run すると再マージされる (re-run 後に `verify-updater-json` も re-run する)
 5. release notes に **macOS 初回起動時の Gatekeeper 回避手順** を必ず記載
 6. publish
@@ -527,7 +527,7 @@ macOS を CI へ移行した理由:
 運用:
 
 - updater 署名鍵は GitHub Actions Secrets (`TAURI_SIGNING_PRIVATE_KEY` / `_PASSWORD`) を Linux / macOS の job で共用する。nix-sops の鍵は個人用 / fallback ビルド用として維持
-- macOS x86_64 は Apple Silicon runner 上で `--target x86_64-apple-darwin` で cross build する (Intel runner は廃止方向のため)
+- macOS は Apple Silicon (aarch64) のみ配布する。Intel Mac (x86_64) は対象外 (v0.2.3 で決定)
 - Windows 対応を再開する場合も同じ matrix に追加する
 
 ### 5.3 配布戦略
