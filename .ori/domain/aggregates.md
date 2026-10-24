@@ -244,7 +244,7 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 - **UpdateChannel** (root entity, 揮発)
   - `current_version: Version` — ビルド時に埋め込まれる
-  - `latest_release: Option<Release>` — 起動時チェックの結果
+  - `latest_release: Option<Release>` — 直近の確認（起動時 / 定期確認）の結果
 - **Version** (VO)
   - semver 文字列（例: `0.3.1`）
   - 比較順序を持つ
@@ -258,14 +258,20 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 - **I-U1**: `current_version` は immutable（ビルド時定数）
 - **I-U2**: `latest_release` が `Some` のとき、`latest_release.version > current_version`
   を満たす（同一 / 古いリリースは `None` に正規化）
-- **I-U3**: 確認は **アプリ起動時 1 回のみ**。常駐 polling はしない
+- **I-U3**: 確認は **アプリ起動時に 1 回** 行い、以降は **前回確認から 24 時間経過するごとに**
+  再確認する。間隔は定数（設定 UI は持たない）。前回確認の時刻は揮発（プロセス内のみ、永続化しない）。
+  失敗時の即時リトライ（短い間隔での再試行）はしない。次の確認は通常の 24 時間周期を待つ
   （spec の core 動作: 通知のみ）
+- **I-U4**: 同一プロセス内で一度通知した `Release::version` 以下のバージョンについては、
+  `NewVersionDetected` を再発行しない。通知済みバージョンは揮発（再起動後は再び通知される）。
+  この抑止は application service が揮発 state で担い、aggregate は 1 回分の確認結果を返すだけ
 
 ### 公開操作 {#update-channel-aggregate-operations}
 
 #### Commands {#update-channel-aggregate-commands}
 
-- `UpdateChannel::check_at_startup() -> UpdateChannel`
+- `UpdateChannel::check() -> UpdateChannel`
+  - 起動時および 24 時間ごとの定期確認で呼ばれる（I-U3）
   - async ネットワーク呼び出し。Tauri updater plugin に委譲
   - 失敗は **application service 内部で silent に握り潰し**、`latest_release: None` の
     `UpdateChannel` を返す（S14 / I-U2 / `workflows/check-for-updates.md#error-handling`）。
