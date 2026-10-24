@@ -555,6 +555,8 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
   Toast を表示する
 - アプリを再起動した場合は通知済み記録が消えるため、起動時の確認で再び通知される（I-U4 揮発）
 
+## 補足 {#validation-notes}
+
 ### シナリオ漏れの検出ポリシー {#notes-coverage-policy}
 
 - 各 aggregate の **各 command を最低 1 シナリオでカバー** することを目標
