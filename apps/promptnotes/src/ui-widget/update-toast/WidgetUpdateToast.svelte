@@ -3,17 +3,20 @@
 	import {
 		createUpdateToastStore,
 		type UpdateEventListener,
+		type UpdateSubscribedHook,
 		type UpdateUrlOpener
 	} from './store.svelte';
 
 	type Props = {
 		listenFn?: UpdateEventListener;
 		openUrlFn?: UpdateUrlOpener;
+		/** listen 確立後に 1 回呼ばれる。page-main が起動時 check-for-updates を流す。 */
+		onSubscribed?: UpdateSubscribedHook;
 	};
 
-	let { listenFn, openUrlFn }: Props = $props();
+	let { listenFn, openUrlFn, onSubscribed }: Props = $props();
 
-	const store = untrack(() => createUpdateToastStore({ listenFn, openUrlFn }));
+	const store = untrack(() => createUpdateToastStore({ listenFn, openUrlFn, onSubscribed }));
 
 	$effect(() => {
 		void store.start();

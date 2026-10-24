@@ -1,4 +1,5 @@
 import { listen as tauriListen } from '@tauri-apps/api/event';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 /**
  * widget-update-toast の購読 + dismiss / view-release ロジックを保持する store。
@@ -8,6 +9,9 @@ import { listen as tauriListen } from '@tauri-apps/api/event';
  * - I-UT3: 同セッション中の再 emit は最新で payload を上書き
  * - I-UT4: dismiss は payload=null（次回起動で再 emit があれば再表示）
  * - I-UT5: view-release は openUrlFn を呼び、payload は維持
+ * - onSubscribed: listen 確立 **後** に 1 回だけ呼ぶ hook。page-main はここで起動時の
+ *   check-for-updates (I-U3) を invoke する。listen 前に emit されると取りこぼすため、
+ *   check は必ず購読確立後に走らせる (ori-m2ra.1)
  */
 
 export type NewVersionDetectedPayload = {
@@ -23,9 +27,12 @@ export type UpdateEventListener = (
 
 export type UpdateUrlOpener = (url: string) => void | Promise<void>;
 
+export type UpdateSubscribedHook = () => void | Promise<void>;
+
 export type UpdateToastStoreDeps = {
 	listenFn?: UpdateEventListener;
 	openUrlFn?: UpdateUrlOpener;
+	onSubscribed?: UpdateSubscribedHook;
 };
 
 export type UpdateToastStore = ReturnType<typeof createUpdateToastStore>;
@@ -37,15 +44,19 @@ const defaultListenFn: UpdateEventListener = async (handler) =>
 		handler(event.payload);
 	});
 
-const defaultOpenUrlFn: UpdateUrlOpener = (url) => {
-	if (typeof window !== 'undefined') {
-		window.open(url, '_blank', 'noopener');
+// I-UT7: Tauri webview の window.open は OS ブラウザを開かないため opener plugin を使う。
+const defaultOpenUrlFn: UpdateUrlOpener = async (url) => {
+	try {
+		await openUrl(url);
+	} catch {
+		// silent — non-Tauri host / opener 失敗時も toast は維持する
 	}
 };
 
 export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 	const listenFn = deps.listenFn ?? defaultListenFn;
 	const openUrlFn = deps.openUrlFn ?? defaultOpenUrlFn;
+	const onSubscribed = deps.onSubscribed;
 
 	let payload = $state<NewVersionDetectedPayload | null>(null);
 	let unsubscribe: (() => void) | null = null;
@@ -58,6 +69,12 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 			});
 		} catch {
 			// I-UT2 / S14: listen 失敗は silent。toast は出さない。
+			return;
+		}
+		try {
+			await onSubscribed?.();
+		} catch {
+			// S14: 起動時 check の失敗は silent。
 		}
 	}
 

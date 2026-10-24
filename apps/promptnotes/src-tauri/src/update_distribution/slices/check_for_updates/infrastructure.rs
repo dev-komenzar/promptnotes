@@ -63,8 +63,13 @@ impl UpdaterPort for TauriUpdaterPort {
 
         match check_result {
             Ok(Some(update)) => Ok(RawRelease {
+                // `update.download_url` は latest.json の platform 別アセット URL
+                // (tauri-action が api.github.com/.../releases/assets/<id> を書く) で
+                // ブラウザで開くとバイナリ / JSON になる。toast の「View release」は
+                // GitHub Releases page を開く契約 (aggregates.md#update-channel-aggregate
+                // `url: Url (GitHub Releases page)`) なので、version から組み立てる。
+                url: release_page_url(&update.version),
                 version_string: update.version,
-                url: update.download_url.to_string(),
                 notes: update.body.unwrap_or_default(),
             }),
             Ok(None) => {
@@ -78,6 +83,16 @@ impl UpdaterPort for TauriUpdaterPort {
             }
         }
     }
+}
+
+/// GitHub Releases の tag page URL prefix。tag は release workflow が `v<version>` で切る。
+const RELEASE_TAG_URL_PREFIX: &str = "https://github.com/dev-komenzar/promptnotes/releases/tag/v";
+
+/// latest.json の `version` (例: `0.2.3` / `v0.2.3`) から GitHub Releases page の URL を組み立てる。
+pub(crate) fn release_page_url(version: &str) -> String {
+    let version = version.trim();
+    let version = version.strip_prefix('v').unwrap_or(version);
+    format!("{RELEASE_TAG_URL_PREFIX}{version}")
 }
 
 /// Maps `tauri_plugin_updater::Error` to our domain `UpdateError`.

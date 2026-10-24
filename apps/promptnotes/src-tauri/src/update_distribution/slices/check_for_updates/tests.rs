@@ -436,3 +436,22 @@ fn tp_t1_execute_signature_has_no_result() {
         CheckForUpdatesCommand,
     ) -> UpdateChannel = CheckForUpdatesUseCase::execute;
 }
+
+// ===== infrastructure: release_url (ori-m2ra.2) =====
+
+/// aggregates.md#update-channel-aggregate — `Release.url` は GitHub Releases page。
+/// latest.json の platform アセット URL (api.github.com/.../assets/<id>) を流用しない。
+#[test]
+fn release_page_url_points_to_github_release_tag_page() {
+    use super::infrastructure::release_page_url;
+
+    assert_eq!(
+        release_page_url("0.2.3"),
+        "https://github.com/dev-komenzar/promptnotes/releases/tag/v0.2.3"
+    );
+    // tag 由来の `v` prefix 付き version でも `vv` にならない
+    assert_eq!(
+        release_page_url("v0.2.3"),
+        "https://github.com/dev-komenzar/promptnotes/releases/tag/v0.2.3"
+    );
+}

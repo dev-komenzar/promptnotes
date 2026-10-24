@@ -11,6 +11,9 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        // update-toast の「View release」で GitHub Releases page を OS 既定ブラウザで開く
+        // (Tauri webview の window.open は外部ブラウザを開かない)。
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::new().build());
     #[cfg(debug_assertions)]

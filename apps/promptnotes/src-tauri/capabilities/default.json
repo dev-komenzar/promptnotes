@@ -9,6 +9,8 @@
 		"fs:default",
 		"dialog:default",
 		"updater:default",
+		"opener:allow-open-url",
+		"opener:allow-default-urls",
 		"wdio:default"
 	]
 }
