@@ -47,6 +47,6 @@ struct GetAppVersionQuery;    // 入力なし（ビルド時定数を読むだ�
 - `check-for-updates` と **同じビルド時定数** を情報源とする
   （両者の `current_version` が食い違ってはならない）
 - 呼び出しは widget-settings-modal の mount 時。値は不変なので結果をキャッシュしてよい
-- I-U3（起動時 1 回のみの更新確認）とは無関係: 本 query は GitHub Releases に問い合わせない
+- I-U3（起動時 + 24 時間ごとの更新確認）とは無関係: 本 query は GitHub Releases に問い合わせない
 - Update Distribution BC から他 BC への参照は発生しない（UI 層のみが購読、
   [context-map](../context-map.md#decisions-update-distribution) 参照）
