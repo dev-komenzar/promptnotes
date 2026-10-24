@@ -1,0 +1,8 @@
+scenario_id: s23-update-same-version-once
+derived_at: 2026-10-24T05:07:20.955Z
+beads:
+  epic: ori-scenario-s23-update-same-version-once
+  current_phase: null
+  completion: []
+phases: {}
+dirty: []

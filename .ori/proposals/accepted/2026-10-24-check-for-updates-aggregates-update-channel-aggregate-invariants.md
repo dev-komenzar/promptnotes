@@ -3,7 +3,9 @@ target: domain/aggregates.md#update-channel-aggregate-invariants
 by: slices/check-for-updates
 reason: I-U3「確認は起動時 1 回のみ」では、アプリを終了せず使い続ける利用者 (特に macOS) が長期間更新に気付かない (ori-m2ra.4)
 created: 2026-10-24
-status: pending
+status: accepted
+accepted_at: 2026-10-24
+accepted_by: human (takuya.kometan@gmail.com)
 ---
 
 # Proposal: I-U3 を「起動時 + 24 時間ごとの定期確認」に改訂し、同一バージョンの重複通知を抑止する

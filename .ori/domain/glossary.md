@@ -198,7 +198,7 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 ### NewVersionDetected {#glossary-new-version-detected}
 
 - **発行者**: UpdateChannel Aggregate
-- **トリガー**: `UpdateChannel::check_at_startup` 成功 かつ新バージョンあり
+- **トリガー**: `UpdateChannel::check` 成功 かつ同一プロセス内で未通知の新バージョンあり（I-U3 / I-U4）
 
 ### NoteFileCreatedExternally {#glossary-note-file-created-externally}
 

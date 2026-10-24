@@ -10,8 +10,8 @@ ori:
 
 # check-for-updates {#check-for-updates}
 
-アプリ起動時に GitHub Releases へ HTTP リクエストを送り、
-新バージョンがあれば `NewVersionDetected` を発行する。失敗は silent。
+アプリ起動時、および以降 24 時間ごとに GitHub Releases へ HTTP リクエストを送り、
+同一プロセス内で未通知の新バージョンがあれば `NewVersionDetected` を発行する（I-U3 / I-U4）。失敗は silent。
 
 ## Input {#input}
 
@@ -29,7 +29,7 @@ struct CheckForUpdatesCommand {
 
 ## Errors {#errors}
 
-- `UpdateError` — application service が握り潰す（silent failure, I-U3, S14）
+- `UpdateError` — application service が握り潰す（silent failure, S14）
   - `NetworkError`
   - `ParseError`
   - `RateLimited`
@@ -45,13 +45,16 @@ struct CheckForUpdatesCommand {
    - `NewVersion(release)` → step 5 へ
    - `UpToDate | OlderVersion` → 早期 return（event 非発行、I-U2 通り）
 5. `buildUpdateChannel: (Version, Release) → UpdateChannel`
-6. `emit: UpdateChannel → NewVersionDetected`
+6. `suppressNotified: (UpdateChannel, Option<Version>) → Option<UpdateChannel>`
+   - 同一プロセス内の通知済みバージョン以下なら event 非発行で終了（I-U4）
+7. `emit: UpdateChannel → NewVersionDetected`
+   - 発行したバージョンを通知済みとして記録する（揮発）
 
 ## Error Handling {#error-handling}
 
 - すべての `UpdateError` を application service の outer layer で握り潰す
 - ログは出すが UI 通知はしない（S14: silent）
-- リトライ・常駐 polling は行わない（I-U3）
+- 失敗時の即時リトライは行わない。次の確認は通常の 24 時間周期を待つ（I-U3）
 
 ## Dependencies {#dependencies}
 
@@ -60,7 +63,9 @@ struct CheckForUpdatesCommand {
 
 ## Notes {#notes}
 
-- **起動時 1 回のみ実行**。常駐 polling や手動チェックボタンは MVP 範囲外
+- **起動時 1 回 + 24 時間ごとに実行**（I-U3）。手動チェックボタンは MVP 範囲外
+- sleep / 休止復帰で timer が遅れる場合の吸収（monotonic clock での経過時間計測、
+  ウィンドウ focus 復帰時の経過確認など）は実装詳細とし、domain では規定しない
 - 通知 UI（Toast vs Modal）の選択は Phase 11a (ui-fields) で確定
 - ネットワーク失敗時に「更新確認できませんでした」を見せない方針:
   ユーザの作業フローを妨げない判断（discovery の core を尊重）

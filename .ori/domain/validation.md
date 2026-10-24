@@ -307,17 +307,17 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
 
 ### Given {#s14-given}
 
-- アプリ起動直後
+- アプリ起動時、または前回確認から 24 時間経過した定期確認時（I-U3）
 - ネットワーク断
 
 ### When {#s14-when}
 
-- `UpdateChannel::check_at_startup()` 実行
+- `UpdateChannel::check()` 実行
 
 ### Then {#s14-then}
 
 - HTTP 失敗 → `UpdateError` を application service が握り潰す
-- event **NewVersionDetected** は **発行されない**（I-U3 / domain-events.md 参照）
+- event **NewVersionDetected** は **発行されない**（S14 / domain-events.md 参照）
 - UI 通知なし、ログ出力のみ
 - ユーザの作業を妨げない
 
@@ -534,6 +534,27 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
 - 補足: このシナリオは S11 を拡張したもの。
   S11 の `StorageDirChanged` subscriber に infrastructure 層が追加された形
 
+## Scenario S23: 通知済みバージョンは定期確認で再通知しない {#s23-update-same-version-once}
+
+### Given {#s23-given}
+
+- current_version = `0.2.2`
+- 起動時の確認で `0.2.3` を検出し、event **NewVersionDetected** `{ latest_version: 0.2.3 }` を発行済み
+- ユーザは Toast を dismiss 済み（アプリは終了していない）
+
+### When {#s23-when}
+
+1. 前回確認から 24 時間経過し、定期確認で `UpdateChannel::check()` 実行 → 再び `0.2.3` を検出
+2. さらに 24 時間後の定期確認で `0.2.4` を検出
+
+### Then {#s23-then}
+
+- When 1: `latest_release = Some(0.2.3)` だが通知済みのため
+  event **NewVersionDetected** は **発行されない**（I-U4）。UI 通知なし
+- When 2: `0.2.4` は未通知のため event **NewVersionDetected** `{ latest_version: 0.2.4 }` を発行し、
+  Toast を表示する
+- アプリを再起動した場合は通知済み記録が消えるため、起動時の確認で再び通知される（I-U4 揮発）
+
 ### シナリオ漏れの検出ポリシー {#notes-coverage-policy}
 
 - 各 aggregate の **各 command を最低 1 シナリオでカバー** することを目標
@@ -550,6 +571,7 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
 ### Phase 5 / 6 への手戻りは無し {#notes-no-regression}
 
 - 22 シナリオすべてが既存の aggregate / event で表現できた
+  （S23 は I-U3 改訂・I-U4 新設時に追加。こちらも既存 event で表現できる）
 - ただし S4, S9 で「変化がない場合は event を発行しない」という暗黙の前提を
   application service 層に置く必要性を確認
 
