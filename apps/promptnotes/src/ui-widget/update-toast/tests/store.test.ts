@@ -147,3 +147,54 @@ describe('widget:widget-update-toast store', () => {
 		expect(listenFn).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe('widget:widget-update-toast startup check hook (ori-m2ra.1)', () => {
+	it('spec#invariants-lifecycle (I-UT1 / I-U3) — onSubscribed は listen 確立後に 1 回だけ呼ばれ、その中の emit を取りこぼさない', async () => {
+		const cap = makeListenCapture();
+		const payload = makePayload();
+		// onSubscribed の中で即 emit する = 起動時 check が event を emit するケース。
+		// listen 確立前に呼ばれていれば cap.emit が throw し、payload も set されない。
+		const onSubscribed = vi.fn(() => cap.emit(payload));
+		const store = createUpdateToastStore({
+			listenFn: cap.listenFn,
+			openUrlFn: vi.fn(),
+			onSubscribed
+		});
+
+		await store.start();
+		await store.start();
+
+		expect(onSubscribed).toHaveBeenCalledTimes(1);
+		expect(store.payload).toStrictEqual(payload);
+	});
+
+	it('spec#tp-ut-listen-failure-silent — listen 失敗時は onSubscribed を呼ばない', async () => {
+		const failingListen: UpdateEventListener = async () => {
+			throw new Error('boom');
+		};
+		const onSubscribed = vi.fn();
+		const store = createUpdateToastStore({
+			listenFn: failingListen,
+			openUrlFn: vi.fn(),
+			onSubscribed
+		});
+
+		await store.start();
+
+		expect(onSubscribed).not.toHaveBeenCalled();
+	});
+
+	it('S14 silent failure — onSubscribed が reject しても start は throw しない', async () => {
+		const cap = makeListenCapture();
+		const store = createUpdateToastStore({
+			listenFn: cap.listenFn,
+			openUrlFn: vi.fn(),
+			onSubscribed: async () => {
+				throw new Error('network down');
+			}
+		});
+
+		await expect(store.start()).resolves.toBeUndefined();
+		expect(store.payload).toBeNull();
+	});
+});

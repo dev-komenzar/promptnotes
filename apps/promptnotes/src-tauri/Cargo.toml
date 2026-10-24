@@ -28,6 +28,7 @@ tauri-plugin-dialog = "2.7.1"
 tauri-plugin-window-state = "2.4.1"
 tauri-plugin-updater = "2.10.1"
 tauri-plugin-clipboard-manager = "2"
+tauri-plugin-opener = "2.5.5"
 tauri-plugin-wdio = "1"
 specta = "2.0.0-rc.22"
 tauri-specta = { version = "2.0.0-rc.25", features = ["javascript", "typescript"] }
@@ -38,6 +39,7 @@ unicode-normalization = "0.1"
 sha2 = "0.10"
 hex = "0.4"
 notify = { version = "6", default-features = false, features = ["macos_kqueue"] }
+
 
 [dev-dependencies]
 proptest = "=1.6.0"

@@ -3,6 +3,7 @@
 	import { listen } from '@tauri-apps/api/event';
 	import { listNotes } from '$lib/note-feed/slices/list-feed';
 	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
+	import { checkForUpdates } from '$lib/update-distribution/slices/check-for-updates';
 	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 	import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
 	import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
@@ -35,6 +36,7 @@
 		onOpenSettings?: () => void;
 		loadSettingsFn?: typeof loadSettings;
 		listNotesFn?: typeof listNotes;
+		checkForUpdatesFn?: typeof checkForUpdates;
 		pendingFlush?: PendingFlushRegistry;
 		quitWindow?: QuitWindow | null;
 	};
@@ -43,6 +45,7 @@
 		onOpenSettings,
 		loadSettingsFn = loadSettings,
 		listNotesFn = listNotes,
+		checkForUpdatesFn = checkForUpdates,
 		pendingFlush = pendingFlushRegistry,
 		quitWindow
 	}: Props = $props();
@@ -113,6 +116,21 @@
 	let currentSettings = $state<Settings>({ ...DEFAULT_SETTINGS });
 	let draftRegion: ReturnType<typeof DraftRegion> | undefined;
 
+	// I-PM3: load-settings → check-for-updates の順で起動する。load-settings の成否に
+	// かかわらず settle したら check に進む (失敗は defaults fallback で silent)。
+	let resolveSettingsSettled: () => void = () => {};
+	const settingsSettled = new Promise<void>((resolve) => {
+		resolveSettingsSettled = resolve;
+	});
+
+	// I-U3 / ori-m2ra.1: 起動時 1 回の更新確認。widget-update-toast が
+	// `new_version_detected` の listen を確立した **後** に呼ばれる (onSubscribed) ので、
+	// Rust 側の emit を取りこぼさない。失敗は silent (S14 / C-CFU1)。
+	async function checkForUpdatesAtStartup(): Promise<void> {
+		await settingsSettled;
+		await checkForUpdatesFn().catch(() => {});
+	}
+
 	const themeSubscriber = createThemeSubscriber({
 		onThemeChanged: (theme) => {
 			// theme_changed event で currentSettings.theme を更新 (SSoT)。
@@ -134,7 +152,8 @@
 			})
 			.catch(() => {
 				// silent fallback to defaults
-			});
+			})
+			.finally(() => resolveSettingsSettled());
 		void listNotesFn()
 			.then((feed) => {
 				feedStore.hydrateNotes(feed.notes);
@@ -439,7 +458,7 @@
 	</div>
 {/if}
 
-<WidgetUpdateToast />
+<WidgetUpdateToast onSubscribed={checkForUpdatesAtStartup} />
 
 <WidgetExternalChangeConflict
 	localBody={conflictLocalBody}
