@@ -32,3 +32,9 @@ ori-6l4 完了後の別 follow-up issue (ori-2lm.8) で以下を追加する:
 - (6.b) TP-R1b: UpToDate / OlderVersion path でも UpdaterPort 呼出が 1 回であることを assert（C-CFU4 全 path 網羅）
 - (7.a / 本ファイル) blocker と follow-up issue を notes.md に固定
 - (1.a) aggregates.md の signature 修正 proposal 起票
+
+## 2026-10-24 proposal 作成
+
+- target: domain/aggregates.md#update-channel-aggregate-invariants
+- file: .ori/proposals/2026-10-24-check-for-updates-aggregates-update-channel-aggregate-invariants.md
+- reason: I-U3「確認は起動時 1 回のみ」では、アプリを終了せず使い続ける利用者が長期間更新に気付かない (ori-m2ra.4)
