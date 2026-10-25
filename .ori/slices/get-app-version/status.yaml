@@ -40,17 +40,5 @@ phases:
     passes: 1
     verdict: PASS
     passing_tests: 13
-dirty:
-  - source:
-      path: .ori/domain/workflows/get-app-version.md
-      sectionId: get-app-version
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: update-channel-aggregate
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-finalized_at: 2026-10-07
+dirty: []
+finalized_at: 2026-10-25
