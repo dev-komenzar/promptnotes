@@ -123,7 +123,7 @@
 		resolveSettingsSettled = resolve;
 	});
 
-	// I-U3 / ori-m2ra.1: 起動時 1 回の更新確認。widget-update-toast が
+	// I-U3 / ori-m2ra.1: 起動時の更新確認 (24 時間ごとの定期確認は Rust 側の背景 task)。widget-update-toast が
 	// `new_version_detected` の listen を確立した **後** に呼ばれる (onSubscribed) ので、
 	// Rust 側の emit を取りこぼさない。失敗は silent (S14 / C-CFU1)。
 	async function checkForUpdatesAtStartup(): Promise<void> {
