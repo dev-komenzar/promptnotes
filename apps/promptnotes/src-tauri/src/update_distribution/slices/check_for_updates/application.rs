@@ -37,8 +37,9 @@ impl<U: UpdaterPort, B: EventBus, L: NotifiedVersionLedger> CheckForUpdatesUseCa
         let current_version = cmd.current_version.clone();
         match self.try_execute(cmd) {
             Ok(channel) => channel,
-            Err(_e) => {
-                // S14 / C-CFU3: silent failure。実 wiring (ori-6l4) 後は `log::warn!("update check failed: {:?}", _e);` を有効化。
+            Err(e) => {
+                // S14 / C-CFU3: silent failure。UI には伝搬せず、ログ出力のみ。
+                log::warn!("update check failed: {e:?}");
                 UpdateChannel::without_release(current_version)
             }
         }

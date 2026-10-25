@@ -103,6 +103,7 @@ E2E での具体化:
 ### Then {#then}
 
 - invoke は **throw せず** `{ current_version: <ビルド時 version>, latest_release: null }` を返す
+  （ビルド時 version は `get_app_version` を Tauri 境界 invoke して取得し、テストに version を直書きしない）
   （C-CFU1: `Result` を露出しない。silent degradation。I-U1: current_version はビルド時定数）
 - `NewVersionDetected` は発行されない → 更新通知 Toast（`data-testid="widget.widget-update-toast.root"`）は
   **DOM に存在しない**（S14 / screen-3 / page-groups failure mode）。起動時の自動確認も失敗しているので
@@ -126,6 +127,9 @@ E2E での具体化:
   引き起こしており、TP2 の「Toast 不在」が空振りでないことを示す
 - **TP5 — 即時リトライなし / 24 時間周期**: 失敗後に同一確認内で再試行しないこと、次の確認が 24 時間後に
   なることは E2E では待てないため、check-for-updates slice の unit test（`tests.rs` TP-R2 / TP-P2 / TP-P5 / TP-P6）で担保する
+- **TP6 — ログ出力のみ（S14 Then「UI 通知なし、ログ出力のみ」の「ログ出力」）**: E2E では app のログを読まず、
+  check-for-updates slice の unit test（`tests.rs` TP-S14-6: 失敗時に `update check failed` の warn ログが 1 件、
+  TP-S14-7: 成功時は出さない）で代替担保する。「UI 通知なし」は TP2 が E2E で検証する
 - **check-for-updates slice unit test との分担**: 本 scenario は Update Distribution BC の 1 use case
   のみを対象とする。`check-for-updates` slice の unit test
   （`src-tauri/.../check_for_updates/tests.rs` の TP-S14-1..5, TP-I3, TP-T1）が Rust 層の silent

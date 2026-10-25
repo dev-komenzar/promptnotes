@@ -4,11 +4,31 @@ import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createServer, type Server } from 'node:http';
+import { createConnection } from 'node:net';
+// onPrepare で普通の Error を throw しても wdio launcher はログに出すだけで続行する。停止には SevereServiceError
+import { SevereServiceError } from 'webdriverio';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BINARY = resolve(__dirname, '../../../apps/promptnotes/src-tauri/target/debug/app');
 
+// tauri-driver の待受 port（@wdio/tauri-service の既定値）
+const DRIVER_PORT = 4444;
+
 let tmpDir: string;
+
+const isPortInUse = (port: number) =>
+  new Promise<boolean>((done) => {
+    const socket = createConnection({ port, host: '127.0.0.1' });
+    socket.setTimeout(1000, () => {
+      socket.destroy();
+      done(false);
+    });
+    socket.once('connect', () => {
+      socket.destroy();
+      done(true);
+    });
+    socket.once('error', () => done(false));
+  });
 let updaterServer: Server | undefined;
 
 function seedNote(dir: string, id: string, body: string): void {
@@ -63,17 +83,18 @@ function startUpdaterServer(modeFile: string): Promise<number> {
   });
 }
 
+// 'tauri:options' は WebdriverIO.Capabilities の型に無いため、型を明示した定数に切り出す
+const tauriCapability: WebdriverIO.Capabilities & { 'tauri:options': { application: string } } = {
+  browserName: 'tauri',
+  'tauri:options': { application: BINARY },
+};
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   specs: ['./tests/**/*.spec.ts'],
   maxInstances: 1,
   services: [['@wdio/tauri-service', { driverProvider: 'external' }]],
-  capabilities: [
-    {
-      browserName: 'tauri',
-      'tauri:options': { application: BINARY },
-    },
-  ],
+  capabilities: [tauriCapability],
   framework: 'mocha',
   mochaOpts: { ui: 'bdd', timeout: 120_000 },
   reporters: ['spec'],
@@ -83,6 +104,18 @@ export const config: WebdriverIO.Config = {
   connectionRetryCount: 3,
 
   onPrepare: async () => {
+    // XDG 隔離は Linux でしか効かない。他 platform では実ユーザ領域を汚すため実行しない
+    if (process.platform !== 'linux') {
+      throw new SevereServiceError(
+        `scenario:s14 は Linux のみ対応 (XDG による storage 隔離が効かない: ${process.platform})`,
+      );
+    }
+    if (await isPortInUse(DRIVER_PORT)) {
+      throw new SevereServiceError(
+        `tauri-driver port :${DRIVER_PORT} が使用中。残留 tauri-driver の可能性があるため ` +
+          '`pkill tauri-driver` で停止してから再実行してください',
+      );
+    }
     tmpDir = mkdtempSync(tmpdir() + '/promptnotes-scenario-s14-');
     const notesDir = join(tmpDir, 'notes');
     const configHome = join(tmpDir, 'config');

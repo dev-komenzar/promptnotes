@@ -98,3 +98,52 @@ production への正味の変更は **1 file**（debug seam のみ）。
   陽性対照）は満たす。
 - production 変更は debug seam 1 file のみ。RED 検出力は変異 A の実測で確認済み。
 - Verdict: **PASS**
+
+## Pass 2 (re-derive 2026-10-25) {#pass-2}
+
+> reviewer: ori-reviewer (fresh context)。対象は re-derive 後の spec.md#scenario-steps と tests/*.spec.ts、wdio.conf.ts。E2E 実測 (main session): 4 passing。Pass 1 は旧 testid / 旧 version を参照する stale な記述のため参照しない。
+
+### Then ↔ assertion coverage {#pass-2-coverage}
+
+Then 件数: spec.md#scenario-steps に 4 件 (main session 申告と一致)。
+
+| Then (source#anchor) | 期待される assertion | テスト (file:line) | 状態 |
+|---|---|---|---|
+| spec.md#scenario-steps Then HTTP 失敗の UpdateError を application service が握り潰す | invoke が reject せず `latest_release == null`、`current_version` 保持 | tests/s14-update-check-failure.spec.ts:63-67。補強: apps/promptnotes/src-tauri/src/update_distribution/slices/check_for_updates/tests.rs:269 `tp_s14_1_network_error_returns_channel_with_none` | VERIFIED |
+| spec.md#scenario-steps Then event NewVersionDetected は発行されない | Toast root が DOM 不在 (購読 store payload が null のまま) | tests/s14-update-check-failure.spec.ts:73 (陽性対照 :95-97)。補強: tests.rs:289 `tp_s14_2_network_error_publishes_no_event` (bus.count()==0) | VERIFIED |
+| spec.md#scenario-steps Then UI 通知なし、ログ出力のみ (UI 通知なしの半分) | エラー UI / Toast が出ない | tests/s14-update-check-failure.spec.ts:73 (Toast 不在のみ。エラー toast 等の他 UI 要素は未検査だが、domain 上 UI は Toast のみ) | VERIFIED |
+| spec.md#scenario-steps Then UI 通知なし、ログ出力のみ (「ログ出力」の半分) | 失敗時に log が出力される | E2E / unit のどちらにも assertion なし。実装は infrastructure.rs:87 `log::warn!("updater check failed")` に存在するが検証するテストが無い | **UNVERIFIED** |
+| spec.md#scenario-steps Then ユーザの作業を妨げない | seed Note がフィードに残存、永続 .md が無傷、ウィンドウ生存 | tests/s14-update-check-failure.spec.ts:78-79 | VERIFIED |
+
+### test-points 網羅 gate {#pass-2-test-points}
+
+spec.md#test-points は TP1〜TP5。TP1 (:63-67) / TP2 (:73) / TP3 (:78-79) / TP4 (:95-98 陽性対照) は E2E で assert 済み。TP5 (即時リトライなし / 24h 周期) は tests.rs の TP-R2 (:397) / TP-P2 (:691) / TP-P5 (:717) / TP-P6 (:731) で代替担保され、実在を確認。UNCOVERED なし。ただし Then「ログ出力」に対応する test-point が spec 側に存在しない (下記 Finding 1)。
+
+### Mode checklist (local tauri) {#pass-2-mode-checklist}
+
+| item | status | note |
+|---|---|---|
+| spec `runner: wdio` ↔ test ↔ wdio.conf.ts | PASS | `browser.tauri.execute` / `$`、conf は `@wdio/tauri-service`、architecture.md と一致 |
+| テストコード内に service lifecycle が無い | PASS | updater server / seed は `onPrepare`、`onComplete` で close + rmSync。spec は mode ファイル切替 + invoke + assert のみ |
+| docker-compose 不在 | PASS | compose-service 参加者ゼロ |
+| `tauri:options.application` == runtime binary | PASS | `target/debug/app` |
+
+### Findings {#pass-2-findings}
+
+- [1 Then ↔ assertion] **HIGH**: 「ログ出力のみ」のログ出力が UNVERIFIED。spec.md#test-points にも対応 TP が無く、E2E / unit いずれも log を assert していない。実装は infrastructure.rs:87 の `log::warn!` で存在するが、application.rs:41 のコメント (`実 wiring (ori-6l4) 後は log::warn! を有効化`) が stale のまま、application service (握り潰す層) 自体は log を出さず infra 層任せ。未検証 Then の LOW 化は禁止のため HIGH。推奨修正 (`/ori-generate` へ差し戻し): (a) 失敗時 log を捕捉して assert する unit test を tests.rs (または infrastructure の adapter test) に追加し、spec.md#test-points に TP を追加して N/A(代替担保) として紐付ける、または (b) E2E で app の log ファイル / stderr を読み `updater check failed` の出現を assert する。(a) が低コスト。application.rs:41 の stale コメントも更新すること。
+- [5 edge case] LOW: spec.ts:66 は `current_version` を `'0.2.3'` に、:98 も同様にハードコード。Cargo.toml version bump (リリース時に必ず変わる) で E2E が壊れる。推奨: Cargo.toml / tauri.conf から読む、または `typeof string` と非空の assert + 動的取得に。non-blocking だが保守負債。
+- [5 edge case] LOW: wdio.conf.ts は Linux ガード (非 linux で SevereServiceError) と tauri-driver 残留 port 検査を持たず、同系の s23 conf と不整合。XDG のみで隔離するため非 Linux では実環境を汚染しうる。推奨: s23 と同じガードを追加。
+- [5 edge case] LOW: Then「ユーザの作業を妨げない」の assert (:78-79) は seed Note の表示とファイル内容のみで、ウィンドウ生存・入力継続は間接的。許容範囲。
+- [6 トレース] PASS: it 名に `validation#s14-update-check-failure` を引用、最外殻 `describe('scenario:s14-update-check-failure')`。
+- [3 DDD / 4 副作用境界] PASS: seam は debug build 限定で本番挙動不変 (Pass 1 記載の通り)。
+
+## 総合判定 (Pass 2)
+
+**NEEDS_FIX**
+
+理由:
+1. Then「UI 通知なし、ログ出力のみ」のうち「ログ出力」を assert するテストが E2E / unit のどちらにも存在せず UNVERIFIED。代替担保も無いため HIGH (規則により LOW 不可)。
+2. 他の Then 3 件は VERIFIED。test-points TP1〜TP5 に UNCOVERED なし、mode checklist も PASS。
+3. 差し戻し先は `/ori-generate` (log 出力の assertion 追加と spec.md#test-points への TP 追記)。
+
+verdict: NEEDS_FIX
