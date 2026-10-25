@@ -43,6 +43,14 @@ function readNote(id: string): string {
   return readFileSync(join(NOTES_DIR, `${id}.md`), 'utf-8');
 }
 
+/** ビルド時 version (CARGO_PKG_VERSION) を Tauri 境界から取る。テストに version を直書きしない。 */
+async function buildVersion(): Promise<string> {
+  const result = await browser.tauri.execute(async (tauri) => {
+    return await tauri.core.invoke('get_app_version');
+  });
+  return result as string;
+}
+
 async function checkForUpdates(): Promise<UpdateChannelResponse> {
   const result = await browser.tauri.execute(async (tauri) => {
     return await tauri.core.invoke('check_for_updates');
@@ -63,7 +71,7 @@ describe('scenario:s14-update-check-failure', () => {
     const res = await checkForUpdates();
 
     // Then: Result を露出せず (C-CFU1)、失敗は latest_release=null に正規化される (S14 / I-U2)。
-    expect(res.current_version).toBe('0.2.3');
+    expect(res.current_version).toBe(await buildVersion());
     expect(res.latest_release).toBeNull();
   });
 
@@ -95,6 +103,8 @@ describe('scenario:s14-update-check-failure', () => {
     const toast = await $('[data-testid="widget.widget-update-toast.root"]');
     await toast.waitForExist({ timeout: 10000 });
     expect(await $('[data-testid="widget.widget-update-toast.latest-version"]').getText()).toBe('9.9.9');
-    expect(await $('[data-testid="widget.widget-update-toast.current-version"]').getText()).toContain('0.2.3');
+    expect(await $('[data-testid="widget.widget-update-toast.current-version"]').getText()).toContain(
+      await buildVersion(),
+    );
   });
 });

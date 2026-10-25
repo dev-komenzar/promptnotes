@@ -121,7 +121,7 @@ slice 完了時に成立すべき条件。括弧内は domain での出典。
 
 - **C-CFU1**: 戻り型に `Result` を露出しない。use case シグネチャは `execute(cmd) -> UpdateChannel`（Tauri command も `UpdateChannelResponse` を直接返す）
 - **C-CFU2**: `compare` の判定: `latest > current` → `NewVersion(Release)`、`==` → `UpToDate`、`<` → `OlderVersion`（I-U2）
-- **C-CFU3**: `UpdateError` は use case 内で握り潰し UI 層へ伝搬しない（S14）。ログ出力のみ
+- **C-CFU3**: `UpdateError` は use case 内で握り潰し UI 層へ伝搬しない（S14）。ログ出力のみ — `execute` の outer layer が失敗 1 回につき `log::warn!("update check failed: ...")` を 1 件出す（adapter 側の詳細ログとは別に、握り潰す層自身が記録する）
 - **C-CFU4**: 1 回の確認（`execute` 1 呼出）で `UpdaterPort::fetch_latest_release` を呼ぶのは **ちょうど 1 回**。失敗時も同一確認内で再試行しない（I-U3「即時リトライなし」）
 - **C-CFU5**: 1 回の確認で publish する `NewVersionDetected` は **高々 1 件**。payload は `current_version` / `latest_version` / `release_url` / `release_notes`
 - **C-CFU6**: 失敗時 / UpToDate 時 / OlderVersion 時 / 通知済み時 のいずれでも `EventBus::publish` は呼ばれない（S14 + I-U2 + I-U4）
@@ -179,6 +179,8 @@ phase 3 で failing test に展開する観点。Rust 側は `check_for_updates/
 - **TP-S14-4**: `ParseError` も silent
 - **TP-S14-4b**: `Ok` で返った version 文字列が parse 不能（`"0.4.0-rc1"`）でも silent
 - **TP-S14-5**: `RateLimited` も silent
+- **TP-S14-6**: 失敗（Network / Parse / RateLimited / parse 不能）1 回につき `update check failed` の warn ログを 1 件出し、UI へは伝搬しない（S14 Then「UI 通知なし、ログ出力のみ」/ C-CFU3）。`log` の出力は test 用 logger で捕捉する（adapter 境界）
+- **TP-S14-7**: 成功 path（NewVersion / 通知済み / UpToDate）では失敗ログを出さない
 
 ### リトライなし {#tp-no-retry}
 

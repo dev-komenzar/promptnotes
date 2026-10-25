@@ -754,3 +754,100 @@ proptest! {
         prop_assert_eq!(is_check_due(t0(), t0() + elapsed), elapsed >= DAY);
     }
 }
+
+// ===== TP-S14-6: 失敗時はログ出力のみ (S14 Then「UI 通知なし、ログ出力のみ」/ C-CFU3) =====
+
+mod log_capture {
+    //! `log` crate の出力を test thread ごとに捕捉する logger (adapter 境界の test double)。
+    use std::cell::RefCell;
+    use std::sync::Once;
+
+    thread_local! {
+        static CAPTURED: RefCell<Vec<(log::Level, String)>> = const { RefCell::new(Vec::new()) };
+    }
+
+    struct CaptureLogger;
+
+    impl log::Log for CaptureLogger {
+        fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+            true
+        }
+
+        fn log(&self, record: &log::Record<'_>) {
+            CAPTURED.with(|c| {
+                c.borrow_mut()
+                    .push((record.level(), record.args().to_string()))
+            });
+        }
+
+        fn flush(&self) {}
+    }
+
+    static LOGGER: CaptureLogger = CaptureLogger;
+    static INIT: Once = Once::new();
+
+    /// logger を (プロセスで 1 回) 登録し、この thread の捕捉バッファを空にする。
+    pub fn start() {
+        INIT.call_once(|| {
+            log::set_logger(&LOGGER).expect("no other logger is installed in unit tests");
+            log::set_max_level(log::LevelFilter::Trace);
+        });
+        CAPTURED.with(|c| c.borrow_mut().clear());
+    }
+
+    pub fn take() -> Vec<(log::Level, String)> {
+        CAPTURED.with(|c| std::mem::take(&mut *c.borrow_mut()))
+    }
+}
+
+/// spec.md#tp-s14 TP-S14-6 — 失敗 (Network / Parse / RateLimited / parse 不能) は warn ログを 1 件出す
+#[test]
+fn tp_s14_6_failure_is_logged_as_warning() {
+    for response in [
+        Err(UpdateError::NetworkError),
+        Err(UpdateError::ParseError),
+        Err(UpdateError::RateLimited),
+        Ok(raw("0.4.0-rc1", "https://example.com", "")),
+    ] {
+        log_capture::start();
+        let (uc, _u, bus) = rig(response);
+
+        let channel = uc.execute(cmd("0.3.1"));
+
+        let logs = log_capture::take();
+        let warns: Vec<_> = logs
+            .iter()
+            .filter(|(level, msg)| {
+                *level == log::Level::Warn && msg.contains("update check failed")
+            })
+            .collect();
+        assert_eq!(
+            warns.len(),
+            1,
+            "TP-S14-6: 失敗時は warn ログを 1 件 ({logs:?})"
+        );
+        assert!(
+            channel.latest_release().is_none(),
+            "TP-S14-6: UI へは伝搬しない"
+        );
+        assert_eq!(bus.count(), 0, "TP-S14-6: event も発行しない");
+    }
+}
+
+/// spec.md#tp-s14 TP-S14-7 — 成功 path (NewVersion / UpToDate / 通知済み) では失敗ログを出さない
+#[test]
+fn tp_s14_7_success_paths_do_not_log_failure() {
+    log_capture::start();
+    let (uc, _u, _bus) = rig_seq(vec![ok("0.4.0"), ok("0.4.0"), ok("0.3.1")], new_state());
+
+    for _ in 0..3 {
+        let _ = uc.execute(cmd("0.3.1"));
+    }
+
+    let logs = log_capture::take();
+    assert!(
+        logs.iter()
+            .all(|(_, msg)| !msg.contains("update check failed")),
+        "TP-S14-7: 成功 path では失敗ログを出さない ({logs:?})"
+    );
+}
