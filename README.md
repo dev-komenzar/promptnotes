@@ -70,6 +70,15 @@ promptnotes は Apple Developer Program に登録していないため、公証 
 xattr -dr com.apple.quarantine /Applications/promptnotes.app
 ```
 
+### アップデート
+
+起動時に新しいバージョンを確認し、見つかった場合は通知 (toast) からリリースページを開けます。
+
+> **v0.2.3 以前をお使いの方へ**
+> v0.2.2 / v0.2.3 には起動時の更新確認が組み込まれておらず、新しいバージョンが出ても通知されません。
+> 更新確認の修正を含むバージョン (v0.2.4 以降) は、[GitHub Releases](https://github.com/dev-komenzar/promptnotes/releases/latest) から手動でダウンロードして入れ替えてください。
+> 入れ替え後は、以降のバージョンから自動で通知されます。ノートは `.md` ファイルとして保存されたままなので、入れ替えによるデータ移行は不要です。
+
 ---
 
 ## 開発
