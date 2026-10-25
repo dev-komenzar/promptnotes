@@ -12,7 +12,7 @@ coherence:
     - domain/domain-events.md#note-file-deleted-externally
   hash:
     domain/ui-fields/screen-5.md#.*: 8ae9b5c9d594
-    domain/ui-fields/page-groups.md#.*: f5d0be02c55e
+    domain/ui-fields/page-groups.md#.*: a9fb317174a9
     domain/workflows/detect-external-changes.md#.*: a66910b0d892
     domain/domain-events.md#.*: 86acb64f8149
 ---

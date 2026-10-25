@@ -6,8 +6,9 @@ import { openUrl } from '@tauri-apps/plugin-opener';
  *
  * - I-UT1: page-main mount 時に listen を 1 回張り、unmount で解除
  * - I-UT2: NewVersionDetected 未発行時は payload=null のまま（silent, S14）
- * - I-UT3: 同セッション中の再 emit は最新で payload を上書き
- * - I-UT4: dismiss は payload=null（次回起動で再 emit があれば再表示）
+ * - I-UT3: 同セッション中の再 emit (24 時間ごとの定期確認で新しいバージョンを検出) は最新で payload を上書き
+ * - I-UT4: dismiss は payload=null。同じバージョンは同一プロセス内で再 emit されない (I-U4) ので
+ *   再表示されない。次回起動時、または定期確認でより新しいバージョンが emit されたら再表示
  * - I-UT5: view-release は openUrlFn を呼び、payload は維持
  * - onSubscribed: listen 確立 **後** に 1 回だけ呼ぶ hook。page-main はここで起動時の
  *   check-for-updates (I-U3) を invoke する。listen 前に emit されると取りこぼすため、

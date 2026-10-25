@@ -5,7 +5,7 @@ coherence:
   hash:
     domain/workflows/delete-note.md#.*: b727f18ad614
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
     domain/domain-events.md#.*: 86acb64f8149
     domain/validation.md#.*: a4490b2d3809
 ori:

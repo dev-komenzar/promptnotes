@@ -4,15 +4,15 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-07
+  last_derived: 2026-10-25
   derives_from:
     - domain/workflows/get-app-version.md#get-app-version
     - domain/aggregates.md#update-channel-aggregate
     - domain/bounded-contexts.md#update-distribution
   hash:
-    domain/workflows/get-app-version.md#.*: c3a5c313f0f5
-    domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/workflows/get-app-version.md#.*: a7ddfb091648
+    domain/aggregates.md#.*: e3aba26a3001
+    domain/bounded-contexts.md#.*: fe8bafba0f88
 ---
 
 # get-app-version — Specification {#get-app-version-spec}
@@ -30,7 +30,7 @@ coherence:
 > ネットワークアクセスは行わない。
 
 > domain/bounded-contexts.md#update-distribution より：
-> PromptNotes 側のロジックは「起動時に確認する」「通知する」「現在のバージョンを提示する」のみ。
+> PromptNotes 側のロジックは「起動時と 24 時間ごとに確認する」「通知する」「現在のバージョンを提示する」のみ。
 
 ## 入出力 {#io}
 
@@ -70,7 +70,10 @@ composition root（`commands.rs`）で読み、domain の純粋関数へ raw 文
 > **I-U1**: `current_version` は immutable（ビルド時定数）
 
 - 本 slice は I-U1 の定数を **読むだけ** で、書き換え・キャッシュ無効化等は行わない
-- I-U2 / I-U3 は本 slice の対象外（GitHub Releases に問い合わせない）
+- I-U2 / I-U3 / I-U4 は本 slice の対象外（GitHub Releases に問い合わせず、起動時 + 24 時間ごとの更新確認・通知済みバージョンの state とも無関係）
+
+> domain/workflows/get-app-version.md#notes より：
+> I-U3（起動時 + 24 時間ごとの更新確認）とは無関係: 本 query は GitHub Releases に問い合わせない
 
 ### slice 固有制約 {#invariants-slice-specific}
 

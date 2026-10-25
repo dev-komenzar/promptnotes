@@ -12,7 +12,7 @@ coherence:
   hash:
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
 ---
 
 # get-default-storage-dir — Specification {#get-default-storage-dir-spec}

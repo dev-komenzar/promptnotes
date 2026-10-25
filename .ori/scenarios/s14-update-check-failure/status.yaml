@@ -17,34 +17,4 @@ phases:
     state: done
   finalize:
     state: done
-dirty:
-  - source:
-      path: .ori/domain/validation.md
-      sectionId: s14-update-check-failure
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/workflows/check-for-updates.md
-      sectionId: check-for-updates
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/aggregates.md
-      sectionId: update-channel-aggregate
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/domain-events.md
-      sectionId: new-version-detected
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/ui-fields/screen-3.md
-      sectionId: screen-3
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
+dirty: []
