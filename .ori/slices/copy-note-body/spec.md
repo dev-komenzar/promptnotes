@@ -5,7 +5,7 @@ coherence:
   hash:
     domain/workflows/copy-note-body.md#.*: 5ec956893834
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
 ori:
   schema:
     propagation_level: file

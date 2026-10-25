@@ -16,7 +16,7 @@ coherence:
     - path: domain/ui-fields/screen-3.md#screen-3
       hash: 8da9c543d8da
     - path: domain/ui-fields/page-groups.md#widget-update-toast
-      hash: f5d0be02c55e
+      hash: a9fb317174a9
 ---
 
 # s23-update-same-version-once — Scenario Specification

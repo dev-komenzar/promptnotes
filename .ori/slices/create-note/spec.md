@@ -6,7 +6,7 @@ coherence:
     domain/workflows/create-note.md#.*: 6d0fdc24ceb7
     domain/aggregates.md#.*: c2eaa083eaf0
     domain/domain-events.md#.*: 86acb64f8149
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
     domain/ui-fields/screen-1.md#.*: 18a41b79b1f8
 ori:
   schema:
