@@ -38,20 +38,8 @@ phases:
     status: closed
     issue: ori-8os
     completed_at: 2026-06-27
-dirty:
-  - source:
-      path: .ori/domain/ui-fields/screen-3.md
-      sectionId: screen-3
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-  - source:
-      path: .ori/domain/workflows/check-for-updates.md
-      sectionId: check-for-updates
-    detected_at: 2026-10-24T05:05:40.790Z
-    affected_phase: derive
-    reason: edit
-finalized_at: 2026-06-27
+dirty: []
+finalized_at: 2026-10-25
 followup:
   - id: ori-2lm.8
     note: TauriUpdaterPort production wiring (blocked on ori-6l4)
