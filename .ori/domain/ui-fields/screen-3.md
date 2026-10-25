@@ -28,13 +28,14 @@ event を購読して表示する。
 | `{#screen-3-latest-version}` | 最新のバージョン | `Version` | ✓ | read-only label | 太字で強調 |
 | `{#screen-3-release-notes-summary}` | リリースノート（要約） | `String` | - | truncated text (2 行まで) | 全文は外部リンク |
 | `{#screen-3-view-release}` | 詳細を見る | (action → external URL) | - | inline link | `Release::url` を OS ブラウザで開く |
-| `{#screen-3-dismiss}` | × | (action) | - | small icon | Toast 閉じる（次回起動時に再表示） |
+| `{#screen-3-dismiss}` | × | (action) | - | small icon | Toast 閉じる（次回起動時 or より新しいバージョン検出時に再表示） |
 
 ## Cross-Field Rules {#cross-field-rules}
 
 ### 表示タイミング {#cross-display-timing}
 
-- アプリ起動時 1 回のみ `check-for-updates` 実行（I-U3）
+- アプリ起動時 1 回 + 以降 24 時間ごとに `check-for-updates` 実行（I-U3）
+- 同一バージョンの Toast は 1 プロセスにつき 1 回のみ（I-U4）
 - `NewVersionDetected` 受信時のみ Toast 表示
 - 失敗時 (NetworkError / ParseError / RateLimited) は **silent**（表示なし、S14）
 
@@ -48,8 +49,8 @@ event を購読して表示する。
 
 ### dismiss / view 後の挙動 {#cross-dismiss-view}
 
-- `screen-3-dismiss`: Toast を閉じるだけ。次回アプリ起動時に再度 `check-for-updates`
-  が走り、まだ新バージョンがあれば再表示
+- `screen-3-dismiss`: Toast を閉じるだけ。同じバージョンは同一プロセス内では再表示しない（I-U4）。
+  次回アプリ起動時、または定期確認でさらに新しいバージョンが見つかった時に再表示
 - `screen-3-view-release`: OS デフォルトブラウザで `Release::url` を開く。
   Toast はそのまま残す（ユーザが明示クローズするまで）
 

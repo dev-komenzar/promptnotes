@@ -327,8 +327,9 @@ struct SortPreferenceChanged {
 
 #### Trigger {#new-version-detected-trigger}
 
-`UpdateChannel::check_at_startup()` 成功 かつ `latest_release: Some(_)` の場合。
-起動時 1 回のみ発行される（I-U3）。
+`UpdateChannel::check()` 成功 かつ `latest_release: Some(_)` で、そのバージョンが
+同一プロセス内で未通知の場合。起動時および 24 時間ごとの定期確認で発行されうる（I-U3）が、
+同一バージョン（またはそれ以下）について 2 回目以降は発行しない（I-U4）。
 
 #### Payload {#new-version-detected-payload}
 
@@ -343,12 +344,12 @@ struct NewVersionDetected {
 
 #### Subscribers {#new-version-detected-subscribers}
 
-- **UI 層**: 起動時通知（Toast または Modal、Phase 11a UI 設計で確定）
+- **UI 層**: 新バージョン通知（Toast または Modal、Phase 11a UI 設計で確定）
 
 #### Timing {#new-version-detected-timing}
 
 非同期発行（network 呼び出しの結果）、購読は同期。
-失敗時は event を発行しない（silent failure、I-U3 補足）。
+失敗時は event を発行しない（silent failure、S14）。
 
 ## 発行しない event {#non-events}
 
