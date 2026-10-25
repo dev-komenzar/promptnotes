@@ -11,7 +11,7 @@ coherence:
     - domain/workflows/check-for-updates.md#check-for-updates
   hash:
     domain/ui-fields/screen-3.md#.*: 8da9c543d8da
-    domain/ui-fields/page-groups.md#.*: f5d0be02c55e
+    domain/ui-fields/page-groups.md#.*: a9fb317174a9
     domain/workflows/check-for-updates.md#.*: f08ad6cf0874
 ---
 

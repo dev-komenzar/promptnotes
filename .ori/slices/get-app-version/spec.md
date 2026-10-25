@@ -12,7 +12,7 @@ coherence:
   hash:
     domain/workflows/get-app-version.md#.*: a7ddfb091648
     domain/aggregates.md#.*: e3aba26a3001
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
 ---
 
 # get-app-version — Specification {#get-app-version-spec}
@@ -30,7 +30,7 @@ coherence:
 > ネットワークアクセスは行わない。
 
 > domain/bounded-contexts.md#update-distribution より：
-> PromptNotes 側のロジックは「起動時に確認する」「通知する」「現在のバージョンを提示する」のみ。
+> PromptNotes 側のロジックは「起動時と 24 時間ごとに確認する」「通知する」「現在のバージョンを提示する」のみ。
 
 ## 入出力 {#io}
 

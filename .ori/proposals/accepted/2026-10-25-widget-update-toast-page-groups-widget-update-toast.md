@@ -3,7 +3,9 @@ target: domain/ui-fields/page-groups.md#widget-update-toast
 by: pages/widget-update-toast
 reason: I-U3 改訂 (起動時 + 24h 定期確認) の連動更新から page-groups.md と bounded-contexts.md の「起動時」記述が漏れている (ori-m2ra.4)
 created: 2026-10-25
-status: pending
+status: accepted
+accepted_at: 2026-10-25
+accepted_by: human (takuya.kometan@gmail.com)
 ---
 
 # Proposal: page-groups.md / bounded-contexts.md の「起動時のみ」記述を I-U3 改訂に追随させる

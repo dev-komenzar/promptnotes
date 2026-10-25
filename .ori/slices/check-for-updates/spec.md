@@ -5,7 +5,7 @@ coherence:
   hash:
     domain/workflows/check-for-updates.md#.*: f08ad6cf0874
     domain/aggregates.md#.*: e3aba26a3001
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
     domain/domain-events.md#.*: cc1d928f09e4
     domain/validation.md#.*: a12e27d425ae
 ori:
@@ -29,7 +29,7 @@ aggregate root と `Version` / `Release` VO を定義する。
 > `NewVersionDetected` を発行する（I-U3 / I-U4）。失敗は silent。」
 >
 > domain/bounded-contexts.md#update-distribution より：本 BC は **generic subdomain**。Tauri v2 updater
-> plugin + GitHub Releases に外注し、PromptNotes 側は「確認する」「通知する」のみ。
+> plugin + GitHub Releases に外注し、PromptNotes 側は「起動時と 24 時間ごとに確認する」「通知する」のみ。
 
 2026-10-24 の I-U3 改訂（起動時 1 回のみ → 起動時 + 24 時間ごと）と I-U4 新設（同一バージョンの再通知なし）
 に伴う再 derive（proposal: `.ori/proposals/accepted/2026-10-24-check-for-updates-aggregates-update-channel-aggregate-invariants.md`、

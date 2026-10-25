@@ -20,9 +20,9 @@ coherence:
     - path: domain/ui-fields/screen-1.md#screen-1
       hash: 18a41b79b1f8
     - path: domain/ui-fields/page-groups.md#widget-external-change-conflict
-      hash: f5d0be02c55e
+      hash: a9fb317174a9
     - path: domain/ui-fields/page-groups.md#widget-external-delete-notice
-      hash: f5d0be02c55e
+      hash: a9fb317174a9
     - path: domain/ui-fields/screen-5.md#screen-5
       hash: 8ae9b5c9d594
     - path: domain/glossary.md#glossary-timestamp
