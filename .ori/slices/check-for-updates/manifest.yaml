@@ -6,6 +6,7 @@ derives_from:
   - domain/bounded-contexts.md#update-distribution
   - domain/domain-events.md#new-version-detected
   - domain/validation.md#s14-update-check-failure
+  - domain/validation.md#s23-update-same-version-once
 relations: []
 implementation:
   language: rust

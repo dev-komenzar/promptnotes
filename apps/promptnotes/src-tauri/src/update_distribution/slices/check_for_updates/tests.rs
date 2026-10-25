@@ -1,34 +1,45 @@
 //! Tests for slice `check-for-updates`.
 //!
-//! Spec: `.ori/slices/check-for-updates/spec.md#test-perspectives`.
+//! Spec: `.ori/slices/check-for-updates/spec.md#test-points`.
 //!
 //! 設計メモ:
-//! - `UpdaterPort` を inject。production impl (`TauriUpdaterPort`) は ori-6l4 release infra 完了後に別 issue で追加。
-//! - GREEN 化は phase 4 (impl-green) の責務。RED 段階では未実装 module の path 解決失敗を期待する。
+//! - `UpdaterPort` / `EventBus` は adapter 境界なので test double (`FakeUpdater` / `FakeBus`) を inject。
+//! - `NotifiedVersionLedger` は production の `InMemoryUpdateCheckState` を実物で使う
+//!   (spec.md#tp-production-fixture)。
+//! - 時刻は引数注入 (`SystemTime`) で検証し、実時間で待たない (spec.md#tp-periodic)。
 
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell, RefMut};
+use std::collections::VecDeque;
 use std::rc::Rc;
+use std::time::{Duration, SystemTime};
 
-use crate::update_distribution::shared::ports::{EventBus, RawRelease, UpdaterPort};
+use proptest::prelude::*;
+
+use crate::update_distribution::shared::ports::{
+    EventBus, NotifiedVersionLedger, RawRelease, UpdaterPort,
+};
 use crate::update_distribution::shared::types::{
     NewVersionDetected, UpdateChannel, UpdateError, Version,
 };
 
 use super::application::CheckForUpdatesUseCase;
-use super::domain::CheckForUpdatesCommand;
+use super::domain::{
+    is_check_due, should_notify, CheckForUpdatesCommand, PERIODIC_CHECK_TICK, UPDATE_CHECK_INTERVAL,
+};
+use super::infrastructure::InMemoryUpdateCheckState;
 
 // ===== test doubles =====
 
-/// `UpdaterPort` の test double。`with_response` で挙動 inject、呼出回数を観測。
+/// `UpdaterPort` の test double。応答を queue で inject (1 確認 = 1 応答)、呼出回数を観測。
 struct FakeUpdater {
-    response: RefCell<Option<Result<RawRelease, UpdateError>>>,
+    responses: RefCell<VecDeque<Result<RawRelease, UpdateError>>>,
     call_count: Cell<usize>,
 }
 
 impl FakeUpdater {
-    fn with_response(result: Result<RawRelease, UpdateError>) -> Self {
+    fn with_responses(results: Vec<Result<RawRelease, UpdateError>>) -> Self {
         Self {
-            response: RefCell::new(Some(result)),
+            responses: RefCell::new(results.into()),
             call_count: Cell::new(0),
         }
     }
@@ -41,10 +52,10 @@ impl FakeUpdater {
 impl UpdaterPort for FakeUpdater {
     fn fetch_latest_release(&self) -> Result<RawRelease, UpdateError> {
         self.call_count.set(self.call_count.get() + 1);
-        self.response
-            .borrow_mut()
-            .take()
-            .expect("FakeUpdater response was already consumed (test should set per call)")
+        let mut queue: RefMut<'_, _> = self.responses.borrow_mut();
+        queue
+            .pop_front()
+            .expect("FakeUpdater response queue exhausted (test should set one per check)")
     }
 }
 
@@ -87,17 +98,46 @@ fn raw(version: &str, url: &str, notes: &str) -> RawRelease {
     }
 }
 
-type Rig = (
-    CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
-    Rc<FakeUpdater>,
-    Rc<FakeBus>,
-);
+type UseCase = CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>, Rc<InMemoryUpdateCheckState>>;
+
+type Rig = (UseCase, Rc<FakeUpdater>, Rc<FakeBus>);
+
+/// production fixture: 通知済み state は `InMemoryUpdateCheckState` の実物 (spec.md#tp-production-fixture)。
+fn new_state() -> Rc<InMemoryUpdateCheckState> {
+    Rc::new(InMemoryUpdateCheckState::new(SystemTime::UNIX_EPOCH))
+}
 
 fn rig(updater_response: Result<RawRelease, UpdateError>) -> Rig {
-    let updater = Rc::new(FakeUpdater::with_response(updater_response));
+    rig_seq(vec![updater_response], new_state())
+}
+
+/// 同じ ledger (state) で複数回確認する rig。応答は確認 1 回につき 1 つ消費する。
+fn rig_seq(
+    responses: Vec<Result<RawRelease, UpdateError>>,
+    state: Rc<InMemoryUpdateCheckState>,
+) -> Rig {
+    let updater = Rc::new(FakeUpdater::with_responses(responses));
     let bus = Rc::new(FakeBus::new());
-    let uc = CheckForUpdatesUseCase::new(updater.clone(), bus.clone());
+    let uc = CheckForUpdatesUseCase::new(updater.clone(), bus.clone(), state);
     (uc, updater, bus)
+}
+
+fn cmd(current: &str) -> CheckForUpdatesCommand {
+    CheckForUpdatesCommand {
+        current_version: v(current),
+    }
+}
+
+fn v(s: &str) -> Version {
+    Version::from_str(s).expect("valid semver in test")
+}
+
+fn ok(version: &str) -> Result<RawRelease, UpdateError> {
+    Ok(raw(
+        version,
+        &format!("https://github.com/x/y/releases/tag/v{version}"),
+        "",
+    ))
 }
 
 // ===== TP-N*: happy path — 新版検出 =====
@@ -262,10 +302,7 @@ fn tp_s14_3_execute_returns_update_channel_not_result() {
     // 関数ポインタとして束縛できれば戻り型が compile-time に固定される。
     // Result<UpdateChannel, _> では型不一致でこの test が落ちる。
     #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
-    let _: fn(
-        &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
-        CheckForUpdatesCommand,
-    ) -> UpdateChannel = CheckForUpdatesUseCase::execute;
+    let _: fn(&UseCase, CheckForUpdatesCommand) -> UpdateChannel = CheckForUpdatesUseCase::execute;
 }
 
 /// spec.md#tp-s14 TP-S14-4 — ParseError も silent
@@ -355,7 +392,7 @@ fn tp_r1b_non_new_version_paths_also_call_updater_exactly_once() {
     }
 }
 
-/// spec.md#tp-no-retry TP-R2 — NetworkError 後にリトライしない (I-U3)
+/// spec.md#tp-no-retry TP-R2 — NetworkError 後に同一確認内で再試行しない (I-U3 / C-CFU4)
 #[test]
 fn tp_r2_failure_path_does_not_retry() {
     let (uc, updater, _b) = rig(Err(UpdateError::NetworkError));
@@ -431,10 +468,7 @@ fn tp_i3_none_release_implies_no_event() {
 #[test]
 fn tp_t1_execute_signature_has_no_result() {
     #[allow(clippy::type_complexity)] // signature pin: 型を固定すること自体が目的
-    let _: fn(
-        &CheckForUpdatesUseCase<Rc<FakeUpdater>, Rc<FakeBus>>,
-        CheckForUpdatesCommand,
-    ) -> UpdateChannel = CheckForUpdatesUseCase::execute;
+    let _: fn(&UseCase, CheckForUpdatesCommand) -> UpdateChannel = CheckForUpdatesUseCase::execute;
 }
 
 // ===== infrastructure: release_url (ori-m2ra.2) =====
@@ -454,4 +488,269 @@ fn release_page_url_points_to_github_release_tag_page() {
         release_page_url("v0.2.3"),
         "https://github.com/dev-komenzar/promptnotes/releases/tag/v0.2.3"
     );
+}
+
+// ===== TP-D*: I-U4 / S23 — 通知済みバージョンの再通知抑止 =====
+
+fn published_versions(bus: &FakeBus) -> Vec<Version> {
+    bus.events().into_iter().map(|e| e.latest_version).collect()
+}
+
+/// spec.md#tp-notified-once TP-D1 — 同一バージョンを 2 回受信 → 2 回目は event 0 件、
+/// ただし戻り値は Some(0.2.3) のまま (S23 When 1 / I-U4)
+#[test]
+fn tp_d1_same_version_is_notified_only_once() {
+    let (uc, _u, bus) = rig_seq(vec![ok("0.2.3"), ok("0.2.3")], new_state());
+
+    let first = uc.execute(cmd("0.2.2"));
+    assert_eq!(bus.count(), 1, "TP-D1: 1 回目は通知する");
+    assert_eq!(
+        first.latest_release().map(|r| r.version()),
+        Some(&v("0.2.3"))
+    );
+
+    let second = uc.execute(cmd("0.2.2"));
+    assert_eq!(
+        bus.count(),
+        1,
+        "TP-D1: 通知済みの 0.2.3 は再通知しない (I-U4)"
+    );
+    assert_eq!(
+        second.latest_release().map(|r| r.version()),
+        Some(&v("0.2.3")),
+        "TP-D1: 抑止しても確認結果は Some(0.2.3) (S23 Then)"
+    );
+}
+
+/// spec.md#tp-notified-once TP-D2 — 0.2.3 通知済みの後に 0.2.4 → 通知する (S23 When 2)
+#[test]
+fn tp_d2_newer_version_after_notified_is_notified() {
+    let (uc, _u, bus) = rig_seq(vec![ok("0.2.3"), ok("0.2.3"), ok("0.2.4")], new_state());
+
+    for _ in 0..3 {
+        let _ = uc.execute(cmd("0.2.2"));
+    }
+
+    assert_eq!(
+        published_versions(&bus),
+        vec![v("0.2.3"), v("0.2.4")],
+        "TP-D2: 0.2.3 は 1 回、0.2.4 は未通知なので通知"
+    );
+}
+
+/// spec.md#tp-notified-once TP-D3 — 0.2.4 通知済みで 0.2.3 (current より新しいが通知済み以下) → 0 件
+#[test]
+fn tp_d3_version_below_notified_is_suppressed() {
+    let (uc, _u, bus) = rig_seq(vec![ok("0.2.4"), ok("0.2.3")], new_state());
+
+    let _ = uc.execute(cmd("0.2.2"));
+    let second = uc.execute(cmd("0.2.2"));
+
+    assert_eq!(
+        published_versions(&bus),
+        vec![v("0.2.4")],
+        "TP-D3: 通知済み以下は再通知しない (I-U4「以下」)"
+    );
+    assert!(
+        second.latest_release().is_some(),
+        "TP-D3: 0.2.3 > current 0.2.2 なので I-U2 上は Some のまま"
+    );
+}
+
+/// spec.md#tp-notified-once TP-D4 — 新しい state (= 再起動相当) では再び通知する (I-U4 揮発)
+#[test]
+fn tp_d4_fresh_state_notifies_again() {
+    let (first_uc, _u1, first_bus) = rig_seq(vec![ok("0.2.3")], new_state());
+    let _ = first_uc.execute(cmd("0.2.2"));
+    assert_eq!(first_bus.count(), 1);
+
+    let (restarted_uc, _u2, restarted_bus) = rig_seq(vec![ok("0.2.3")], new_state());
+    let _ = restarted_uc.execute(cmd("0.2.2"));
+    assert_eq!(
+        restarted_bus.count(),
+        1,
+        "TP-D4: 再起動後は通知済み記録が消えるので再び通知 (S23 Then)"
+    );
+}
+
+/// spec.md#tp-notified-once TP-D5 — 通知しなかった確認 (失敗 / UpToDate / Older) は ledger を変えない
+#[test]
+fn tp_d5_non_notifying_checks_do_not_touch_ledger() {
+    let (uc, _u, bus) = rig_seq(
+        vec![
+            Err(UpdateError::NetworkError),
+            ok("0.2.2"), // UpToDate
+            ok("0.2.1"), // Older
+            Err(UpdateError::ParseError),
+            ok("0.2.3"),
+        ],
+        new_state(),
+    );
+
+    for _ in 0..5 {
+        let _ = uc.execute(cmd("0.2.2"));
+    }
+
+    assert_eq!(
+        published_versions(&bus),
+        vec![v("0.2.3")],
+        "TP-D5: 前段の非通知確認の後でも新版は通知される (C-CFU9)"
+    );
+}
+
+/// spec.md#tp-notified-once TP-D7 — should_notify 純粋関数
+#[test]
+fn tp_d7_should_notify_truth_table() {
+    assert!(should_notify(&v("0.2.3"), None), "未通知なら通知");
+    assert!(
+        should_notify(&v("0.2.4"), Some(&v("0.2.3"))),
+        "通知済みより新しければ通知"
+    );
+    assert!(
+        !should_notify(&v("0.2.3"), Some(&v("0.2.3"))),
+        "同一は通知しない"
+    );
+    assert!(
+        !should_notify(&v("0.2.2"), Some(&v("0.2.3"))),
+        "通知済み以下は通知しない"
+    );
+}
+
+/// spec.md#tp-notified-once — ledger の claim は判定と記録を 1 操作で行う (C-CFU8)
+#[test]
+fn tp_d8_ledger_claim_records_only_on_success() {
+    let state = InMemoryUpdateCheckState::new(SystemTime::UNIX_EPOCH);
+
+    assert!(state.claim(&v("0.2.3")), "初回 claim は true");
+    assert!(!state.claim(&v("0.2.3")), "同一 claim は false");
+    assert!(
+        !state.claim(&v("0.2.2")),
+        "以下の claim は false (記録も変えない)"
+    );
+    assert!(state.claim(&v("0.2.4")), "より新しい claim は true");
+    assert!(!state.claim(&v("0.2.3")), "0.2.4 記録後の 0.2.3 は false");
+}
+
+fn arb_version() -> impl Strategy<Value = Version> {
+    (0u32..4, 0u32..4, 0u32..4).prop_map(|(a, b, c)| Version::new(a, b, c))
+}
+
+proptest! {
+    /// spec.md#tp-notified-once TP-D6 — 任意のバージョン列を同じ state で確認すると、
+    /// publish されたバージョン列は狭義単調増加かつ current より大きい (C-CFU8 / I-U2 / I-U4)
+    #[test]
+    fn tp_d6_published_versions_strictly_increase(
+        current in arb_version(),
+        seen in proptest::collection::vec(arb_version(), 0..12),
+    ) {
+        let responses = seen.iter().map(|ver| ok(&ver.to_string())).collect::<Vec<_>>();
+        let (uc, _u, bus) = rig_seq(responses, new_state());
+        for _ in 0..seen.len() {
+            let _ = uc.execute(CheckForUpdatesCommand { current_version: current.clone() });
+        }
+
+        let published = published_versions(&bus);
+        for w in published.windows(2) {
+            prop_assert!(w[0] < w[1], "published must strictly increase: {:?}", published);
+        }
+        for p in &published {
+            prop_assert!(p > &current, "published {p:?} must be > current {current:?}");
+        }
+        // 見えた中で current より大きい最大値は必ず通知されている (取りこぼしなし)
+        if let Some(max_newer) = seen.iter().filter(|s| *s > &current).max() {
+            prop_assert_eq!(published.last(), Some(max_newer));
+        } else {
+            prop_assert!(published.is_empty());
+        }
+    }
+}
+
+// ===== TP-P*: I-U3 — 24 時間周期の判定 =====
+
+const HOUR: Duration = Duration::from_secs(60 * 60);
+const DAY: Duration = Duration::from_secs(24 * 60 * 60);
+const SEC: Duration = Duration::from_secs(1);
+
+fn t0() -> SystemTime {
+    // 任意の基準時刻 (2026-10-25 付近)。UNIX_EPOCH 近傍の underflow を避ける。
+    SystemTime::UNIX_EPOCH + Duration::from_secs(1_793_000_000)
+}
+
+/// spec.md#tp-periodic TP-P1 — 周期 24h / tick 1h の定数
+#[test]
+fn tp_p1_interval_and_tick_constants() {
+    assert_eq!(UPDATE_CHECK_INTERVAL, DAY, "TP-P1: I-U3 の周期は 24 時間");
+    assert_eq!(
+        PERIODIC_CHECK_TICK, HOUR,
+        "TP-P1: due 判定 tick は 1 時間 (C-CFU11)"
+    );
+}
+
+/// spec.md#tp-periodic TP-P2 — 境界: 24h-1s は not due、24h / 24h+1s は due
+#[test]
+fn tp_p2_due_boundary() {
+    assert!(!is_check_due(t0(), t0() + DAY - SEC));
+    assert!(is_check_due(t0(), t0() + DAY));
+    assert!(is_check_due(t0(), t0() + DAY + SEC));
+}
+
+/// spec.md#tp-periodic TP-P3 — wall clock 巻き戻り (now < last) は due
+#[test]
+fn tp_p3_clock_going_backwards_is_due() {
+    assert!(
+        is_check_due(t0(), t0() - SEC),
+        "TP-P3: 巻き戻りは due (C-CFU11)"
+    );
+}
+
+/// spec.md#tp-periodic TP-P4 — 未確認の state はプロセス起動時刻を基準にする
+#[test]
+fn tp_p4_unchecked_state_uses_process_start() {
+    let state = InMemoryUpdateCheckState::new(t0());
+    assert!(!state.is_due(t0()), "起動直後は not due");
+    assert!(!state.is_due(t0() + DAY - SEC));
+    assert!(state.is_due(t0() + DAY), "起動から 24h 後は due");
+}
+
+/// spec.md#tp-periodic TP-P5 — begin_check で前回確認時刻が更新される (起動時 invoke / 定期共通)
+#[test]
+fn tp_p5_begin_check_resets_baseline() {
+    let state = InMemoryUpdateCheckState::new(t0());
+    let checked_at = t0() + 3 * HOUR;
+    state.begin_check(checked_at);
+
+    assert!(
+        !state.is_due(checked_at + DAY - SEC),
+        "前回確認から 24h 未満は not due"
+    );
+    assert!(state.is_due(checked_at + DAY), "前回確認から 24h で due");
+}
+
+/// spec.md#tp-periodic TP-P6 — begin_due_check は due のときだけ true + 更新、not due は false + 不変
+#[test]
+fn tp_p6_begin_due_check_only_when_due() {
+    let state = InMemoryUpdateCheckState::new(t0());
+
+    assert!(!state.begin_due_check(t0() + HOUR), "not due → false");
+    assert!(
+        state.is_due(t0() + DAY),
+        "not due の begin_due_check は基準を変えない"
+    );
+
+    let due_at = t0() + DAY + HOUR;
+    assert!(state.begin_due_check(due_at), "due → true");
+    assert!(
+        !state.is_due(due_at + HOUR),
+        "true を返したら基準が due_at に更新される"
+    );
+    assert!(state.is_due(due_at + DAY));
+}
+
+proptest! {
+    /// spec.md#tp-periodic TP-P7 — is_check_due(last, last + elapsed) == (elapsed >= 24h)
+    #[test]
+    fn tp_p7_due_iff_elapsed_at_least_interval(elapsed_secs in 0u64..(3 * 24 * 60 * 60)) {
+        let elapsed = Duration::from_secs(elapsed_secs);
+        prop_assert_eq!(is_check_due(t0(), t0() + elapsed), elapsed >= DAY);
+    }
 }

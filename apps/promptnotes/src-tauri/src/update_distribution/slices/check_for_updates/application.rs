@@ -2,25 +2,33 @@
 //!
 //! `execute` シグネチャは `(cmd) -> UpdateChannel` (Result 露出なし、C-CFU1)。
 //! 失敗 / UpToDate / OlderVersion は全て `UpdateChannel::without_release` に正規化される
-//! (S14 silent failure + I-U2)。
+//! (S14 silent failure + I-U2)。同一プロセス内で通知済みのバージョン以下は event を発行しない
+//! (I-U4。`NotifiedVersionLedger` が揮発 state を持つ)。
 
 use std::cmp::Ordering;
 
-use crate::update_distribution::shared::ports::{EventBus, RawRelease, UpdaterPort};
+use crate::update_distribution::shared::ports::{
+    EventBus, NotifiedVersionLedger, RawRelease, UpdaterPort,
+};
 use crate::update_distribution::shared::types::{
     NewVersionDetected, Release, UpdateChannel, UpdateError, Version,
 };
 
 use super::domain::{CheckForUpdatesCommand, Comparison};
 
-pub struct CheckForUpdatesUseCase<U: UpdaterPort, B: EventBus> {
+pub struct CheckForUpdatesUseCase<U: UpdaterPort, B: EventBus, L: NotifiedVersionLedger> {
     updater: U,
     bus: B,
+    ledger: L,
 }
 
-impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
-    pub fn new(updater: U, bus: B) -> Self {
-        Self { updater, bus }
+impl<U: UpdaterPort, B: EventBus, L: NotifiedVersionLedger> CheckForUpdatesUseCase<U, B, L> {
+    pub fn new(updater: U, bus: B, ledger: L) -> Self {
+        Self {
+            updater,
+            bus,
+            ledger,
+        }
     }
 
     /// pure entry point: `Result` を返さない (C-CFU1)。
@@ -37,7 +45,7 @@ impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
     }
 
     /// 内部 pipeline (`workflows/check-for-updates.md#steps`)。`?` で early return。
-    /// I-U3 通り fetch は **1 回のみ** (リトライループなし、C-CFU4)。
+    /// 1 回の確認で fetch は **1 回のみ** (即時リトライなし、I-U3 / C-CFU4)。
     fn try_execute(&self, cmd: CheckForUpdatesCommand) -> Result<UpdateChannel, UpdateError> {
         let raw = self.updater.fetch_latest_release()?;
         let release = parse_release(raw)?;
@@ -45,7 +53,12 @@ impl<U: UpdaterPort, B: EventBus> CheckForUpdatesUseCase<U, B> {
             Comparison::NewVersion(release) => {
                 let channel =
                     UpdateChannel::with_release(cmd.current_version.clone(), release.clone());
-                // C-CFU5: 新版時のみ event 1 件 publish
+                // step 6 suppressNotified (I-U4 / C-CFU8): 通知済み以下なら event 非発行。
+                // claim は判定と記録を 1 操作で行う。確認結果 (Some) はそのまま返す。
+                if !self.ledger.claim(release.version()) {
+                    return Ok(channel);
+                }
+                // step 7 emit (C-CFU5): 未通知の新版のみ event 1 件 publish
                 self.bus.publish(NewVersionDetected {
                     current_version: cmd.current_version,
                     latest_version: release.version().clone(),
