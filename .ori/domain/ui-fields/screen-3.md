@@ -5,13 +5,15 @@ ori:
   depends_on:
     - type-definitions:index
     - workflow:check-for-updates
+    - workflow:install-update
 ---
 
 # Screen 3: Update Notification {#screen-3}
 
 新バージョン検出時の起動時通知 UI。
 [check-for-updates](../workflows/check-for-updates.md) の `NewVersionDetected`
-event を購読して表示する。
+event を購読して表示する。対応配布形式では [install-update](../workflows/install-update.md)
+でその場で更新して再起動できる。
 
 ## Purpose {#purpose}
 
@@ -28,6 +30,8 @@ event を購読して表示する。
 | `{#screen-3-latest-version}` | 最新のバージョン | `Version` | ✓ | read-only label | 太字で強調 |
 | `{#screen-3-release-notes-summary}` | リリースノート（要約） | `String` | - | truncated text (2 行まで) | 全文は外部リンク |
 | `{#screen-3-view-release}` | 詳細を見る | (action → external URL) | - | inline link | `Release::url` を OS ブラウザで開く |
+| `{#screen-3-install-update}` | Update & restart | (action → install-update) | - | primary button | `InstallationKind::is_installable()` のときだけ表示（I-U6）。押すと install → Flush → 再起動 |
+| `{#screen-3-install-status}` | 更新状態 | `Idle \| Installing \| Failed` | - | inline text | Installing 中は「Updating…」、Failed 時は失敗メッセージ |
 | `{#screen-3-dismiss}` | × | (action) | - | small icon | Toast 閉じる（次回起動時 or より新しいバージョン検出時に再表示） |
 
 ## Cross-Field Rules {#cross-field-rules}
@@ -53,6 +57,16 @@ event を購読して表示する。
   次回アプリ起動時、または定期確認でさらに新しいバージョンが見つかった時に再表示
 - `screen-3-view-release`: OS デフォルトブラウザで `Release::url` を開く。
   Toast はそのまま残す（ユーザが明示クローズするまで）
+
+### Update & restart の挙動 {#cross-install-update}
+
+- `screen-3-install-update` は `is_update_installable` が true のときだけ表示する（I-U6）。
+  false（nix 等）のときは View release / dismiss のみ（S26）
+- 押すと `screen-3-install-status = Installing`（「Updating…」）にし、install 中はボタンと dismiss を無効化する
+- 成功: page-main が全 pending Note を Flush してからアプリを再起動する（I-U8、S24）
+- 失敗: `screen-3-install-status = Failed` で失敗メッセージを表示し、ボタンを再び押せるようにする。
+  View release は使える（I-U7、S25）
+- download 進捗（%）は表示しない（MVP 範囲外）
 
 ### 抑制ロジック（MVP 範囲外） {#cross-suppression}
 
@@ -81,9 +95,10 @@ Phase 11b で確定。現時点では：
 - 実装側: `UpdaterPlugin` trait (Phase 10 types) が GitHub Releases から
   Release 情報取得
 - このスクリーンは「取得済みの NewVersionDetected event を購読」するだけ
-- 実際の更新 install は Tauri updater plugin の標準フロー（ユーザがバージョン
-  リンクから GitHub Release ページに行き、download or auto-update を実行）
-- MVP では「自動 install」「再起動して更新」までは扱わない（spec で明示されていない）
+- 更新 install は [install-update](../workflows/install-update.md) が Tauri updater plugin に委譲する
+  （ユーザが「Update & restart」を押したときだけ。I-U5）
+- 再起動前の Flush は page-main が orchestrate する（I-U8。quit 時の S13 と同じ pending flush 経路）
+- 非対応の配布形式では従来どおり View release で GitHub Release ページから手動更新する（I-U6）
 
 ### 表示文言 {#notes-wording}
 

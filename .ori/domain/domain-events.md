@@ -369,6 +369,11 @@ Phase 2 / Phase 5 で候補に挙がったが、domain event として発行し�
   ファイルウォッチャーは rename を delete＋create の 2 イベントとして報告するため、
   `NoteFileDeletedExternally` + `NoteFileCreatedExternally` の連続発行で十分
 
+- **UpdateInstalled**:
+  インストール結果は [install-update](workflows/install-update.md) の戻り値として
+  要求元の UI がそのまま受け取る。購読する BC が他になく、成功直後にアプリは再起動するため
+  event として配信する意味がない
+
 ## Notes {#notes}
 
 ### in-process 同期発行の根拠 {#notes-sync-rationale}
