@@ -1,0 +1,154 @@
+---
+coherence:
+  source: derived
+  last_derived: 2026-11-01
+  hash:
+    domain/workflows/install-update.md#.*: c0633544b381
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/validation.md#.*: a226e34cf459
+ori:
+  schema:
+    propagation_level: file
+---
+
+# install-update spec {#install-update-spec}
+
+> This file is a derived document. Edit the source manifest + domain docs and re-run `/ori-derive install-update`.
+
+## 概要 {#overview}
+
+ユーザが更新通知 (widget-update-toast) の「Update & restart」を押したときに、最新リリースを取得し直して
+download → 署名検証 → install する command slice。成功時はインストールしたバージョンを返し、
+再起動は呼出側 (page-main) が全 Note の Flush 後に `restart_app` で行う。
+
+> domain/workflows/install-update.md#install-update より：「インストールできるのは updater 対応の配布形式だけ（I-U6）。
+> 成功したらインストールしたバージョンを返し、呼出側（page-main）が全 Note を Flush してからアプリを再起動する（I-U8）。」
+
+併せて、通知 UI がボタンを出してよいかを返す query `is_update_installable` と、Flush 後に呼ぶ
+`restart_app` を同じ slice の command として公開する (workflow の Dependencies `AppRestarter`)。
+
+## 入出力 {#io}
+
+### Input {#io-input}
+
+```rust
+pub struct InstallUpdateCommand {
+    pub current_version: Version,        // build_version() を parse (I-U1)
+    pub installation: InstallationKind,  // tauri::utils::platform::bundle_type() から導出
+}
+```
+
+- `is_update_installable` / `restart_app` は引数なし
+
+### Output {#io-output}
+
+- `install_update` → `Result<String /* installed version */, InstallUpdateErrorResponse>`
+- `is_update_installable` → `bool`
+- `restart_app` → 戻らない (プロセス再起動)
+- domain event: なし (domain-events.md#non-events UpdateInstalled)
+
+### Errors {#io-errors}
+
+`InstallUpdateError` (UI に返す。silent にしない、I-U7):
+
+| variant | 条件 |
+|--|--|
+| `UnsupportedInstallation` | `InstallationKind::Unbundled` (I-U6) |
+| `NoUpdateAvailable` | 取得し直した最新版 `<= current_version` (I-U7)、または plugin がリリースなしを返した |
+| `CheckFailed` | 最新リリースの取得 / version parse に失敗 |
+| `DownloadFailed` | download 失敗 |
+| `InstallFailed` | 署名検証失敗 / OS へのインストール失敗 (deb/rpm の権限昇格拒否を含む) |
+
+TS へは `{ kind: "<variant>", message: string }` に射影する。
+
+## 不変条件 {#invariants}
+
+### UpdateChannel Aggregate 由来 {#invariants-update-channel-aggregate}
+
+- **I-U5**: install はユーザ要求時のみ。本 slice は起動時 / 定期確認から呼ばれない
+- **I-U6**: `Unbundled` は `UnsupportedInstallation`。updater には一切触れない
+- **I-U7**: `current_version` より新しいリリースのみ install。失敗は UI に返す
+- **I-U8**: `restart_app` は install 成功後、Flush 完了後にのみ呼ばれる (呼出順序は page-main の責務)
+
+### slice 固有制約 {#invariants-slice-specific}
+
+- **C-IU1**: 1 回の `install_update` で updater の fetch は 1 回、download_and_install は高々 1 回
+- **C-IU2**: version 比較は domain (`Version` の Ord) が担う。updater plugin の comparator は permissive にする (check-for-updates と同じ方針)
+- **C-IU3**: `NoUpdateAvailable` / `UnsupportedInstallation` / `CheckFailed` のときは download_and_install を呼ばない
+- **C-IU4**: `InstallationKind` は `BundleType` から導出する: `App`/`Dmg` → `MacApp`、`AppImage`/`Deb`/`Rpm`/`Msi`/`Nsis` は同名、`None` (bundle 種別なし) → `Unbundled`
+- **C-IU5**: check-for-updates の揮発 state (通知済みバージョン I-U4 / 前回確認時刻) を読まない・変えない
+
+## 境界契約 {#boundary-contract}
+
+- boundary kind: `tauri_command`
+- Rust: `apps/promptnotes/src-tauri/src/update_distribution/slices/install_update/commands.rs`
+  - `install_update(app_handle) -> Result<String, InstallUpdateErrorResponse>` (async)
+  - `is_update_installable() -> bool`
+  - `restart_app(app_handle)`
+  - `lib.rs` の `invoke_handler!` に配線
+- TS: `apps/promptnotes/src/lib/update-distribution/slices/install-update/index.ts`
+  - `installUpdate(): Promise<string>` (reject 値は `InstallUpdateErrorResponse`)
+  - `isUpdateInstallable(): Promise<boolean>`
+  - `restartApp(): Promise<void>`
+- 禁止: UI 層が `@tauri-apps/plugin-updater` を直接呼んで install すること (I-U6 / I-U7 の判定を迂回する)
+
+## テスト観点 {#test-points}
+
+Rust 側は `install_update/tests.rs`。`UpdateInstaller` は adapter 境界の test double (`FakeInstaller`)。
+
+### happy path {#tp-install-success}
+
+- **TP-S1**: `Bundled(AppImage)`、current `0.2.4`、fetch `0.2.5` → `Ok(0.2.5)`、download_and_install 1 回 (S24)
+- **TP-S2**: fetch した版が通知時と異なる新しい版 (`0.2.6`) でもそれを install して `Ok(0.2.6)`
+
+### I-U6: 非対応配布形式 {#tp-unbundled}
+
+- **TP-U1**: `Unbundled` → `Err(UnsupportedInstallation)`、fetch も install も 0 回 (S26)
+- **TP-U2**: `InstallationKind::is_installable` は `Bundled(_)` 全 variant で true、`Unbundled` で false
+- **TP-U3**: `BundleType` → `InstallationKind` の導出 (C-IU4)。`None` → `Unbundled`
+
+### I-U7: 新しくない版 {#tp-not-newer}
+
+- **TP-N1**: fetch `0.2.4` (同一) / `0.2.3` (古い) → `Err(NoUpdateAvailable)`、install 0 回
+- **TP-N2**: proptest — 任意の (current, fetched) で install が呼ばれるのは `fetched > current` のときだけ
+
+### 失敗の伝搬 {#tp-failures}
+
+- **TP-F1**: fetch 失敗 → `Err(CheckFailed)`、install 0 回
+- **TP-F2**: fetch した version が parse 不能 → `Err(CheckFailed)`
+- **TP-F3**: download 失敗 → `Err(DownloadFailed)` / install 失敗 → `Err(InstallFailed)` (S25)、それぞれ fetch 1 回・install 1 回 (C-IU1)
+
+### boundary test {#tp-boundary}
+
+- **TP-B1**: TS — `installUpdate()` が `invoke('install_update')` を 1 回呼び、resolve 値を返す / reject 値をそのまま reject
+- **TP-B2**: TS — `isUpdateInstallable()` / `restartApp()` がそれぞれ `invoke('is_update_installable')` / `invoke('restart_app')` を呼ぶ
+- **TP-B3**: エラー DTO の `kind` が variant 名と一致する (Rust unit)
+
+## 実装ノート {#impl-notes}
+
+### アーキ層への落とし込み {#impl-layers}
+
+```
+apps/promptnotes/src-tauri/src/update_distribution/
+├── shared/
+│   ├── types/installation_kind.rs  # InstallationKind / BundleFormat (新設)
+│   ├── types/install_update_error.rs # InstallUpdateError (新設)
+│   └── ports.rs                    # + UpdateInstaller / PendingUpdate
+└── slices/install_update/
+    ├── mod.rs
+    ├── domain.rs          # InstallUpdateCommand / ensure_installable / ensure_newer (純粋)
+    ├── application.rs     # InstallUpdateUseCase<I>: ensure_installable → fetch → ensure_newer → download_and_install
+    ├── infrastructure.rs  # TauriUpdateInstaller / current_installation_kind()
+    ├── commands.rs        # install_update / is_update_installable / restart_app
+    └── tests.rs
+```
+
+- updater の async API は check-for-updates と同じく `block_in_place` で同期化する
+- tauri-specta 未採用のため bindings 再生成は無い (DoD rule 4 対象外)
+
+### Out of scope {#out-of-scope}
+
+- download 進捗 (%) の通知
+- 再起動前の Flush (page-main / widget-update-toast の責務)
+- install 中のアプリ終了の扱い (updater plugin の挙動に従う)
