@@ -5,7 +5,7 @@ coherence:
   hash:
     domain/workflows/remove-tag.md#.*: b27eb7d105b1
     domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: 957e7f4a4930
+    domain/bounded-contexts.md#.*: fe8bafba0f88
     domain/domain-events.md#.*: 86acb64f8149
 ori:
   schema:

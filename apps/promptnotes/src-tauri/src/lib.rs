@@ -32,12 +32,22 @@ pub fn run() {
         .manage(Mutex::new(
             note_feed::slices::detect_external_changes::commands::WatcherState::new(),
         ))
+        // I-U3 / I-U4: 更新確認の揮発 state (前回確認時刻 / 通知済みバージョン)。
+        // 起動時刻を前回確認時刻の初期値にし、frontend の起動時 invoke と定期確認 task が共有する。
+        .manage(Arc::new(
+            update_distribution::slices::check_for_updates::infrastructure::InMemoryUpdateCheckState::new(
+                std::time::SystemTime::now(),
+            ),
+        ))
         // S22 / C-DEC11: `StorageDirChanged` の Infrastructure 層 subscriber。
         // cross-BC 配線のため composition root で登録する (この slice の
         // commands.rs module doc / .ori/scenarios/s22.../notes.md に理由を記録)。
         .setup(|app| {
             note_feed::slices::detect_external_changes::commands::
                 register_storage_dir_changed_subscriber(app.handle().clone());
+            // I-U3: 起動時確認は page-main が invoke する。ここでは 24h ごとの定期確認 task を起動する。
+            update_distribution::slices::check_for_updates::commands::
+                spawn_periodic_update_check(app.handle().clone());
             Ok(())
         })
         // S13 (.ori/domain/validation.md#s13-quit-flush) の連続 Flush は

@@ -2,8 +2,8 @@
 
 ## 概要 {#overview}
 
-アプリ起動時の更新チェックが **HTTP 失敗しても silent に握り潰され**（S14 / C-CFU1 / C-CFU3）、
-`NewVersionDetected` を発行しない（I-U3）ため更新通知 Toast が mount されず、UI 通知なし
+更新チェック（起動時 / 24 時間ごとの定期確認）が **HTTP 失敗しても silent に握り潰され**（S14 / C-CFU1 / C-CFU3）、
+`NewVersionDetected` を発行しない（S14）ため更新通知 Toast が mount されず、UI 通知なし
 （ログ出力のみ）でユーザの作業を妨げない、ことを E2E で検証する。
 
 ## テスト方式: debug endpoint seam + 実 HTTP 失敗 {#test-approach}
@@ -34,8 +34,8 @@
 
 | 検証項目 | 検証方法 |
 |---|---|
-| 更新チェック失敗は reject せず `latest_release=null`（核 / C-CFU1 / S14） | E2E step 1（mode=fail → invoke → `current_version=0.2.1`, `latest_release=null`） |
-| `NewVersionDetected` 非発行 → UI 通知なし（I-U3 / screen-3 / page-groups failure mode） | E2E step 2（`[data-testid="widget-update-toast"]` が `isExisting()==false`） |
+| 更新チェック失敗は reject せず `latest_release=null`（核 / C-CFU1 / S14） | E2E step 1（mode=fail → invoke → `current_version=<ビルド時 version>`, `latest_release=null`） |
+| `NewVersionDetected` 非発行 → UI 通知なし（S14 / screen-3 / page-groups failure mode） | E2E step 2（`[data-testid="widget.widget-update-toast.root"]` が `isExisting()==false`） |
 | ユーザの作業を妨げない | E2E step 3（seed Note がフィードに残存・永続化ファイル無傷） |
 | 陽性対照（非空虚性）: 成功時は event → Toast mount | E2E step 4（mode=release → `latest_release.version=9.9.9` → Toast + `screen-3-latest-version=9.9.9`） |
 | Rust 層 silent failure（C-CFU1..C-CFU6 / I-U2） | `check-for-updates` slice unit test（`tests.rs` TP-S14-1..5, TP-I3, TP-T1）— 20 passed |
@@ -72,10 +72,11 @@ production への正味の変更は **1 file**:
 
 ## 既知の未対応 / 補足 {#known-issues}
 
-- **起動時 invoke wiring は未実装**: production の frontend は現状 `check_for_updates` を起動時に
-  invoke していない（command は `invoke_handler` 登録済み）。本 scenario は validation の When
-  「`UpdateChannel::check_at_startup()` 実行」を Tauri 境界 invoke で再現する。起動時 wiring は
-  本 scenario のスコープ外（follow-up 候補）。
+- **起動時 invoke wiring**: ori-m2ra.1（PR #491）で page-main が listen 確立後に `check_for_updates` を
+  自動 invoke するようになった。mode ファイルの既定 `fail` により起動時の自動確認も失敗し、step 2 の
+  「Toast 不在」はその確認も含めて検証する。
+- **24 時間ごとの定期確認**（I-U3 改訂、ori-m2ra.4）: Rust 背景 task が同じ確認処理を呼ぶ。E2E では
+  24 時間待てないため Tauri 境界 invoke で確認処理を再実行し、周期判定は slice unit test（TP-P*）で担保する。
 - **platform key は build target 依存**: 陽性対照の `latest.json` は linux x86_64 の
   `platforms["linux-x86_64"]` を使う。別 OS/arch で走らせる場合は key を合わせる必要がある
   （`bundle_type()` が None の debug no-bundle build では installer suffix なしの key が使われる）。

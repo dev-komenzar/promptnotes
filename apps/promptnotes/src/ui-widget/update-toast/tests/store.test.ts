@@ -63,7 +63,7 @@ describe('widget:widget-update-toast store', () => {
 		expect(store.payload).toStrictEqual(payload);
 	});
 
-	it('spec#invariants-lifecycle (I-UT3) — 再 emit は最新で上書き', async () => {
+	it('spec#tp-ut-latest-overrides (I-UT3) — 再 emit は最新で上書き', async () => {
 		const cap = makeListenCapture();
 		const store = createUpdateToastStore({ listenFn: cap.listenFn, openUrlFn: vi.fn() });
 
@@ -88,6 +88,23 @@ describe('widget:widget-update-toast store', () => {
 
 		expect(store.payload).toBeNull();
 		expect(openUrlFn).not.toHaveBeenCalled();
+	});
+
+	it('spec#tp-ut-redisplay-on-newer (I-UT4 / I-UT3) — dismiss 後に定期確認で新しいバージョンが届くと再表示', async () => {
+		const cap = makeListenCapture();
+		const store = createUpdateToastStore({ listenFn: cap.listenFn, openUrlFn: vi.fn() });
+
+		await store.start();
+		// 起動時の確認で 1.4.0 を受信 → dismiss
+		cap.emit(makePayload({ latest_version: '1.4.0' }));
+		store.dismiss();
+		expect(store.payload).toBeNull();
+
+		// 24 時間後の定期確認で未通知の 1.4.1 が届く (同一バージョンは発行側が抑止する、I-U4)
+		cap.emit(makePayload({ latest_version: '1.4.1', release_url: 'https://example.com/v1.4.1' }));
+
+		expect(store.payload?.latest_version).toBe('1.4.1');
+		expect(store.payload?.release_url).toBe('https://example.com/v1.4.1');
 	});
 
 	it('spec#tp-ut-view-release-opens — view-release で openUrlFn を 1 回呼び payload は維持', async () => {
@@ -149,7 +166,7 @@ describe('widget:widget-update-toast store', () => {
 });
 
 describe('widget:widget-update-toast startup check hook (ori-m2ra.1)', () => {
-	it('spec#invariants-lifecycle (I-UT1 / I-U3) — onSubscribed は listen 確立後に 1 回だけ呼ばれ、その中の emit を取りこぼさない', async () => {
+	it('spec#tp-ut-subscribed-hook (I-UT8) — onSubscribed は listen 確立後に 1 回だけ呼ばれ、その中の emit を取りこぼさない', async () => {
 		const cap = makeListenCapture();
 		const payload = makePayload();
 		// onSubscribed の中で即 emit する = 起動時 check が event を emit するケース。
@@ -184,7 +201,7 @@ describe('widget:widget-update-toast startup check hook (ori-m2ra.1)', () => {
 		expect(onSubscribed).not.toHaveBeenCalled();
 	});
 
-	it('S14 silent failure — onSubscribed が reject しても start は throw しない', async () => {
+	it('spec#tp-ut-subscribed-hook (I-UT8 / S14) — onSubscribed が reject しても start は throw しない', async () => {
 		const cap = makeListenCapture();
 		const store = createUpdateToastStore({
 			listenFn: cap.listenFn,

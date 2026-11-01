@@ -38,3 +38,11 @@ ori-6l4 完了後の別 follow-up issue (ori-2lm.8) で以下を追加する:
 - target: domain/aggregates.md#update-channel-aggregate-invariants
 - file: .ori/proposals/accepted/2026-10-24-check-for-updates-aggregates-update-channel-aggregate-invariants.md
 - reason: I-U3「確認は起動時 1 回のみ」では、アプリを終了せず使い続ける利用者が長期間更新に気付かない (ori-m2ra.4)
+
+## 2026-10-25 re-derive (I-U3 改訂 / I-U4 新設、ori-m2ra.4)
+
+- 定期確認は Rust 背景 task (`commands::spawn_periodic_update_check`) が 1h tick ごとに wall clock で 24h 経過を判定。
+  起動時の確認は page-main が listen 確立後に invoke する既存経路 (ori-m2ra.1) を維持
+- I-U4 の通知済みバージョンと前回確認時刻は `InMemoryUpdateCheckState` (揮発、`lib.rs` で manage)
+- phase 管理: 旧 phase issue (ori-2lm.1〜.7) は closed のため、今回の再 derive は親 issue ori-m2ra.4 の notes で追跡した
+- review: slice PASS / widget-update-toast PASS / s23 PASS / s14 Pass 3 PASS (Pass 2 の HIGH「ログ出力」未検証は TP-S14-6/7 で解消)

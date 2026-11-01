@@ -1,4 +1,4 @@
-use super::types::{NewVersionDetected, UpdateError};
+use super::types::{NewVersionDetected, UpdateError, Version};
 
 /// Parse 前の生 GitHub Releases payload。`UpdaterPort` の戻り型。
 /// `Version::from_str` での parse は use case 側の責務 (`workflows/check-for-updates.md#steps` step 2)。
@@ -11,8 +11,7 @@ pub struct RawRelease {
 
 /// Tauri v2 updater plugin の薄ラッパー port (`workflows/check-for-updates.md#dependencies`)。
 ///
-/// production impl (`TauriUpdaterPort`) は release infrastructure 整備 (ori-6l4) 完了後に
-/// 別 follow-up issue で追加する。本 slice では `FakeUpdater` (test) のみ実装。
+/// production impl は `check_for_updates::infrastructure::TauriUpdaterPort` (ori-2lm.8)。
 pub trait UpdaterPort {
     fn fetch_latest_release(&self) -> Result<RawRelease, UpdateError>;
 }
@@ -21,6 +20,17 @@ pub trait UpdaterPort {
 /// (`domain-events.md#notes-sync-rationale`)。
 pub trait EventBus {
     fn publish(&self, event: NewVersionDetected);
+}
+
+/// 同一プロセス内で通知済みの `Release::version` を保持する揮発 state の port (I-U4)。
+///
+/// `claim` は「通知すべきか」の判定と「通知済みとして記録」を 1 操作で行う
+/// (`check-for-updates` spec C-CFU8)。production impl は
+/// `check_for_updates::infrastructure::InMemoryUpdateCheckState`。
+pub trait NotifiedVersionLedger {
+    /// `version` を通知すべきなら通知済みを `version` に更新して `true`。
+    /// 通知済みバージョン以下なら state を変えずに `false`。
+    fn claim(&self, version: &Version) -> bool;
 }
 
 impl<T: UpdaterPort + ?Sized> UpdaterPort for std::rc::Rc<T> {
@@ -32,5 +42,17 @@ impl<T: UpdaterPort + ?Sized> UpdaterPort for std::rc::Rc<T> {
 impl<T: EventBus + ?Sized> EventBus for std::rc::Rc<T> {
     fn publish(&self, event: NewVersionDetected) {
         (**self).publish(event)
+    }
+}
+
+impl<T: NotifiedVersionLedger + ?Sized> NotifiedVersionLedger for std::rc::Rc<T> {
+    fn claim(&self, version: &Version) -> bool {
+        (**self).claim(version)
+    }
+}
+
+impl<T: NotifiedVersionLedger + ?Sized> NotifiedVersionLedger for std::sync::Arc<T> {
+    fn claim(&self, version: &Version) -> bool {
+        (**self).claim(version)
     }
 }

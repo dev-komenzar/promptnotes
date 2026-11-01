@@ -37,3 +37,29 @@ spec.md と domain docs を通読し、意味的乖離・観点漏れ・解釈�
 3. test set が TP-N / TP-F / TP-P / TP-B / TP-T のすべての spec#test-points を網羅する
 4. 境界契約 (public_entry、invoke_handler 配線、情報源共有 `build_version()`) が spec 通りに実装されている
 5. 検出した 3 件はいずれも LOW (運用前提に依存する軽微な注意点のみで、spec / domain 文書に根拠を持つ乖離は無い)
+
+## Pass 2 (re-derive 2026-10-25) {#pass-2}
+
+> ori-m2ra.4 (I-U3 改訂 + I-U4 新設) に伴う再 derive。本 slice は文言追随のみで実装・テスト共に変更なし。
+
+### 1. 変更差分の確認 {#pass-2-diff}
+
+- spec.md: `last_derived` と domain hash を更新。`invariants-update-channel-aggregate` section に I-U4 を「本 slice の対象外」として追記し、`workflows/get-app-version.md#notes` の引用に I-U3 の表現を「起動時 + 24 時間ごと」へ揃えた。
+- `commands.rs` / `domain.rs` / `application.rs` / `tests.rs` に変更なし (git diff で確認)。
+- `AppVersion` / `to_app_version` / `GetAppVersionUseCase` / `build_version()` 共有の情報源 (C-GAV5) は Pass 1 時点のまま。
+
+### 2. domain 再写像の整合性 {#pass-2-coherence}
+
+- I-U1 (immutable) のみを依存する slice であり、I-U2 / I-U3 / I-U4 は spec #invariants-update-channel-aggregate で「対象外」と明示されている。
+- `workflows/get-app-version.md#notes` の引用も改訂後の表現 (「起動時 + 24 時間ごと」) に揃っており、`check-for-updates` の I-U3 改訂と文言ずれなし。
+- `aggregates.md` の hash (`e3aba26a3001`) は `check-for-updates` 側の記録と一致 — I-U4 を含む版が参照されている。
+
+### 3. 検出事項 {#pass-2-findings}
+
+- 新規検出なし。Pass 1 の findings も依然 LOW のままで実装への影響は無い。
+
+### 総合判定 {#pass-2-verdict}
+
+本 slice は domain hash 追随と「対象外」注記の文言追加のみで、`get-app-version` 本体の振る舞い (C-GAV1〜C-GAV6) は spec・impl・test 共に Pass 1 PASS のまま維持されている。I-U4 新設は本 slice の責務外であることも明示されており、意味的乖離は無い。
+
+verdict: PASS

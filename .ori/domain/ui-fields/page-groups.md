@@ -67,8 +67,8 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 - **kind**: ui-widget
 - **screens**: [screen-3](screen-3.md)
 - **対応 workflow**: check-for-updates
-- **mount trigger**: アプリ起動時の `NewVersionDetected` event 受信
-- **unmount trigger**: dismiss / view-release のいずれかをユーザがクリック
+- **mount trigger**: `NewVersionDetected` event 受信（起動時および 24 時間ごとの定期確認。I-U3 / I-U4）
+- **unmount trigger**: dismiss をユーザがクリック（view-release では残る。screen-3 cross-dismiss-view）
 - **依存する page**: page-main (toast は parent page の overlay area に表示)
 - **failure mode**: `NewVersionDetected` 未発行時は **mount されない** (silent, S14)
 
