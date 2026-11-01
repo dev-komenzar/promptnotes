@@ -1,5 +1,6 @@
 import { listen as tauriListen } from '@tauri-apps/api/event';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { installUpdate, isUpdateInstallable } from '$lib/update-distribution/slices/install-update';
 
 /**
  * widget-update-toast の購読 + dismiss / view-release ロジックを保持する store。
@@ -13,6 +14,11 @@ import { openUrl } from '@tauri-apps/plugin-opener';
  * - onSubscribed: listen 確立 **後** に 1 回だけ呼ぶ hook。page-main はここで起動時の
  *   check-for-updates (I-U3) を invoke する。listen 前に emit されると取りこぼすため、
  *   check は必ず購読確立後に走らせる (ori-m2ra.1)
+ * - I-UT9 (I-U6): start 時に installableFn で「Update & restart」を出せるか判定する。失敗時は false
+ *   (通知のみ)
+ * - I-UT10 (I-U5 / S24): install は installStatus=installing の間は多重実行しない。成功したら
+ *   onInstalled (page-main: 全 Note Flush → 再起動、I-U8) を await する
+ * - I-UT11 (I-U7 / S25): install 失敗は installStatus=failed にして再実行可能に戻す。payload は維持
  */
 
 export type NewVersionDetectedPayload = {
@@ -30,10 +36,22 @@ export type UpdateUrlOpener = (url: string) => void | Promise<void>;
 
 export type UpdateSubscribedHook = () => void | Promise<void>;
 
+export type UpdateInstallableFn = () => Promise<boolean>;
+
+export type UpdateInstallFn = () => Promise<string>;
+
+/** install 成功後に呼ぶ hook。page-main が全 pending Note を Flush してから再起動する (I-U8)。 */
+export type UpdateInstalledHook = (installedVersion: string) => void | Promise<void>;
+
+export type InstallStatus = 'idle' | 'installing' | 'failed';
+
 export type UpdateToastStoreDeps = {
 	listenFn?: UpdateEventListener;
 	openUrlFn?: UpdateUrlOpener;
 	onSubscribed?: UpdateSubscribedHook;
+	installableFn?: UpdateInstallableFn;
+	installFn?: UpdateInstallFn;
+	onInstalled?: UpdateInstalledHook;
 };
 
 export type UpdateToastStore = ReturnType<typeof createUpdateToastStore>;
@@ -58,8 +76,13 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 	const listenFn = deps.listenFn ?? defaultListenFn;
 	const openUrlFn = deps.openUrlFn ?? defaultOpenUrlFn;
 	const onSubscribed = deps.onSubscribed;
+	const installableFn = deps.installableFn ?? isUpdateInstallable;
+	const installFn = deps.installFn ?? installUpdate;
+	const onInstalled = deps.onInstalled;
 
 	let payload = $state<NewVersionDetectedPayload | null>(null);
+	let installable = $state(false);
+	let installStatus = $state<InstallStatus>('idle');
 	let unsubscribe: (() => void) | null = null;
 
 	async function start(): Promise<void> {
@@ -67,10 +90,18 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 		try {
 			unsubscribe = await listenFn((p) => {
 				payload = p;
+				// より新しい版の通知で失敗表示はリセットする。install 中は状態を変えない。
+				if (installStatus === 'failed') installStatus = 'idle';
 			});
 		} catch {
 			// I-UT2 / S14: listen 失敗は silent。toast は出さない。
 			return;
+		}
+		try {
+			installable = await installableFn();
+		} catch {
+			// I-UT9: 判定できなければ通知のみ (View release) にとどめる。
+			installable = false;
 		}
 		try {
 			await onSubscribed?.();
@@ -85,7 +116,24 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 	}
 
 	function dismiss(): void {
+		if (installStatus === 'installing') return;
 		payload = null;
+		installStatus = 'idle';
+	}
+
+	async function install(): Promise<void> {
+		if (!payload || !installable || installStatus === 'installing') return;
+		installStatus = 'installing';
+		let installedVersion: string;
+		try {
+			installedVersion = await installFn();
+		} catch (err) {
+			console.error('[update] install failed', err);
+			installStatus = 'failed';
+			return;
+		}
+		// 成功時は onInstalled (Flush → 再起動) に進む。再起動までは installing のまま。
+		await onInstalled?.(installedVersion);
 	}
 
 	async function viewRelease(): Promise<void> {
@@ -97,9 +145,16 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 		get payload() {
 			return payload;
 		},
+		get installable() {
+			return installable;
+		},
+		get installStatus() {
+			return installStatus;
+		},
 		start,
 		stop,
 		dismiss,
+		install,
 		viewRelease
 	};
 }

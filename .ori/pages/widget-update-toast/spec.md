@@ -4,15 +4,17 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-25
+  last_derived: 2026-11-01
   derives_from:
     - domain/ui-fields/screen-3.md#screen-3
     - domain/ui-fields/page-groups.md#widget-update-toast
     - domain/workflows/check-for-updates.md#check-for-updates
+    - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-3.md#.*: 8da9c543d8da
-    domain/ui-fields/page-groups.md#.*: a9fb317174a9
+    domain/ui-fields/screen-3.md#.*: 9272e0f0142d
+    domain/ui-fields/page-groups.md#.*: b10b453d71fb
     domain/workflows/check-for-updates.md#.*: f08ad6cf0874
+    domain/workflows/install-update.md#.*: c0633544b381
 ---
 
 # widget-update-toast — Widget Specification {#widget-update-toast-spec}
@@ -32,6 +34,9 @@ screen-3 を実体化する **conditional overlay widget**。
 - **parent**: page-main（subscribe 自体は page-main の lifecycle に従属、I-PM2）
 - **subscribes**: `NewVersionDetected`（Tauri event channel `new_version_detected`）
 - **silent on absence**: S14 — event 未発行時は完全に表示なし
+- **install**: 対応配布形式では「Update & restart」で
+  [install-update](../../domain/workflows/install-update.md#install-update) を呼び、成功後は page-main の
+  hook（全 Note Flush → 再起動、I-U8）に委ねる。非対応形式では View release のみ（I-U6 / S26）
 
 > domain/workflows/check-for-updates.md#check-for-updates より：「アプリ起動時、および以降 24 時間ごとに
 > GitHub Releases へ HTTP リクエストを送り、同一プロセス内で未通知の新バージョンがあれば
@@ -102,6 +107,20 @@ Tauri event channel 名は `new_version_detected`（snake_case）。emit 側は
 > 同じバージョンは同一プロセス内では再表示しない（I-U4）。次回アプリ起動時、または定期確認で
 > さらに新しいバージョンが見つかった時に再表示」
 
+### install-update {#invariants-install}
+
+- **I-UT9（installable 判定）**: `start()` で listen 確立後、`installableFn`（default は
+  `is_update_installable` invoke）で「Update & restart」を出すかを決める。判定失敗は `false`（通知のみ、I-U6 / S26）
+- **I-UT10（install は 1 本だけ）**: `install()` は `installStatus = installing` の間は多重実行しない。
+  installing 中は dismiss も無効。成功時は `onInstalled(installedVersion)` を await し、再起動まで installing のまま
+  （再起動前の Flush は page-main の責務、I-U8 / S24）
+- **I-UT11（失敗は表示して再実行可能）**: install 失敗は `installStatus = failed` にして失敗メッセージを
+  `widget.widget-update-toast.install-status` に表示し、ボタンを再び押せるようにする。payload は維持。
+  `onInstalled` は呼ばない。より新しい版の event が届いたら `idle` に戻す（I-U7 / S25）
+
+> domain/ui-fields/screen-3.md#cross-install-update より：「成功: page-main が全 pending Note を Flush してから
+> アプリを再起動する（I-U8、S24）」「失敗: … ボタンを再び押せるようにする。View release は使える（I-U7、S25）」
+
 ### 経路境界 {#invariants-boundary}
 
 - **I-UT6（event listen 経由）**: Tauri event channel `new_version_detected` の購読は
@@ -158,6 +177,34 @@ stub listenFn が reject しても `store.start()` は throw せず、`store.pay
 `onSubscribed` は listen 確立後に 1 回だけ呼ばれ、その中で emit された event を取りこぼさない。
 `onSubscribed` が reject しても `start()` は throw しない（I-UT8 / S14）。
 
+### tp-ut-installable: installable 判定 {#tp-ut-installable}
+
+`installableFn` が true / false を返すと `store.installable` がそれに従う。reject したら false（I-UT9 / S26）。
+
+### tp-ut-install-success: install 成功で onInstalled {#tp-ut-install-success}
+
+`store.install()` で `installFn` が 1 回呼ばれ、`onInstalled` がインストール版で 1 回呼ばれる。
+`installStatus` は `installing` のまま（I-UT10 / S24）。
+
+### tp-ut-install-once: installing 中は多重実行しない {#tp-ut-install-once}
+
+installing 中の `install()` 再呼出と `dismiss()` は無視される（I-UT10）。
+
+### tp-ut-install-failure: 失敗は failed で再実行可能 {#tp-ut-install-failure}
+
+`installFn` が reject すると `installStatus = failed`、`onInstalled` は呼ばれず payload は維持。再度 `install()`
+できる。失敗後に新しい版の event が届くと `idle` に戻る（I-UT11 / S25）。
+
+### tp-ut-install-not-installable: 非対応形式では何もしない {#tp-ut-install-not-installable}
+
+`installable = false` のとき `install()` は `installFn` を呼ばない（I-U6）。
+
+### tp-ut-page-main-restart-order: page-main の再起動順序 {#tp-ut-page-main-restart-order}
+
+page-main の browser test で、ボタン押下 → `install_update` → `flushAll` → `restart_app` の順に呼ばれること（S24）、
+失敗時は flush / restart を呼ばず失敗表示すること（S25）、`is_update_installable = false` ではボタンを出さないこと（S26）を
+Tauri IPC 境界だけ fake にして検証する（`PageMain.update-check.svelte.test.ts`）。
+
 ## 実装ノート {#impl-notes}
 
 ### testid 契約 {#impl-testid}
@@ -173,6 +220,9 @@ stub listenFn が reject しても `store.start()` は throw せず、`store.pay
   - `deps.openUrlFn?`: `(url) => void | Promise<void>`。default は
     `@tauri-apps/plugin-opener` の `openUrl`（失敗は silent）
   - `deps.onSubscribed?`: listen 確立後に 1 回呼ぶ hook（I-UT8）
+  - `deps.installableFn?` / `deps.installFn?`: default は install-update slice の
+    `isUpdateInstallable` / `installUpdate`（UI 層から updater plugin を直接呼ばない）
+  - `deps.onInstalled?`: install 成功後の hook。page-main が `flushAll('app_quit')` → `restartApp()` を渡す
 - component (`*.svelte`) は store の薄い presentation layer
 - 重複通知の抑止 state は持たない（発行側の I-U4 に任せる）
 
@@ -188,14 +238,15 @@ apps/promptnotes/src/ui-widget/update-toast/
 
 ### page-main からの mount {#impl-mount-from-page-main}
 
-- `PageMain.svelte` で **常に** `<WidgetUpdateToast onSubscribed={...} />` を render
+- `PageMain.svelte` で **常に** `<WidgetUpdateToast onSubscribed={...} onInstalled={...} />` を render
 - 内部 store が `start()` で listen を張り、event 受信時のみ `{#if store.payload}` で
   toast を可視化（I-UT2 silent）
 - `page-main` の unmount 時に store の `stop()` で unsubscribe
 
 ### 非責務 {#impl-non-responsibility}
 
-- **自動 install / 再起動**: screen-3.md#notes-tauri-separation より対象外
+- **install の実処理 / 再起動前の Flush**: install-update slice と page-main の責務。widget は状態表示と hook 呼出のみ
+- **download 進捗（%）**: screen-3.md#cross-install-update より MVP 範囲外
 - **このバージョンを skip（永続）**: cross-suppression より MVP 範囲外
 - **定期確認の timer / 重複通知の抑止**: 発行側（check-for-updates slice）の責務
 - **emit 側（Rust）**: 本 widget は listen のみ

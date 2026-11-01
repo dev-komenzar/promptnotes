@@ -215,3 +215,115 @@ describe('widget:widget-update-toast startup check hook (ori-m2ra.1)', () => {
 		expect(store.payload).toBeNull();
 	});
 });
+
+describe('widget:widget-update-toast store — install-update', () => {
+	async function startWith(
+		deps: Partial<Parameters<typeof createUpdateToastStore>[0]> = {}
+	): Promise<{ cap: Capture; store: ReturnType<typeof createUpdateToastStore> }> {
+		const cap = makeListenCapture();
+		const store = createUpdateToastStore({
+			listenFn: cap.listenFn,
+			openUrlFn: vi.fn(),
+			installableFn: async () => true,
+			...deps
+		});
+		await store.start();
+		cap.emit(makePayload());
+		return { cap, store };
+	}
+
+	it('spec#tp-ut-installable (I-UT9 / S26) — installableFn の結果を installable に反映する', async () => {
+		const yes = await startWith({ installableFn: async () => true });
+		expect(yes.store.installable).toBe(true);
+
+		const no = await startWith({ installableFn: async () => false });
+		expect(no.store.installable).toBe(false);
+	});
+
+	it('spec#tp-ut-installable (I-UT9) — installableFn 失敗時は false (通知のみ)', async () => {
+		const { store } = await startWith({
+			installableFn: async () => {
+				throw new Error('not tauri');
+			}
+		});
+		expect(store.installable).toBe(false);
+	});
+
+	it('spec#tp-ut-install-success (I-UT10 / S24) — install 成功で onInstalled をインストール版で呼ぶ', async () => {
+		const installFn = vi.fn(async () => '1.4.0');
+		const onInstalled = vi.fn();
+		const { store } = await startWith({ installFn, onInstalled });
+
+		await store.install();
+
+		expect(installFn).toHaveBeenCalledOnce();
+		expect(onInstalled).toHaveBeenCalledExactlyOnceWith('1.4.0');
+		// 再起動までは installing のまま (ボタン / dismiss は無効)
+		expect(store.installStatus).toBe('installing');
+	});
+
+	it('spec#tp-ut-install-once (I-UT10) — installing 中の再要求と dismiss は無視する', async () => {
+		let resolveInstall: (v: string) => void = () => {};
+		const installFn = vi.fn(
+			() =>
+				new Promise<string>((resolve) => {
+					resolveInstall = resolve;
+				})
+		);
+		const { store } = await startWith({ installFn });
+
+		const first = store.install();
+		expect(store.installStatus).toBe('installing');
+		await store.install();
+		store.dismiss();
+
+		expect(installFn).toHaveBeenCalledOnce();
+		expect(store.payload).not.toBeNull();
+		resolveInstall('1.4.0');
+		await first;
+	});
+
+	it('spec#tp-ut-install-failure (I-UT11 / S25) — 失敗は failed にし、onInstalled を呼ばず再実行できる', async () => {
+		const installFn = vi
+			.fn<() => Promise<string>>()
+			.mockRejectedValueOnce({ kind: 'DownloadFailed', message: 'net' })
+			.mockResolvedValueOnce('1.4.0');
+		const onInstalled = vi.fn();
+		const { store } = await startWith({ installFn, onInstalled });
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		await store.install();
+		expect(store.installStatus).toBe('failed');
+		expect(store.payload).not.toBeNull();
+		expect(onInstalled).not.toHaveBeenCalled();
+
+		await store.install();
+		expect(installFn).toHaveBeenCalledTimes(2);
+		expect(onInstalled).toHaveBeenCalledExactlyOnceWith('1.4.0');
+	});
+
+	it('spec#tp-ut-install-not-installable (I-U6) — installable=false なら install は何もしない', async () => {
+		const installFn = vi.fn(async () => '1.4.0');
+		const { store } = await startWith({ installableFn: async () => false, installFn });
+
+		await store.install();
+
+		expect(installFn).not.toHaveBeenCalled();
+		expect(store.installStatus).toBe('idle');
+	});
+
+	it('spec#tp-ut-install-failure (I-UT11) — 失敗後に新しい版が届くと idle に戻る', async () => {
+		const { cap, store } = await startWith({
+			installFn: async () => {
+				throw { kind: 'InstallFailed', message: 'sig' };
+			}
+		});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		await store.install();
+		expect(store.installStatus).toBe('failed');
+
+		cap.emit(makePayload({ latest_version: '1.4.1' }));
+		expect(store.installStatus).toBe('idle');
+	});
+});

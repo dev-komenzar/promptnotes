@@ -6,6 +6,10 @@ derived:
     field: screen-3-current-version
   - testid: widget.widget-update-toast.dismiss
     field: screen-3-dismiss
+  - testid: widget.widget-update-toast.install-status
+    field: screen-3-install-status
+  - testid: widget.widget-update-toast.install-update
+    field: screen-3-install-update
   - testid: widget.widget-update-toast.latest-version
     field: screen-3-latest-version
   - testid: widget.widget-update-toast.release-notes-summary

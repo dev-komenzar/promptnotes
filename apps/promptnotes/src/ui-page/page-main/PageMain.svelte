@@ -4,6 +4,7 @@
 	import { listNotes } from '$lib/note-feed/slices/list-feed';
 	import { loadSettings, type Settings } from '$lib/user-preferences/slices/load-settings';
 	import { checkForUpdates } from '$lib/update-distribution/slices/check-for-updates';
+	import { restartApp } from '$lib/update-distribution/slices/install-update';
 	import type { SettingsDto } from '$lib/user-preferences/slices/update-settings';
 	import WidgetExternalChangeConflict from '../../ui-widget/external-change-conflict/WidgetExternalChangeConflict.svelte';
 	import WidgetExternalDeleteNotice from '../../ui-widget/external-delete-notice/WidgetExternalDeleteNotice.svelte';
@@ -37,6 +38,7 @@
 		loadSettingsFn?: typeof loadSettings;
 		listNotesFn?: typeof listNotes;
 		checkForUpdatesFn?: typeof checkForUpdates;
+		restartAppFn?: typeof restartApp;
 		pendingFlush?: PendingFlushRegistry;
 		quitWindow?: QuitWindow | null;
 	};
@@ -46,6 +48,7 @@
 		loadSettingsFn = loadSettings,
 		listNotesFn = listNotes,
 		checkForUpdatesFn = checkForUpdates,
+		restartAppFn = restartApp,
 		pendingFlush = pendingFlushRegistry,
 		quitWindow
 	}: Props = $props();
@@ -129,6 +132,17 @@
 	async function checkForUpdatesAtStartup(): Promise<void> {
 		await settingsSettled;
 		await checkForUpdatesFn().catch(() => {});
+	}
+
+	// I-U8 / S24: install-update 成功後、quit 時 (S13) と同じ pending flush を await してから再起動する。
+	// install-update slice は Note Capture を知らないので、順序保証はここ (composition) が持つ。
+	async function restartAfterUpdate(): Promise<void> {
+		try {
+			await pendingFlush.flushAll('app_quit');
+		} catch (err) {
+			console.error('[update] flushAll before restart failed', err);
+		}
+		await restartAppFn();
 	}
 
 	const themeSubscriber = createThemeSubscriber({
@@ -458,7 +472,7 @@
 	</div>
 {/if}
 
-<WidgetUpdateToast onSubscribed={checkForUpdatesAtStartup} />
+<WidgetUpdateToast onSubscribed={checkForUpdatesAtStartup} onInstalled={restartAfterUpdate} />
 
 <WidgetExternalChangeConflict
 	localBody={conflictLocalBody}
