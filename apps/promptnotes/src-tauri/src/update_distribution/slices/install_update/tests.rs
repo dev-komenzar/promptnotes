@@ -15,7 +15,7 @@ use crate::update_distribution::shared::types::{
 };
 
 use super::commands::InstallUpdateErrorResponse;
-use super::infrastructure::installation_kind_from;
+use super::infrastructure::{installation_kind_from, map_download_error};
 use super::{InstallUpdateCommand, InstallUpdateUseCase};
 
 #[derive(Clone, Copy)]
@@ -268,4 +268,21 @@ fn tp_b3_error_response_kind_matches_variant_name() {
         assert_eq!(dto.kind, kind);
         assert_eq!(dto.message, message);
     }
+}
+
+#[test]
+fn tp_f4_signature_errors_map_to_install_failed_others_to_download_failed() {
+    use tauri_plugin_updater::Error as E;
+    assert!(matches!(
+        map_download_error(E::SignatureUtf8("bad".into())),
+        InstallUpdateError::InstallFailed(_)
+    ));
+    assert!(matches!(
+        map_download_error(E::Network("down".into())),
+        InstallUpdateError::DownloadFailed(_)
+    ));
+    assert!(matches!(
+        map_download_error(E::Io(std::io::Error::other("disk"))),
+        InstallUpdateError::DownloadFailed(_)
+    ));
 }

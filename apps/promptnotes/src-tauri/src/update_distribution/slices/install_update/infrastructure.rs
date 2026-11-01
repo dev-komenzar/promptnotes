@@ -27,7 +27,13 @@ pub(crate) fn installation_kind_from(bundle: Option<BundleType>) -> Installation
 }
 
 /// 実行中アプリの配布形式。bundler が binary に埋め込んだ値を読む。
+///
+/// 開発ビルド (`debug_assertions`) は常に `Unbundled`。macOS では bundler 未経由でも
+/// `bundle_type()` が `Some(App)` を返すため、そのままだと dev でもボタンが出てしまう。
 pub fn current_installation_kind() -> InstallationKind {
+    if cfg!(debug_assertions) {
+        return InstallationKind::Unbundled;
+    }
     installation_kind_from(bundle_type())
 }
 
@@ -78,7 +84,7 @@ impl PendingUpdate for TauriPendingUpdate {
     }
 }
 
-fn map_download_error(e: tauri_plugin_updater::Error) -> InstallUpdateError {
+pub(crate) fn map_download_error(e: tauri_plugin_updater::Error) -> InstallUpdateError {
     use tauri_plugin_updater::Error as E;
     match e {
         E::Minisign(_) | E::Base64(_) | E::SignatureUtf8(_) => {

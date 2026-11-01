@@ -76,7 +76,7 @@ TS へは `{ kind: "<variant>", message: string }` に射影する。
 - **C-IU1**: 1 回の `install_update` で updater の fetch は 1 回、download_and_install は高々 1 回
 - **C-IU2**: version 比較は domain (`Version` の Ord) が担う。updater plugin の comparator は permissive にする (check-for-updates と同じ方針)
 - **C-IU3**: `NoUpdateAvailable` / `UnsupportedInstallation` / `CheckFailed` のときは download_and_install を呼ばない
-- **C-IU4**: `InstallationKind` は `BundleType` から導出する: `App`/`Dmg` → `MacApp`、`AppImage`/`Deb`/`Rpm`/`Msi`/`Nsis` は同名、`None` (bundle 種別なし) → `Unbundled`
+- **C-IU4**: `InstallationKind` は `BundleType` から導出する: `App`/`Dmg` → `MacApp`、`AppImage`/`Deb`/`Rpm`/`Msi`/`Nsis` は同名、`None` (bundle 種別なし) → `Unbundled`。開発ビルド (`debug_assertions`) は bundle 種別によらず `Unbundled` (macOS は bundler 未経由でも `App` を返すため)
 - **C-IU5**: check-for-updates の揮発 state (通知済みバージョン I-U4 / 前回確認時刻) を読まない・変えない
 
 ## 境界契約 {#boundary-contract}
@@ -118,6 +118,8 @@ Rust 側は `install_update/tests.rs`。`UpdateInstaller` は adapter 境界の 
 - **TP-F1**: fetch 失敗 → `Err(CheckFailed)`、install 0 回
 - **TP-F2**: fetch した version が parse 不能 → `Err(CheckFailed)`
 - **TP-F3**: download 失敗 → `Err(DownloadFailed)` / install 失敗 → `Err(InstallFailed)` (S25)、それぞれ fetch 1 回・install 1 回 (C-IU1)
+
+- **TP-F4**: plugin の署名エラー (`SignatureUtf8` / `Minisign` / `Base64`) は `InstallFailed`、それ以外の download エラーは `DownloadFailed` に写す
 
 ### boundary test {#tp-boundary}
 

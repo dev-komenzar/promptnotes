@@ -59,6 +59,10 @@ pub fn is_update_installable() -> bool {
 }
 
 /// アプリを再起動する。install 成功 + Flush 完了後にだけ呼ばれる (I-U8)。
+///
+/// IPC worker thread から呼ばれるため `AppHandle::restart` は exit を要求して sleep し続け、
+/// この command は応答を返さない (frontend の `invoke('restart_app')` は resolve しない)。
+/// exit 要求は window の CloseRequested を発火しないので、quit 時の flush handler は再実行されない。
 #[tauri::command]
 pub fn restart_app(app_handle: tauri::AppHandle) {
     app_handle.restart();

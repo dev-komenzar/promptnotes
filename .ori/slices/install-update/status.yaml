@@ -2,7 +2,7 @@ slice_id: install-update
 derived_at: 2026-11-01
 beads:
   epic: ori-rbb9
-  current_phase: review
+  current_phase: finalize
   completion:
     - phase: derive
       issue: ori-rbb9.2
@@ -10,5 +10,8 @@ beads:
       issue: ori-rbb9.2
     - phase: impl-green
       issue: ori-rbb9.2
+    - phase: review
+      issue: ori-rbb9.2
 phases: {}
 dirty: []
+finalized_at: 2026-11-01
