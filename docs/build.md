@@ -349,7 +349,7 @@ apps/promptnotes/src-tauri/target/release/bundle/macos/PromptNotes.app.tar.gz.si
    - `apps/promptnotes/src-tauri/tauri.conf.json` (CI と updater が参照する version)
    - `apps/promptnotes/src-tauri/Cargo.toml` と `Cargo.lock` (`cargo update -p app`)
    - `flake.nix` (`packages.default` の `version`)
-   - `.ori/scenarios/s14-update-check-failure/tests/*.spec.ts` (`current_version` の期待値)
+   - (s14 E2E の `current_version` は `get_app_version` から取るため更新不要)
 2. `git tag vX.Y.Z` & push
 3. CI をトリガー: tag を push すると `.github/workflows/release.yml` が起動する。既存タグを再ビルドする場合は `gh workflow run release.yml --ref main -f tag=vX.Y.Z`
    - `create-release` job が draft Release を 1 つ作成 (同じ tag の Release があれば再利用)
