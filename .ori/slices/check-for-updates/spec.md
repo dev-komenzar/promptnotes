@@ -1,13 +1,13 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-10-25
+  last_derived: 2026-11-02
   hash:
     domain/workflows/check-for-updates.md#.*: f08ad6cf0874
-    domain/aggregates.md#.*: e3aba26a3001
-    domain/bounded-contexts.md#.*: fe8bafba0f88
-    domain/domain-events.md#.*: cc1d928f09e4
-    domain/validation.md#.*: a12e27d425ae
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/domain-events.md#.*: 922c62c32c4d
+    domain/validation.md#.*: a226e34cf459
 ori:
   schema:
     propagation_level: file

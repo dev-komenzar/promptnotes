@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-11-02
   upstream:
     - domain/workflows/detect-external-changes.md#detect-external-changes
     - domain/aggregates.md#note-feed-aggregate
@@ -12,9 +12,9 @@ coherence:
     - domain/domain-events.md#storage-dir-changed
   hash:
     domain/workflows/detect-external-changes.md#.*: a66910b0d892
-    domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: fe8bafba0f88
-    domain/domain-events.md#.*: 86acb64f8149
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/domain-events.md#.*: 922c62c32c4d
 ori:
   schema:
     propagation_level: file

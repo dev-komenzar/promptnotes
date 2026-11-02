@@ -1,7 +1,7 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-11-02
   upstream:
     - domain/workflows/auto-save-note.md#auto-save-note
     - domain/aggregates.md#note-aggregate
@@ -11,10 +11,10 @@ coherence:
     - domain/validation.md#s9-idempotent-autosave
   hash:
     domain/workflows/auto-save-note.md#.*: 642c5094fd1a
-    domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: fe8bafba0f88
-    domain/domain-events.md#.*: 86acb64f8149
-    domain/validation.md#.*: a4490b2d3809
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/domain-events.md#.*: 922c62c32c4d
+    domain/validation.md#.*: a226e34cf459
 ori:
   schema:
     propagation_level: file

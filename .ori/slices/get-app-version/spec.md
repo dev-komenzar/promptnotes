@@ -4,15 +4,15 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-25
+  last_derived: 2026-11-02
   derives_from:
     - domain/workflows/get-app-version.md#get-app-version
     - domain/aggregates.md#update-channel-aggregate
     - domain/bounded-contexts.md#update-distribution
   hash:
     domain/workflows/get-app-version.md#.*: a7ddfb091648
-    domain/aggregates.md#.*: e3aba26a3001
-    domain/bounded-contexts.md#.*: fe8bafba0f88
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
 ---
 
 # get-app-version — Specification {#get-app-version-spec}
