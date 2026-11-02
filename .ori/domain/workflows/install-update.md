@@ -8,6 +8,7 @@ ori:
     - scenario:s25-install-update-failure
     - scenario:s26-unbundled-notify-only
     - scenario:s27-manual-update-check-new-version
+    - scenario:s29-concurrent-install-rejected
 ---
 
 # install-update {#install-update}
@@ -44,6 +45,7 @@ struct IsUpdateInstallableQuery {
 
 - `InstallUpdateError` — UI に返し、要求元（Toast / 設定モーダル）に失敗を表示する（I-U7。silent にしない）
   - `UnsupportedInstallation` — `InstallationKind::Unbundled`（I-U6）
+  - `InstallInProgress` — 別のインストールが実行中、またはインストール成功後の再起動待ち（I-U10）
   - `NoUpdateAvailable` — 取得し直した最新リリースが `current_version` 以下（I-U7）
   - `CheckFailed` — 最新リリースの取得 / parse に失敗（ネットワーク等）
   - `DownloadFailed` — パッケージの download に失敗
@@ -53,19 +55,25 @@ struct IsUpdateInstallableQuery {
 
 1. `ensureInstallable: InstallationKind → Result<(), InstallUpdateError>`
    - `Unbundled` → `UnsupportedInstallation` で終了（I-U6）。ネットワークには触れない
-2. `fetchLatestUpdate: () → Result<PendingUpdate, InstallUpdateError>`
+2. `acquireInstallSlot: InstallState → Result<(), InstallUpdateError>`
+   - 揮発 state が `Idle` なら `Installing` にして続行。`Installing` / `Installed` なら
+     `InstallInProgress` で終了（I-U10）。ネットワークには触れない
+   - 以降の step が失敗したら `Idle` に戻す。成功したら `Installed`（再起動まで保持）にする
+3. `fetchLatestUpdate: () → Result<PendingUpdate, InstallUpdateError>`
    - Tauri v2 updater plugin で最新リリースを取得し直す（通知時の情報は使い回さない。
      通知後により新しいリリースが出ていれば、そちらを入れる）
-3. `ensureNewer: (Version, PendingUpdate) → Result<PendingUpdate, InstallUpdateError>`
+4. `ensureNewer: (Version, PendingUpdate) → Result<PendingUpdate, InstallUpdateError>`
    - `PendingUpdate.version <= current_version` → `NoUpdateAvailable`（I-U7 / I-U2）
-4. `downloadAndInstall: PendingUpdate → Result<Version, InstallUpdateError>`
+5. `downloadAndInstall: PendingUpdate → Result<Version, InstallUpdateError>`
    - updater plugin に委譲。署名検証もここ（失敗は `InstallFailed`）
-5. 成功時、インストールしたバージョンを返す
+6. 成功時、インストールしたバージョンを返す
 
 再起動（I-U8）はこの workflow の外で、UI 層が次の順に行う:
 
 1. 全 pending Note の Flush を await（S13 と同じ `flush-note` 経路）
 2. `restartApp` を呼ぶ（アプリプロセスを再起動。インストール成功後にしか呼ばない）
+3. `restartApp` 自体が失敗した場合は、要求元の UI が「インストール済み。再起動して更新を完了してください」を
+   表示し、操作できる状態（閉じる / 保存等）に戻す。再インストールは要求しない（揮発 state は `Installed` のまま）
 
 ## Error Handling {#error-handling}
 
@@ -87,3 +95,5 @@ struct IsUpdateInstallableQuery {
 - Linux の deb / rpm は updater plugin が `pkexec` で権限昇格してインストールする。
   ユーザが認証を拒否した場合は `InstallFailed`
 - 定期確認（I-U3）が install 中に走っても干渉しない（install は通知済み state を変えない）
+- 通知と設定モーダルは独立にインストールを要求できるが、同時実行は I-U10 で拒否される。
+  2 本目を要求した UI は「別のインストールが進行中」を表示するだけで、失敗扱いの再試行は促さない

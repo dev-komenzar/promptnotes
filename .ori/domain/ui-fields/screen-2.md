@@ -44,7 +44,7 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 | `{#screen-2-update-check-result}` | 確認結果 | `Result<UpdateChannel, UpdateError>` | - | read-only text | 確認中 / 最新 / 新バージョンあり / 確認失敗 のいずれか。未確認時は非表示 |
 | `{#screen-2-view-release}` | リリースを見る | (action) | - | text button | 新バージョンありのときだけ表示。リリースページを OS 既定ブラウザで開く |
 | `{#screen-2-install-update}` | 更新して再起動 | (action) | - | primary button | 新バージョンあり かつ `is_update_installable` のときだけ表示（I-U6）。`install-update` 呼び出し |
-| `{#screen-2-install-status}` | インストール状態 | (表示) | - | read-only text | インストール中 / インストール失敗 を表示。idle 時は非表示 |
+| `{#screen-2-install-status}` | インストール状態 | (表示) | - | read-only text | インストール中 / インストール失敗 / 別のインストールが進行中 / 再起動が必要 を表示。idle 時は非表示 |
 | `{#screen-2-cancel}` | キャンセル | (action) | - | secondary button | 変更を破棄してモーダル閉じる |
 | `{#screen-2-save}` | 保存 | (action) | - | primary button | `update-settings` 呼び出し |
 
@@ -132,6 +132,10 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 - 成功したら page-main が全 Note を Flush してから再起動する（I-U8、Toast と同じ経路）
 - 失敗したら「Update failed. Try again or download it from the release page.」を表示し、
   「Update & restart」を再度押せる状態に戻す（I-U7 / S25）
+- Toast 側のインストールが実行中 / 再起動待ちで `InstallInProgress` が返ったら（I-U10）、
+  「An update is already being installed.」を表示する。失敗扱いにせず、モーダルは操作できる状態のまま（S29）
+- インストール成功後に再起動が失敗したら「The update was installed. Restart PromptNotes to finish updating.」を
+  表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は無効のまま（I-U8 / I-U10）
 
 ## Depended By {#depended-by}
 

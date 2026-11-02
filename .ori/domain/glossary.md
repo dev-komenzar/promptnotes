@@ -139,7 +139,8 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
 ### UpdateInstall {#glossary-update-install}
 
 - **定義**: ユーザが更新通知、または設定モーダルの手動確認結果から要求した、最新リリースの download + 署名検証 + install。
-  成功後に全 Note を Flush してから再起動する（I-U5 / I-U8、[install-update](workflows/install-update.md)）
+  成功後に全 Note を Flush してから再起動する（I-U5 / I-U8、[install-update](workflows/install-update.md)）。
+  同時に実行できるのは 1 本だけ（I-U10）
 - **kind**: workflow
 
 ### ManualUpdateCheck {#glossary-manual-update-check}

@@ -280,12 +280,17 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
   パッケージの署名検証は updater plugin に委譲し、検証失敗はインストール失敗として扱う。
   失敗時はアプリを継続し、失敗をユーザに伝える（ユーザ操作の結果なので S14 の silent 方針は適用しない）
 - **I-U8**: インストール成功後にのみアプリを再起動する。再起動の前に編集中の全 Note を Flush する
-  （quit 時の S13 と同じ順序保証。永続化を待ってから再起動する）
+  （quit 時の S13 と同じ順序保証。永続化を待ってから再起動する）。インストール成功後に再起動自体が
+  失敗した場合は、インストール済みであることと手動での再起動をユーザに伝え、UI は操作できる状態に戻す
 - **I-U9**: ユーザは設定モーダルから **手動確認** を要求できる。手動確認は I-U3 の周期とは独立に
   その場で 1 回確認し、結果（新しいリリースあり / 最新 / 確認失敗）を要求元の UI にそのまま返す。
   ユーザ操作の結果なので失敗も伝える（S14 の silent 方針は適用しない。I-U7 と同じ扱い）。
   新しいリリースは通知済み（I-U4）でも結果として返す。手動確認は `NewVersionDetected` を発行せず、
   通知済みバージョン（I-U4）と前回確認時刻（I-U3）の揮発 state も変更しない（結果は要求元 UI だけが使う）
+- **I-U10**: インストールは同一プロセス内で **同時に 1 本だけ** 実行する。インストール中、および
+  インストール成功から再起動までの間は、どの UI（通知 / 設定モーダル）から要求されても 2 本目を
+  `InstallInProgress` で拒否し、updater には触れない。インストールが失敗したら再び要求を受け付ける。
+  実行状態は揮発（プロセス内のみ。再起動で初期化される）で、application service が持つ
 
 ### 公開操作 {#update-channel-aggregate-operations}
 
@@ -307,7 +312,8 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 
 - `UpdateChannel::install(installation: InstallationKind) -> Result<Version, InstallUpdateError>`
   - ユーザが通知、または設定モーダルの「Update & restart」を押したときに呼ばれる（I-U5）
-  - `Unbundled` は即 `UnsupportedInstallation`（I-U6）。最新リリースを取得し直し、
+  - `Unbundled` は即 `UnsupportedInstallation`（I-U6）。別のインストールが実行中 / 再起動待ちなら
+    `InstallInProgress`（I-U10）。最新リリースを取得し直し、
     `current_version` より新しくなければ `NoUpdateAvailable`（I-U7）
   - 成功時はインストールしたバージョンを返す。再起動は呼出側（UI の orchestration）が
     全 Note の Flush 後に行う（I-U8、[install-update](workflows/install-update.md)）

@@ -661,6 +661,28 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
   通知済みバージョン（I-U4）は変化しない
 - 確認失敗の後も「Check for updates」を再度押せる。自動リトライはしない
 
+## Scenario S29: 同時に要求されたインストールは 2 本目を拒否する {#s29-concurrent-install-rejected}
+
+### Given {#s29-given}
+
+- current_version = `0.2.4`、`InstallationKind::Bundled(AppImage)`
+- Toast に `0.2.5` を表示中。ユーザが Toast の「Update & restart」を押し、インストール中（download 中）
+- ユーザが設定モーダルを開き、「Check for updates」で `0.2.5` を表示している
+
+### When {#s29-when}
+
+1. ユーザが設定モーダルの「Update & restart」を押す
+2. Toast 側のインストールが成功し、page-main が Flush 後に `restartApp` を呼ぶが、再起動に失敗する
+
+### Then {#s29-then}
+
+- When 1: `UpdateChannel::install()` は `InstallInProgress` を返し、updater には触れない（I-U10）。
+  2 本目の download / install は行われない
+- When 1: 設定モーダルは「別のインストールが進行中」を表示する。Toast 側のインストールは影響を受けない
+- When 2: Toast は「インストール済み。再起動して更新を完了してください」を表示し、dismiss できる状態に戻る（I-U8）
+- When 2: 再起動待ちの間に再び「Update & restart」が押されても `InstallInProgress` で拒否される（I-U10）
+- アプリを手動で再起動すると揮発 state は初期化され、新しいバージョンで起動する
+
 ## 補足 {#validation-notes}
 
 ### シナリオ漏れの検出ポリシー {#notes-coverage-policy}

@@ -66,6 +66,7 @@ Phase 7 validation scenarios の workflow 対応：
 | S26 (非対応配布形式は通知のみ) | install-update |
 | S27 (手動確認で新バージョン → インストール) | check-for-updates-manually → install-update |
 | S28 (手動確認の最新 / 確認失敗表示) | check-for-updates-manually |
+| S29 (同時インストール要求の拒否 / 再起動失敗) | install-update |
 | S15 (同一秒内編集) | auto-save-note / flush-note |
 
 ## Open Questions {#open-questions}
