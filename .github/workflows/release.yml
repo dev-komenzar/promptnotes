@@ -144,7 +144,7 @@ jobs:
     needs: [create-release, build]
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Check latest.json platforms
         env:
