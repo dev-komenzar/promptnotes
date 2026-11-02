@@ -330,6 +330,8 @@ struct SortPreferenceChanged {
 `UpdateChannel::check()` 成功 かつ `latest_release: Some(_)` で、そのバージョンが
 同一プロセス内で未通知の場合。起動時および 24 時間ごとの定期確認で発行されうる（I-U3）が、
 同一バージョン（またはそれ以下）について 2 回目以降は発行しない（I-U4）。
+設定モーダルからの手動確認（[check-for-updates-manually](workflows/check-for-updates-manually.md)、I-U9）では
+発行しない（結果は要求元の UI が直接受け取る）。
 
 #### Payload {#new-version-detected-payload}
 

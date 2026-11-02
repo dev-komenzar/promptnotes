@@ -80,6 +80,7 @@ xattr -dr com.apple.quarantine /Applications/promptnotes.app
 ### アップデート
 
 起動時と 24 時間ごとに新しいバージョンを確認し、見つかった場合は通知 (toast) でお知らせします。
+設定画面の「Updates」にある **Check for updates** からも、いつでも手動で確認できます（結果は設定画面内に表示され、新しいバージョンがあれば下の 2 つのボタンが表示されます）。
 
 - **Update & restart**: その場で新しいバージョンをダウンロード・インストールし、編集中のノートを保存してから再起動します。macOS (.app / .dmg)、Linux の AppImage / deb / rpm 版で使えます。deb / rpm 版はインストール時に管理者パスワードを求められます。
 - **View release**: リリースページを開きます。Nix でビルドした版など自動更新に対応していない形式では、こちらから手動で更新してください。

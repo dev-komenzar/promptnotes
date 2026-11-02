@@ -77,6 +77,9 @@ graph LR
 - 更新インストール後の「全 Note Flush → 再起動」（I-U8）は **UI 層（page-main）が orchestrate** する。
   [install-update](workflows/install-update.md) は Note Capture を知らず、page-main が
   quit 時（S13）と同じ pending flush を await してから再起動を呼ぶ。Separate Ways は維持される
+- 設定モーダルの手動確認（[check-for-updates-manually](workflows/check-for-updates-manually.md)）と
+  そこからのインストールも **UI 層が直接** 呼ぶ。インストール後の Flush → 再起動は Toast と同じく
+  page-main が orchestrate する（User Preferences BC は Update Distribution を知らない）
 
 ### 採用しなかったパターン {#decisions-rejected}
 

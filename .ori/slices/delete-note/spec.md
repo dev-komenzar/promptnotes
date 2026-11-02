@@ -4,10 +4,10 @@ coherence:
   last_derived: 2026-11-02
   hash:
     domain/workflows/delete-note.md#.*: b727f18ad614
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/bounded-contexts.md#.*: 4e4f641c9627
-    domain/domain-events.md#.*: 922c62c32c4d
-    domain/validation.md#.*: a226e34cf459
+    domain/aggregates.md#.*: 0549c2d38dd2
+    domain/bounded-contexts.md#.*: c3bc130f98d5
+    domain/domain-events.md#.*: 34746af8d1fa
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file

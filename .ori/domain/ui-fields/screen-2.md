@@ -7,6 +7,8 @@ ori:
     - workflow:update-settings
     - workflow:get-app-version
     - workflow:get-default-storage-dir
+    - workflow:check-for-updates-manually
+    - workflow:install-update
 ---
 
 # Screen 2: Settings Modal {#screen-2}
@@ -22,6 +24,9 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 現在のアプリバージョンを読み取り専用で表示する。
 「デフォルトに戻す」は [get-default-storage-dir](../workflows/get-default-storage-dir.md)
 で取得した OS 慣習パスを使う。
+「Updates」セクションでは [check-for-updates-manually](../workflows/check-for-updates-manually.md)
+で手動確認し、新しいリリースがあれば [install-update](../workflows/install-update.md) で
+その場でインストールできる（I-U9 / I-U5）。
 
 `sort_preference` は [change-sort-order](../workflows/change-sort-order.md) 経由
 （ツールバーのソートトグル）でも変更されるため、本モーダルでは扱わない方針
@@ -34,7 +39,12 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 | `{#screen-2-storage-dir}` | 保存ディレクトリ | `PathBuf → StorageDir` | ✓ | folder picker + read-only path display | OS ネイティブのフォルダ選択ダイアログ。デフォルト = OS 慣習パス |
 | `{#screen-2-storage-dir-reset}` | デフォルトに戻す | (action) | - | button | 編集中の保存ディレクトリを OS 慣習パスに置き換える（保存は「保存」押下時） |
 | `{#screen-2-theme}` | テーマ | `Theme` | ✓ | segmented control / radio | `System | Light | Dark` の 3 値 |
-| `{#screen-2-app-version}` | バージョン | `AppVersion` | - | read-only text | モーダル下部に `v{version}` 形式で表示（例: `v0.2.2`）。編集不可・保存対象外 |
+| `{#screen-2-app-version}` | バージョン | `AppVersion` | - | read-only text | 「Updates」セクションの 1 行目に `Version {version}` 形式で表示（例: `Version 0.2.2`）。編集不可・保存対象外 |
+| `{#screen-2-check-for-updates}` | 更新をチェック | (action) | - | secondary button | 「Updates」セクション 1 行目の右端。`check-for-updates-manually` 呼び出し。保存対象外 |
+| `{#screen-2-update-check-result}` | 確認結果 | `Result<UpdateChannel, UpdateError>` | - | read-only text | 確認中 / 最新 / 新バージョンあり / 確認失敗 のいずれか。未確認時は非表示 |
+| `{#screen-2-view-release}` | リリースを見る | (action) | - | text button | 新バージョンありのときだけ表示。リリースページを OS 既定ブラウザで開く |
+| `{#screen-2-install-update}` | 更新して再起動 | (action) | - | primary button | 新バージョンあり かつ `is_update_installable` のときだけ表示（I-U6）。`install-update` 呼び出し |
+| `{#screen-2-install-status}` | インストール状態 | (表示) | - | read-only text | インストール中 / インストール失敗 / 別のインストールが進行中 / 再起動が必要 を表示。idle 時は非表示 |
 | `{#screen-2-cancel}` | キャンセル | (action) | - | secondary button | 変更を破棄してモーダル閉じる |
 | `{#screen-2-save}` | 保存 | (action) | - | primary button | `update-settings` 呼び出し |
 
@@ -86,10 +96,46 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 ### app version の表示 {#cross-app-version-display}
 
 - モーダル mount 時に `get-app-version` を 1 回呼ぶ（値は不変のためキャッシュ可）
-- 取得完了前、または呼び出し自体が失敗した場合は **行ごと非表示**
-  （エラー表示はしない。設定編集の妨げにしない）
+- 取得完了前、または呼び出し自体が失敗した場合は **バージョン表示だけ非表示**
+  （エラー表示はしない。設定編集の妨げにしない。「Check for updates」は表示したまま）
 - 表示値は Save / Cancel / theme プレビューの影響を受けない
 - 差分判定（`cross-no-diff`）の対象外
+
+### Updates セクションの配置 {#cross-updates-section-layout}
+
+- バージョン情報と更新関連 UI は Theme の下、区切り線で分けた「Updates」セクションにまとめる
+  - 1 行目: `screen-2-app-version`（左）と `screen-2-check-for-updates`（右）
+  - 2 行目以降: `screen-2-update-check-result`、新バージョンありなら
+    `screen-2-view-release` / `screen-2-install-update`、`screen-2-install-status`
+- footer は「キャンセル」「保存」のみを置く（バージョン表示を footer から移す）
+- Updates セクションの操作は設定の draft（storage_dir / theme）と独立。保存 / 差分判定（`cross-no-diff`）の対象外
+
+### 手動確認 {#cross-manual-update-check}
+
+- 「Check for updates」押下で `check-for-updates-manually` を 1 回呼ぶ（mount 時には自動で呼ばない）
+- 確認中は「Checking…」を表示し、ボタンを **disabled** にする（多重実行しない）
+- 結果の表示（`screen-2-update-check-result`）:
+  - `latest_release: None` → 「You're up to date」
+  - `latest_release: Some(release)` → 「Version {release.version} is available」。
+    通知済み（I-U4）でも表示する（I-U9）
+  - `Err(UpdateError)` → 「Couldn't check for updates」（I-U9。silent にしない）
+- 結果は設定モーダル内だけで完結し、Toast は出さない（event 非発行、I-U9）
+- 確認後もボタンは再度押せる（再確認）。結果は modal scope に閉じ、閉じると破棄される
+
+### 設定モーダルからのインストール {#cross-install-from-settings}
+
+- 新バージョンありのときだけ `screen-2-view-release` を表示する
+- `install-update` の `is_update_installable` が true のときだけ `screen-2-install-update` を表示する
+  （`Unbundled` = Nix ビルド・開発ビルドは「View release」のみ、I-U6）。判定は mount 時に 1 回、失敗時は false
+- 「Update & restart」押下で `install-update` を呼ぶ。インストール中は「Updating…」を表示し、
+  確認 / インストール / 保存 / キャンセル / Esc をすべて受け付けない（S27）
+- 成功したら page-main が全 Note を Flush してから再起動する（I-U8、Toast と同じ経路）
+- 失敗したら「Update failed. Try again or download it from the release page.」を表示し、
+  「Update & restart」を再度押せる状態に戻す（I-U7 / S25）
+- Toast 側のインストールが実行中 / 再起動待ちで `InstallInProgress` が返ったら（I-U10）、
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせず、モーダルは操作できる状態のまま（S29）
+- インストール成功後に再起動が失敗したら「The update was installed. Restart PromptNotes to finish updating.」を
+  表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は無効のまま（I-U8 / I-U10）
 
 ## Depended By {#depended-by}
 

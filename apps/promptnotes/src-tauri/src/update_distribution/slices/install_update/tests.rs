@@ -5,17 +5,22 @@
 
 use std::cell::Cell;
 use std::rc::Rc;
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 use proptest::prelude::*;
 use tauri::utils::config::BundleType;
 
-use crate::update_distribution::shared::ports::{PendingUpdate, UpdateInstaller};
+use crate::update_distribution::shared::ports::{InstallGuard, PendingUpdate, UpdateInstaller};
 use crate::update_distribution::shared::types::{
     BundleFormat, InstallUpdateError, InstallationKind, Version,
 };
 
 use super::commands::InstallUpdateErrorResponse;
-use super::infrastructure::{installation_kind_from, map_download_error};
+use super::domain::InstallPhase;
+use super::infrastructure::{installation_kind_from, map_download_error, InMemoryInstallState};
 use super::{InstallUpdateCommand, InstallUpdateUseCase};
 
 #[derive(Clone, Copy)]
@@ -88,8 +93,25 @@ fn cmd(current: &str, installation: InstallationKind) -> InstallUpdateCommand {
 
 const APPIMAGE: InstallationKind = InstallationKind::Bundled(BundleFormat::AppImage);
 
-/// (result, fetch 回数, install 回数)
+/// (result, fetch 回数, install 回数)。実行状態は毎回新しい production state (Idle) を使う。
 fn run(
+    current: &str,
+    installation: InstallationKind,
+    fetch: Result<&str, InstallUpdateError>,
+    outcome: InstallOutcome,
+) -> (Result<Version, InstallUpdateError>, u32, u32) {
+    run_with(
+        &Arc::new(InMemoryInstallState::new()),
+        current,
+        installation,
+        fetch,
+        outcome,
+    )
+}
+
+/// 共有の実行状態 (production の `InMemoryInstallState`) で 1 回 install する。
+fn run_with(
+    state: &Arc<InMemoryInstallState>,
     current: &str,
     installation: InstallationKind,
     fetch: Result<&str, InstallUpdateError>,
@@ -100,7 +122,8 @@ fn run(
         installer.fetch_calls.clone(),
         installer.install_calls.clone(),
     );
-    let result = InstallUpdateUseCase::new(installer).execute(cmd(current, installation));
+    let result =
+        InstallUpdateUseCase::new(installer, state.clone()).execute(cmd(current, installation));
     (result, fetches.get(), installs.get())
 }
 
@@ -252,6 +275,7 @@ fn tp_b3_error_response_kind_matches_variant_name() {
             "UnsupportedInstallation",
         ),
         (InstallUpdateError::NoUpdateAvailable, "NoUpdateAvailable"),
+        (InstallUpdateError::InstallInProgress, "InstallInProgress"),
         (InstallUpdateError::CheckFailed("x".into()), "CheckFailed"),
         (
             InstallUpdateError::DownloadFailed("x".into()),
@@ -285,4 +309,173 @@ fn tp_f4_signature_errors_map_to_install_failed_others_to_download_failed() {
         map_download_error(E::Io(std::io::Error::other("disk"))),
         InstallUpdateError::DownloadFailed(_)
     ));
+}
+
+// ===== spec.md#tp-concurrency (I-U10) =====
+
+#[test]
+fn tp_g1_install_phase_transitions() {
+    use InstallPhase::*;
+    assert_eq!(Idle.begin(), Some(Installing));
+    assert_eq!(Installing.begin(), None);
+    assert_eq!(Installed.begin(), None);
+    assert_eq!(Installing.finish(true), Installed);
+    assert_eq!(Installing.finish(false), Idle);
+    assert_eq!(Idle.finish(true), Idle);
+    assert_eq!(Installed.finish(false), Installed);
+}
+
+#[test]
+fn tp_g2_install_while_installing_is_rejected_without_touching_updater() {
+    let state = Arc::new(InMemoryInstallState::new());
+    // 別 UI からの install が実行中
+    assert!(state.try_begin());
+
+    let (result, fetches, installs) =
+        run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+
+    assert_eq!(result, Err(InstallUpdateError::InstallInProgress));
+    assert_eq!((fetches, installs), (0, 0));
+    // 実行中の install の状態は変えない
+    assert_eq!(state.phase(), InstallPhase::Installing);
+}
+
+#[test]
+fn tp_g3_success_keeps_installed_until_restart_and_rejects_reinstall() {
+    let state = Arc::new(InMemoryInstallState::new());
+
+    let (first, _, _) = run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(first, Ok(v("0.2.5")));
+    assert_eq!(state.phase(), InstallPhase::Installed);
+
+    let (second, fetches, installs) =
+        run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(second, Err(InstallUpdateError::InstallInProgress));
+    assert_eq!((fetches, installs), (0, 0));
+}
+
+#[test]
+fn tp_g4_failure_releases_the_slot_for_retry() {
+    let state = Arc::new(InMemoryInstallState::new());
+    for (fetch, outcome) in [
+        (
+            Err(InstallUpdateError::CheckFailed("net".into())),
+            InstallOutcome::Ok,
+        ),
+        (Ok("0.2.4"), InstallOutcome::Ok),
+        (Ok("0.2.5"), InstallOutcome::DownloadFails),
+        (Ok("0.2.5"), InstallOutcome::InstallFails),
+    ] {
+        let (result, _, _) = run_with(&state, "0.2.4", APPIMAGE, fetch, outcome);
+        assert!(result.is_err());
+        assert_eq!(state.phase(), InstallPhase::Idle);
+    }
+
+    let (retry, _, installs) = run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(retry, Ok(v("0.2.5")));
+    assert_eq!(installs, 1);
+}
+
+#[test]
+fn tp_g5_unbundled_does_not_take_the_slot() {
+    let state = Arc::new(InMemoryInstallState::new());
+
+    let (result, _, _) = run_with(
+        &state,
+        "0.2.4",
+        InstallationKind::Unbundled,
+        Ok("0.2.5"),
+        InstallOutcome::Ok,
+    );
+
+    assert_eq!(result, Err(InstallUpdateError::UnsupportedInstallation));
+    assert_eq!(state.phase(), InstallPhase::Idle);
+}
+
+/// download 中に止まる installer (thread 間で使うため Send な実装)。
+struct BlockingInstaller {
+    started: mpsc::Sender<()>,
+    release: Arc<std::sync::Mutex<mpsc::Receiver<()>>>,
+}
+
+struct BlockingPending {
+    release: Arc<std::sync::Mutex<mpsc::Receiver<()>>>,
+}
+
+impl PendingUpdate for BlockingPending {
+    fn version_string(&self) -> &str {
+        "0.2.5"
+    }
+    fn download_and_install(self: Box<Self>) -> Result<(), InstallUpdateError> {
+        self.release
+            .lock()
+            .unwrap()
+            .recv_timeout(Duration::from_secs(5))
+            .expect("test should release the blocked install");
+        Ok(())
+    }
+}
+
+impl UpdateInstaller for BlockingInstaller {
+    fn fetch_pending(&self) -> Result<Box<dyn PendingUpdate>, InstallUpdateError> {
+        self.started.send(()).unwrap();
+        Ok(Box::new(BlockingPending {
+            release: self.release.clone(),
+        }))
+    }
+}
+
+#[test]
+fn tp_g6_concurrent_requests_from_two_threads_run_only_one_install() {
+    let state = Arc::new(InMemoryInstallState::new());
+    let (started_tx, started_rx) = mpsc::channel();
+    let (release_tx, release_rx) = mpsc::channel();
+    let installer = BlockingInstaller {
+        started: started_tx,
+        release: Arc::new(std::sync::Mutex::new(release_rx)),
+    };
+
+    // 1 本目 (例: toast) は download 中に止まる
+    let first_state = state.clone();
+    let first = thread::spawn(move || {
+        InstallUpdateUseCase::new(installer, first_state).execute(cmd("0.2.4", APPIMAGE))
+    });
+    started_rx
+        .recv_timeout(Duration::from_secs(5))
+        .expect("first install should start");
+
+    // 2 本目 (例: 設定モーダル) は拒否され、updater に触れない
+    let (second, fetches, installs) =
+        run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(second, Err(InstallUpdateError::InstallInProgress));
+    assert_eq!((fetches, installs), (0, 0));
+
+    release_tx.send(()).unwrap();
+    assert_eq!(first.join().unwrap(), Ok(v("0.2.5")));
+    assert_eq!(state.phase(), InstallPhase::Installed);
+}
+
+/// fetch で panic する installer (plugin 内部の panic を模す)。
+struct PanickingInstaller;
+
+impl UpdateInstaller for PanickingInstaller {
+    fn fetch_pending(&self) -> Result<Box<dyn PendingUpdate>, InstallUpdateError> {
+        panic!("updater plugin panicked");
+    }
+}
+
+#[test]
+fn tp_g8_panic_during_install_releases_the_slot() {
+    let state = Arc::new(InMemoryInstallState::new());
+
+    let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        InstallUpdateUseCase::new(PanickingInstaller, state.clone()).execute(cmd("0.2.4", APPIMAGE))
+    }));
+    assert!(panicked.is_err());
+    // slot は Idle に戻り、次の install を受け付ける
+    assert_eq!(state.phase(), InstallPhase::Idle);
+
+    let (retry, _, installs) = run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(retry, Ok(v("0.2.5")));
+    assert_eq!(installs, 1);
 }

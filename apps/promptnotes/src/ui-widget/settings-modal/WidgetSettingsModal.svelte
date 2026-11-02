@@ -7,6 +7,7 @@
 		UpdateSettingsError
 	} from '$lib/user-preferences/slices/update-settings';
 	import { createSettingsModalStore } from './store.svelte';
+	import { createSettingsUpdateStore, type SettingsUpdateStoreDeps } from './update-store.svelte';
 
 	type Props = {
 		initial: SettingsDto;
@@ -28,6 +29,12 @@
 				: never
 			: never;
 		openDialogFn?: typeof openDialog;
+		/** install 成功後に 1 回呼ばれる。page-main が全 Note を Flush してから再起動する (I-SM19 / I-U8)。 */
+		onUpdateInstalled?: SettingsUpdateStoreDeps['onInstalled'];
+		checkForUpdatesFn?: SettingsUpdateStoreDeps['checkForUpdatesFn'];
+		installableFn?: SettingsUpdateStoreDeps['installableFn'];
+		installFn?: SettingsUpdateStoreDeps['installFn'];
+		openUrlFn?: SettingsUpdateStoreDeps['openUrlFn'];
 	};
 
 	let {
@@ -37,7 +44,12 @@
 		updateSettingsFn,
 		getAppVersionFn,
 		getDefaultStorageDirFn,
-		openDialogFn = openDialog
+		openDialogFn = openDialog,
+		onUpdateInstalled,
+		checkForUpdatesFn,
+		installableFn,
+		installFn,
+		openUrlFn
 	}: Props = $props();
 
 	// Modal は parent の {#if settingsModalOpen} で mount/unmount 制御するため、
@@ -48,6 +60,16 @@
 			getAppVersionFn,
 			getDefaultStorageDirFn,
 			onPreviewTheme: previewTheme
+		})
+	);
+
+	const updates = untrack(() =>
+		createSettingsUpdateStore({
+			checkForUpdatesFn,
+			installableFn,
+			installFn,
+			openUrlFn,
+			onInstalled: onUpdateInstalled
 		})
 	);
 
@@ -65,6 +87,11 @@
 	// I-SM12: mount ごとに 1 回だけ取得
 	$effect(() => {
 		untrack(() => void store.loadDefaultStorageDir());
+	});
+
+	// I-SM18: mount ごとに 1 回だけ判定 (手動確認そのものは押下時のみ、I-SM15)
+	$effect(() => {
+		untrack(() => void updates.loadInstallable());
 	});
 
 	const THEMES: Array<{ value: Theme; label: string }> = [
@@ -115,6 +142,8 @@
 
 	async function handleSave(event: Event) {
 		event.preventDefault();
+		// I-SM20: インストール中は保存しない (Enter 等による submit も含む)
+		if (updates.busy) return;
 		const outcome = await store.save();
 		if (outcome.kind === 'closed') {
 			if (outcome.settings) onSaved?.(outcome.settings);
@@ -129,7 +158,12 @@
 		onClose();
 	}
 
-	function handleDialogCancel() {
+	function handleDialogCancel(event: Event) {
+		// I-SM20: インストール中は Esc で閉じない
+		if (updates.busy) {
+			event.preventDefault();
+			return;
+		}
 		// <dialog> の Esc → cancel event。preventDefault せず close は親に委ねる。
 		// I-SM5: Esc 時も mount 時の theme に rollback
 		previewTheme(initial.theme);
@@ -219,6 +253,109 @@
 			</div>
 		</section>
 
+		<section
+			aria-labelledby="widget-settings-modal-updates-title"
+			class="flex flex-col gap-1.5 border-t border-neutral-200 pt-4 dark:border-neutral-800"
+		>
+			<span id="widget-settings-modal-updates-title" class="text-sm font-medium">Updates</span>
+			<div class="flex items-center gap-2">
+				{#if store.appVersion}
+					<span
+						data-testid="widget.widget-settings-modal.app-version"
+						class="text-xs text-neutral-600 dark:text-neutral-400"
+					>
+						Version {store.appVersion}
+					</span>
+				{/if}
+				<button
+					type="button"
+					data-testid="widget.widget-settings-modal.check-for-updates"
+					class="ml-auto shrink-0 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+					disabled={updates.checkStatus.kind === 'checking' || updates.busy}
+					onclick={() => void updates.check()}
+				>
+					Check for updates
+				</button>
+			</div>
+			{#if updates.checkStatus.kind !== 'idle'}
+				{@const status = updates.checkStatus}
+				<p
+					data-testid="widget.widget-settings-modal.update-check-result"
+					role="status"
+					class={[
+						'text-xs',
+						status.kind === 'failed'
+							? 'text-red-600 dark:text-red-400'
+							: 'text-neutral-600 dark:text-neutral-400'
+					]}
+				>
+					{#if status.kind === 'checking'}
+						Checking…
+					{:else if status.kind === 'up-to-date'}
+						You're up to date
+					{:else if status.kind === 'available'}
+						Version <span class="font-semibold">{status.release.version}</span> is available
+					{:else}
+						Couldn't check for updates
+					{/if}
+				</p>
+			{/if}
+			{#if updates.installStatus === 'installing'}
+				<p
+					data-testid="widget.widget-settings-modal.install-status"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					Updating…
+				</p>
+			{:else if updates.installStatus === 'failed'}
+				<p
+					data-testid="widget.widget-settings-modal.install-status"
+					role="alert"
+					class="text-xs text-red-600 dark:text-red-400"
+				>
+					Update failed. Try again or download it from the release page.
+				</p>
+			{:else if updates.installStatus === 'already-installing'}
+				<p
+					data-testid="widget.widget-settings-modal.install-status"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					Another update is in progress or waiting for a restart.
+				</p>
+			{:else if updates.installStatus === 'restart-required'}
+				<p
+					data-testid="widget.widget-settings-modal.install-status"
+					role="alert"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					The update was installed. Restart PromptNotes to finish updating.
+				</p>
+			{/if}
+			{#if updates.checkStatus.kind === 'available'}
+				<div class="flex justify-end gap-1">
+					<button
+						type="button"
+						data-testid="widget.widget-settings-modal.view-release"
+						class="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
+						onclick={() => void updates.viewRelease()}
+					>
+						View release
+					</button>
+					{#if updates.installable}
+						<button
+							type="button"
+							data-testid="widget.widget-settings-modal.install-update"
+							disabled={updates.busy || updates.installStatus === 'restart-required'}
+							class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-500 dark:hover:bg-blue-600"
+							onclick={() => void updates.install()}
+						>
+							Update & restart
+						</button>
+					{/if}
+				</div>
+			{/if}
+		</section>
+
 		{#if store.saveState.kind === 'error'}
 			{@const persistMsg = persistErrorMessage(store.saveState.error)}
 			{#if persistMsg}
@@ -229,18 +366,11 @@
 		{/if}
 
 		<footer class="flex items-center justify-end gap-2 pt-2">
-			{#if store.appVersion}
-				<span
-					data-testid="widget.widget-settings-modal.app-version"
-					class="mr-auto text-xs text-neutral-500 dark:text-neutral-400"
-				>
-					v{store.appVersion}
-				</span>
-			{/if}
 			<button
 				type="button"
 				data-testid="widget.widget-settings-modal.cancel"
-				class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+				disabled={updates.busy}
+				class="rounded-md border border-neutral-200 bg-white px-3 py-1 text-xs hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
 				onclick={handleCancel}
 			>
 				Cancel
@@ -248,7 +378,7 @@
 			<button
 				type="submit"
 				data-testid="widget.widget-settings-modal.save"
-				disabled={store.saveState.kind === 'saving'}
+				disabled={store.saveState.kind === 'saving' || updates.busy}
 				class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
 			>
 				Save

@@ -218,6 +218,12 @@ pub struct CheckForUpdatesCommand {
     pub current_version: Version,
 }
 
+/// 設定モーダルの「Check for updates」から行う手動確認 (I-U9)。
+#[derive(Debug, Clone)]
+pub struct CheckForUpdatesManuallyCommand {
+    pub current_version: Version,
+}
+
 #[derive(Debug, Clone)]
 pub struct InstallUpdateCommand {
     pub current_version: Version,
@@ -315,6 +321,15 @@ pub trait CheckForUpdatesWorkflow {
     fn run(
         &self,
         cmd: CheckForUpdatesCommand,
+    ) -> Result<UpdateChannel, UpdateError>;
+}
+
+/// I-U9。失敗も `Err` で要求元 UI に返す (silent にしない)。`NewVersionDetected` は発行せず、
+/// 通知済みバージョン (I-U4) / 前回確認時刻 (I-U3) の揮発 state にも触れない。
+pub trait CheckForUpdatesManuallyWorkflow {
+    fn run(
+        &self,
+        cmd: CheckForUpdatesManuallyCommand,
     ) -> Result<UpdateChannel, UpdateError>;
 }
 

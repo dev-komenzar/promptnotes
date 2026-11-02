@@ -36,7 +36,8 @@ PromptNotes の 18 workflow を BC 別に列挙。各 workflow は DMMF pipeline
 | [get-default-storage-dir](get-default-storage-dir.md) | 設定モーダル表示時 | (なし) | Settings | User Preferences |
 | [check-for-updates](check-for-updates.md) | アプリ起動時 | NewVersionDetected (条件付) | UpdateChannel | Update Distribution |
 | [get-app-version](get-app-version.md) | 設定モーダル表示時 | (なし) | UpdateChannel | Update Distribution |
-| [install-update](install-update.md) | 更新通知の「Update & restart」 | (なし) | UpdateChannel | Update Distribution |
+| [check-for-updates-manually](check-for-updates-manually.md) | 設定モーダルの「Check for updates」 | (なし) | UpdateChannel | Update Distribution |
+| [install-update](install-update.md) | 更新通知 / 設定モーダルの「Update & restart」 | (なし) | UpdateChannel | Update Distribution |
 
 <!-- ori:auto-table:end -->
 
@@ -63,6 +64,9 @@ Phase 7 validation scenarios の workflow 対応：
 | S24 (更新インストール → Flush → 再起動) | install-update |
 | S25 (更新インストール失敗) | install-update |
 | S26 (非対応配布形式は通知のみ) | install-update |
+| S27 (手動確認で新バージョン → インストール) | check-for-updates-manually → install-update |
+| S28 (手動確認の最新 / 確認失敗表示) | check-for-updates-manually |
+| S29 (同時インストール要求の拒否 / 再起動失敗) | install-update |
 | S15 (同一秒内編集) | auto-save-note / flush-note |
 
 ## Open Questions {#open-questions}

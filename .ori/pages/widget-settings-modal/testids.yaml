@@ -6,6 +6,12 @@ derived:
     field: screen-2-app-version
   - testid: widget.widget-settings-modal.cancel
     field: screen-2-cancel
+  - testid: widget.widget-settings-modal.check-for-updates
+    field: screen-2-check-for-updates
+  - testid: widget.widget-settings-modal.install-status
+    field: screen-2-install-status
+  - testid: widget.widget-settings-modal.install-update
+    field: screen-2-install-update
   - testid: widget.widget-settings-modal.save
     field: screen-2-save
   - testid: widget.widget-settings-modal.storage-dir
@@ -14,6 +20,10 @@ derived:
     field: screen-2-storage-dir-reset
   - testid: widget.widget-settings-modal.theme
     field: screen-2-theme
+  - testid: widget.widget-settings-modal.update-check-result
+    field: screen-2-update-check-result
+  - testid: widget.widget-settings-modal.view-release
+    field: screen-2-view-release
 extra:
   - testid: widget.widget-settings-modal.root
     purpose: 設定モーダルの dialog root

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const invokeMock = vi.hoisted(() => vi.fn());
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 
-import { installUpdate, isUpdateInstallable, restartApp } from '../index';
+import { installUpdate, isInstallInProgressError, isUpdateInstallable, restartApp } from '../index';
 
 describe('slice:install-update', () => {
 	afterEach(() => {
@@ -36,5 +36,13 @@ describe('slice:install-update', () => {
 
 		await restartApp();
 		expect(invokeMock).toHaveBeenCalledExactlyOnceWith('restart_app');
+	});
+
+	it('spec.md#tp-concurrency TP-G7: isInstallInProgressError は kind=InstallInProgress だけを true にする', () => {
+		expect(isInstallInProgressError({ kind: 'InstallInProgress', message: 'x' })).toBe(true);
+		expect(isInstallInProgressError({ kind: 'DownloadFailed', message: 'x' })).toBe(false);
+		expect(isInstallInProgressError(new Error('InstallInProgress'))).toBe(false);
+		expect(isInstallInProgressError(null)).toBe(false);
+		expect(isInstallInProgressError('InstallInProgress')).toBe(false);
 	});
 });

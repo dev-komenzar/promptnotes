@@ -4,17 +4,17 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-11-01
+  last_derived: 2026-11-02
   derives_from:
     - domain/ui-fields/screen-3.md#screen-3
     - domain/ui-fields/page-groups.md#widget-update-toast
     - domain/workflows/check-for-updates.md#check-for-updates
     - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-3.md#.*: 9272e0f0142d
-    domain/ui-fields/page-groups.md#.*: b10b453d71fb
-    domain/workflows/check-for-updates.md#.*: f08ad6cf0874
-    domain/workflows/install-update.md#.*: c0633544b381
+    domain/ui-fields/screen-3.md#.*: ddf71dd05ef4
+    domain/ui-fields/page-groups.md#.*: f77c8a834634
+    domain/workflows/check-for-updates.md#.*: 32f87895c0d8
+    domain/workflows/install-update.md#.*: 4b291a6c25a9
 ---
 
 # widget-update-toast — Widget Specification {#widget-update-toast-spec}
@@ -117,6 +117,13 @@ Tauri event channel 名は `new_version_detected`（snake_case）。emit 側は
 - **I-UT11（失敗は表示して再実行可能）**: install 失敗は `installStatus = failed` にして失敗メッセージを
   `widget.widget-update-toast.install-status` に表示し、ボタンを再び押せるようにする。payload は維持。
   `onInstalled` は呼ばない。より新しい版の event が届いたら `idle` に戻す（I-U7 / S25）
+- **I-UT12（別 UI のインストール中は進行中表示）**: `installFn` が `kind = InstallInProgress` で reject したら
+  （設定モーダルからのインストールが実行中 / 再起動待ち、I-U10）`installStatus = already-installing` にして
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせずエラーログも出さない。dismiss は有効。
+  より新しい版の event が届いたら `idle` に戻す（S29）
+- **I-UT13（再起動失敗）**: install 成功後に `onInstalled` が reject したら（page-main の `restart_app` 失敗）
+  `installStatus = restart-required` にして「The update was installed. Restart PromptNotes to finish updating.」を表示し、
+  dismiss を有効に戻す。「Update & restart」は無効のままで `install()` は no-op（再インストールしない、I-U8 / I-U10 / S29）
 
 > domain/ui-fields/screen-3.md#cross-install-update より：「成功: page-main が全 pending Note を Flush してから
 > アプリを再起動する（I-U8、S24）」「失敗: … ボタンを再び押せるようにする。View release は使える（I-U7、S25）」
@@ -198,6 +205,17 @@ installing 中の `install()` 再呼出と `dismiss()` は無視される（I-UT
 ### tp-ut-install-not-installable: 非対応形式では何もしない {#tp-ut-install-not-installable}
 
 `installable = false` のとき `install()` は `installFn` を呼ばない（I-U6）。
+
+### tp-ut-install-in-progress: 別 UI のインストール中 {#tp-ut-install-in-progress}
+
+`installFn` が `{ kind: 'InstallInProgress' }` で reject → `installStatus = already-installing`、`onInstalled` は呼ばれず、
+`console.error` も出ない。dismiss でき、新しい版の event で `idle` に戻る（I-UT12）。
+
+### tp-ut-restart-failure: 再起動失敗 {#tp-ut-restart-failure}
+
+install 成功後に `onInstalled` が reject → `installStatus = restart-required`。再度 `install()` しても `installFn` は
+呼ばれない。dismiss は有効（I-UT13）。page-main の browser test でも `restart_app` 失敗時にボタンが disabled・
+dismiss が enabled になることを確認する（S29）。
 
 ### tp-ut-page-main-restart-order: page-main の再起動順序 {#tp-ut-page-main-restart-order}
 

@@ -134,7 +134,8 @@
 		await checkForUpdatesFn().catch(() => {});
 	}
 
-	// I-U8 / S24: install-update 成功後、quit 時 (S13) と同じ pending flush を await してから再起動する。
+	// I-U8 / S24 / S27: install-update 成功後 (Toast / 設定モーダルのどちらから要求しても)、
+	// quit 時 (S13) と同じ pending flush を await してから再起動する。
 	// install-update slice は Note Capture を知らないので、順序保証はここ (composition) が持つ。
 	async function restartAfterUpdate(): Promise<void> {
 		try {
@@ -432,6 +433,7 @@
 		initial={settingsForModal()}
 		onClose={handleSettingsModalClose}
 		onSaved={handleSettingsSaved}
+		onUpdateInstalled={restartAfterUpdate}
 	/>
 {/if}
 

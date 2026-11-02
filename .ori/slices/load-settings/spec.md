@@ -4,9 +4,9 @@ coherence:
   last_derived: 2026-11-02
   hash:
     domain/workflows/load-settings.md#.*: 0c241b32210d
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/bounded-contexts.md#.*: 4e4f641c9627
-    domain/validation.md#.*: a226e34cf459
+    domain/aggregates.md#.*: 0549c2d38dd2
+    domain/bounded-contexts.md#.*: c3bc130f98d5
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file

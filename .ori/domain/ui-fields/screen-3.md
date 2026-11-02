@@ -31,7 +31,7 @@ event を購読して表示する。対応配布形式では [install-update](..
 | `{#screen-3-release-notes-summary}` | リリースノート（要約） | `String` | - | truncated text (2 行まで) | 全文は外部リンク |
 | `{#screen-3-view-release}` | 詳細を見る | (action → external URL) | - | inline link | `Release::url` を OS ブラウザで開く |
 | `{#screen-3-install-update}` | Update & restart | (action → install-update) | - | primary button | `InstallationKind::is_installable()` のときだけ表示（I-U6）。押すと install → Flush → 再起動 |
-| `{#screen-3-install-status}` | 更新状態 | `Idle \| Installing \| Failed` | - | inline text | Installing 中は「Updating…」、Failed 時は失敗メッセージ |
+| `{#screen-3-install-status}` | 更新状態 | `Idle \| Installing \| Failed \| AlreadyInstalling \| RestartRequired` | - | inline text | Installing 中は「Updating…」、Failed 時は失敗メッセージ、AlreadyInstalling は進行中の旨、RestartRequired は手動再起動の案内 |
 | `{#screen-3-dismiss}` | × | (action) | - | small icon | Toast 閉じる（次回起動時 or より新しいバージョン検出時に再表示） |
 
 ## Cross-Field Rules {#cross-field-rules}
@@ -66,6 +66,11 @@ event を購読して表示する。対応配布形式では [install-update](..
 - 成功: page-main が全 pending Note を Flush してからアプリを再起動する（I-U8、S24）
 - 失敗: `screen-3-install-status = Failed` で失敗メッセージを表示し、ボタンを再び押せるようにする。
   View release は使える（I-U7、S25）
+- 別のインストールが実行中 / 再起動待ち（`InstallInProgress`、I-U10）: `screen-3-install-status = AlreadyInstalling` で
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにしない（S29）
+- インストール成功後に再起動が失敗: `screen-3-install-status = RestartRequired` で
+  「The update was installed. Restart PromptNotes to finish updating.」を表示し、dismiss を有効に戻す。
+  「Update & restart」は無効のまま（再インストールしない、I-U8 / I-U10、S29）
 - download 進捗（%）は表示しない（MVP 範囲外）
 
 ### 抑制ロジック（MVP 範囲外） {#cross-suppression}

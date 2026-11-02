@@ -12,9 +12,9 @@ coherence:
     - domain/domain-events.md#note-file-deleted-externally
   hash:
     domain/ui-fields/screen-5.md#.*: 8ae9b5c9d594
-    domain/ui-fields/page-groups.md#.*: b10b453d71fb
+    domain/ui-fields/page-groups.md#.*: f77c8a834634
     domain/workflows/detect-external-changes.md#.*: a66910b0d892
-    domain/domain-events.md#.*: 922c62c32c4d
+    domain/domain-events.md#.*: 34746af8d1fa
 ---
 
 # widget-external-delete-notice — Widget Specification {#widget-external-delete-notice-spec}

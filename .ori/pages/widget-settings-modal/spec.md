@@ -11,12 +11,16 @@ coherence:
     - domain/workflows/update-settings.md#update-settings
     - domain/workflows/get-app-version.md#get-app-version
     - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
+    - domain/workflows/check-for-updates-manually.md#check-for-updates-manually
+    - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-2.md#.*: 0a4971bac9fa
-    domain/ui-fields/page-groups.md#.*: b10b453d71fb
+    domain/ui-fields/screen-2.md#.*: 395b41f96ec8
+    domain/ui-fields/page-groups.md#.*: f77c8a834634
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: a7ddfb091648
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
+    domain/workflows/check-for-updates-manually.md#.*: c3f0e2d63d42
+    domain/workflows/install-update.md#.*: 4b291a6c25a9
 ---
 
 # widget-settings-modal — Widget Specification {#widget-settings-modal-spec}
@@ -33,8 +37,9 @@ workflow の **唯一の trigger UI** となる。
 - **mount lifecycle**: on-demand（page-main の toolbar 歯車 / `Cmd+,` で mount、
   save / cancel / Esc で unmount）
 - **parent**: page-main（lifecycle は page-main に従属、I-PM2）
-- **hosts**: `update-settings`（唯一の command）/ `get-app-version`（表示用 query）/
-  `get-default-storage-dir`（リセット用の既定値 query）
+- **hosts**: `update-settings`（設定を保存する command）/ `get-app-version`（表示用 query）/
+  `get-default-storage-dir`（リセット用の既定値 query）/ `check-for-updates-manually`（手動確認 query）/
+  `install-update`（設定モーダルからの更新インストール command）
 
 ## ホストする slices {#hosted-slices}
 
@@ -43,6 +48,8 @@ workflow の **唯一の trigger UI** となる。
 | `screen-2-save` | [update-settings](../../slices/update-settings/spec.md) | primary button | `storage_dir` / `theme` 差分を永続化 + 0〜2 件 event |
 | `screen-2-app-version` | [get-app-version](../../slices/get-app-version/spec.md) | modal mount 時に 1 回 | なし（読み取り専用 query） |
 | `screen-2-storage-dir-reset` | [get-default-storage-dir](../../slices/get-default-storage-dir/spec.md) | modal mount 時に 1 回 | なし（読み取り専用 query） |
+| `screen-2-check-for-updates` | [check-for-updates-manually](../../slices/check-for-updates-manually/spec.md) | ボタン押下ごとに 1 回 | なし（event 非発行・揮発 state 非変更、I-U9） |
+| `screen-2-install-update` | [install-update](../../slices/install-update/spec.md)（`installUpdate` / `isUpdateInstallable`） | 判定は mount 時に 1 回、install はボタン押下時 | download + install。成功後は page-main が Flush → 再起動（I-U8） |
 
 `screen-2-storage-dir` の folder picker は OS ネイティブ dialog（`@tauri-apps/plugin-dialog`）
 を起動するが、これは widget の form 状態を組み立てるための副作用であり slice ではない。
@@ -61,15 +68,34 @@ workflow の **唯一の trigger UI** となる。
 > - mount 時の値が default と同じなら、リセットしても差分なし（`cross-no-diff` に従う）
 > - default の取得完了前、または取得自体が失敗した場合は、ボタンを **disabled** にする
 
+> domain/ui-fields/screen-2.md#cross-manual-update-check より:
+> - 「Check for updates」押下で `check-for-updates-manually` を 1 回呼ぶ（mount 時には自動で呼ばない）
+> - 確認中は「Checking…」を表示し、ボタンを disabled にする（多重実行しない）
+> - `latest_release: None` → 「You're up to date」、`Some(release)` → 「Version {release.version} is available」
+>   （通知済みでも表示する、I-U9）、`Err` → 「Couldn't check for updates」
+> - 結果は設定モーダル内だけで完結し、Toast は出さない。閉じると破棄される
+
+> domain/ui-fields/screen-2.md#cross-install-from-settings より:
+> - 新バージョンありのときだけ「View release」、さらに `is_update_installable` が true のときだけ
+>   「Update & restart」を表示する（I-U6）。判定は mount 時に 1 回、失敗時は false
+> - インストール中は「Updating…」を表示し、確認 / インストール / 保存 / キャンセル / Esc を受け付けない
+> - 成功したら page-main が全 Note を Flush してから再起動する（I-U8）。失敗したら失敗を表示して再試行可能に戻す
+
 ## 入出力 {#io}
 
 - **入力 (props)**: `initial: SettingsDto`（mount 時の settings）、`onClose` / `onSaved` callback、
-  test 用の注入点 `updateSettingsFn` / `getAppVersionFn` / `getDefaultStorageDirFn` / `openDialogFn`
+  `onUpdateInstalled` callback（install 成功後に page-main が Flush → 再起動する、I-U8）、
+  test 用の注入点 `updateSettingsFn` / `getAppVersionFn` / `getDefaultStorageDirFn` / `openDialogFn` /
+  `checkForUpdatesFn` / `installableFn` / `installFn` / `openUrlFn`
 - **出力 (slice 呼出)**:
   - `updateSettings(input: UpdateSettingsInput)` — save 時、差分のみ
   - `getAppVersion(): Promise<string>` — mount 時に 1 回
   - `getDefaultStorageDir(): Promise<string>` — mount 時に 1 回
-- **表示 (read-only)**: `screen-2-app-version` に `v{version}`（例: `v0.2.2`）
+  - `isUpdateInstallable(): Promise<boolean>` — mount 時に 1 回
+  - `checkForUpdatesManually(): Promise<UpdateChannelResponse>` — 「Check for updates」押下時
+  - `installUpdate(): Promise<string>` — 「Update & restart」押下時
+- **表示 (read-only)**: `screen-2-app-version` に `Version {version}`（例: `Version 0.2.2`）、
+  `screen-2-update-check-result` / `screen-2-install-status` に確認・インストールの状態
 
 ## 境界契約 {#boundary-contract}
 
@@ -78,10 +104,13 @@ workflow の **唯一の trigger UI** となる。
   - `apps/promptnotes/src/lib/user-preferences/slices/update-settings/index.ts`（`updateSettings`）
   - `apps/promptnotes/src/lib/update-distribution/slices/get-app-version/index.ts`（`getAppVersion`）
   - `apps/promptnotes/src/lib/user-preferences/slices/get-default-storage-dir/index.ts`（`getDefaultStorageDir`）
+  - `apps/promptnotes/src/lib/update-distribution/slices/check-for-updates-manually/index.ts`（`checkForUpdatesManually`）
+  - `apps/promptnotes/src/lib/update-distribution/slices/install-update/index.ts`（`installUpdate` / `isUpdateInstallable`）
 - public_entry: `apps/promptnotes/src/ui-widget/settings-modal/WidgetSettingsModal.svelte`（page-main から mount）
 - 禁止: `ui-widget/settings-modal/` から `@tauri-apps/api/core` の `invoke` / `@tauri-apps/api/app` の
   `getVersion` を直接 import すること（I-SM7 / I-SM9。get-app-version spec#boundary-contract の C-GAV5）。
-  `@tauri-apps/api/path` で default path を独自に計算すること（I-SM12。get-default-storage-dir の C-GDSD3）
+  `@tauri-apps/api/path` で default path を独自に計算すること（I-SM12。get-default-storage-dir の C-GDSD3）。
+  `@tauri-apps/plugin-updater` を直接呼ぶこと（I-SM15 / I-SM18）。`restartApp` を widget から呼ぶこと（I-SM19、再起動は page-main）
 
 ## レイアウト {#layout}
 
@@ -98,16 +127,26 @@ workflow の **唯一の trigger UI** となる。
 │                                                            │
 │  テーマ                                                     │
 │   ( ) System   ( ) Light   ( ) Dark                        │
+│ ────────────────────────────────────────────────────────── │
+│  Updates                                                   │
+│   Version 0.2.4                      [Check for updates]   │
+│   Version 0.2.5 is available                               │
+│                      [View release]  [Update & restart]    │
+│   (Updating… / Update failed. … )                          │
 │                                                            │
-│  v0.2.2                     [キャンセル]  [保存]            │
+│                             [キャンセル]  [保存]            │
 └────────────────────────────────────────────────────────────┘
 ```
 
 - HTML `<dialog>` element + `showModal()` で OS ネイティブ風の modal を実現
 - `Cmd+,` / Toolbar 歯車で open、Esc / cancel / save で close（cross-screen-shortcuts と整合）
 - 背景の dim 等の装飾はしない（screen-2.md#notes-os-native-modal）
-- `screen-2-app-version` はモーダル下部（ボタン行の左）に控えめな secondary text で表示。
-  取得前 / 失敗時は要素ごと描画しない
+- バージョン情報と更新関連 UI は Theme の下、区切り線で分けた「Updates」セクションにまとめる
+  （screen-2.md#cross-updates-section-layout）。footer は Cancel / Save のみ
+- `screen-2-app-version` は Updates セクション 1 行目の左に `Version {version}` で表示。
+  取得前 / 失敗時は要素ごと描画しない（`screen-2-check-for-updates` は 1 行目右端に常に表示）
+- `screen-2-update-check-result` は未確認時は描画しない。確認失敗は警告色で表示する
+- `screen-2-view-release` / `screen-2-install-update` は新バージョンありのときだけ結果の下に右寄せで表示
 - `screen-2-storage-dir-reset` は保存ディレクトリ行の直下に secondary button で表示。
   default 取得前 / 失敗時は要素を残したまま `disabled`
 
@@ -160,6 +199,32 @@ workflow の **唯一の trigger UI** となる。
   draft を変えない。エラー表示・save 阻害はしない
 - **I-SM14（default と同じなら差分なし）**: リセット後の draft が mount 時の `storage_dir` と同じなら
   `dirty` は false のままで、save は workflow を呼ばずに close する（I-SM6）
+
+### 手動更新確認とインストール {#invariants-updates}
+
+- **I-SM15（手動確認は slice 経由・押下時のみ）**: 更新確認は `check-for-updates-manually` slice の
+  `checkForUpdatesManually()` からのみ行い、「Check for updates」押下ごとに 1 回だけ呼ぶ。mount 時には呼ばない
+- **I-SM16（確認中は多重実行しない）**: 確認中は「Checking…」を表示し、ボタンを `disabled` にする。
+  確認中 / インストール中の再押下は no-op
+- **I-SM17（結果の表示）**: `latest_release: null` → 「You're up to date」、非 null → 「Version {version} is available」、
+  reject → 「Couldn't check for updates」。いずれも modal 内だけで表示し、Toast は出さない（I-U9）。
+  結果は form state と独立（`dirty` / save payload / cancel rollback の対象外）
+- **I-SM18（インストール操作の提示）**: 「View release」は新バージョンありのときだけ表示する。
+  「Update & restart」は新バージョンあり かつ `isUpdateInstallable()` が true のときだけ表示する（I-U6）。
+  判定は mount ごとに 1 回、reject は false 扱い
+- **I-SM19（インストールと再起動）**: 「Update & restart」押下で `installUpdate()` を呼ぶ。成功したら
+  `onUpdateInstalled` を await する（page-main が全 Note を Flush → 再起動、I-U8）。widget は `restartApp` を呼ばない
+- **I-SM20（インストール中は閉じない）**: インストール中は「Updating…」を表示し、確認 / インストール / 保存 / キャンセル
+  ボタンを `disabled` にし、Esc でも閉じない
+- **I-SM21（インストール失敗）**: `installUpdate()` が reject したら「Update failed. Try again or download it from
+  the release page.」を表示し、「Update & restart」を再度押せる状態に戻す（I-U7 / S25）。確認結果は維持する。
+  再確認したら失敗表示は消す
+- **I-SM22（別 UI のインストール中）**: `installUpdate()` が `kind = InstallInProgress` で reject したら（Toast からの
+  インストールが実行中 / 再起動待ち、I-U10）「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせず、
+  modal は操作できるまま（`busy` にしない）。再確認したら表示は消す（S29）
+- **I-SM23（再起動失敗）**: install 成功後に `onUpdateInstalled` が reject したら「The update was installed. Restart
+  PromptNotes to finish updating.」を表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は
+  無効のまま（再インストールしない）。再確認しても表示は消えない（I-U8 / I-U10 / S29）
 
 ## テスト観点 (vitest) {#test-points}
 
@@ -255,6 +320,59 @@ component のボタンは `disabled`（I-SM13）。
 save が `invalid_path` で失敗して inline error が出ている状態でリセット → `saveState` は `idle` に戻る
 （folder picker で選び直したときと同じ扱い）。
 
+### tp-sm-update-check-on-click: 押下時だけ確認する {#tp-sm-update-check-on-click}
+
+mount 直後は `checkForUpdatesFn` が呼ばれず、結果は非表示。「Check for updates」押下で 1 回呼ばれる（I-SM15）。
+
+### tp-sm-update-checking-disabled: 確認中は disabled {#tp-sm-update-checking-disabled}
+
+`checkForUpdatesFn` が未 resolve の間は「Checking…」を表示し、ボタンは `disabled`。store の `check()` を
+重ねて呼んでも `checkForUpdatesFn` は 1 回だけ（I-SM16）。
+
+### tp-sm-update-up-to-date: 最新の表示 {#tp-sm-update-up-to-date}
+
+`latest_release: null` で resolve → 「You're up to date」を表示し、View release / Update & restart は出さない（I-SM17）。
+
+### tp-sm-update-available: 新バージョンの表示 {#tp-sm-update-available}
+
+`latest_release: { version: '0.2.5', … }` で resolve → 「Version 0.2.5 is available」と「View release」を表示。
+`isUpdateInstallable` が true なら「Update & restart」も表示、false / reject なら表示しない（I-SM17 / I-SM18）。
+「View release」押下で `openUrlFn(release.url)` が呼ばれる。
+
+### tp-sm-update-check-failed: 確認失敗の表示 {#tp-sm-update-check-failed}
+
+`checkForUpdatesFn` が reject → 「Couldn't check for updates」を表示し、ボタンは再度押せる（I-SM17）。
+
+### tp-sm-update-install-success: インストール成功で onUpdateInstalled {#tp-sm-update-install-success}
+
+新バージョンあり + installable → 「Update & restart」押下で `installFn` が 1 回呼ばれ、resolve したら
+`onUpdateInstalled` がインストールしたバージョンで 1 回呼ばれる。その間は「Updating…」を表示し、
+Check / Update / Save / Cancel は `disabled`（I-SM19 / I-SM20）。
+
+### tp-sm-update-install-blocks-close: インストール中は Esc で閉じない {#tp-sm-update-install-blocks-close}
+
+インストール中に Esc（dialog の cancel event）→ `onClose` は呼ばれない（I-SM20）。
+
+### tp-sm-update-install-failed: インストール失敗は再試行可能 {#tp-sm-update-install-failed}
+
+`installFn` が reject → 「Update failed. …」を表示し、`onUpdateInstalled` は呼ばれず、「Update & restart」は
+再度押せる。再押下で `installFn` が再び呼ばれる（I-SM21）。
+
+### tp-sm-update-install-in-progress: 別 UI のインストール中 {#tp-sm-update-install-in-progress}
+
+`installFn` が `{ kind: 'InstallInProgress' }` で reject → 「Another update is in progress or waiting for a restart.」を表示し、`busy` は
+false、`onUpdateInstalled` は呼ばれない。page-main の browser test で、Toast のインストール中に設定モーダルから要求すると
+2 本目が拒否され、Toast 側は Updating… のまま・Cancel は押せることを確認する（I-SM22 / S29）。
+
+### tp-sm-update-restart-failure: 再起動失敗 {#tp-sm-update-restart-failure}
+
+install 成功後に `onUpdateInstalled` が reject → `restart-required`、`busy` は false、再度 `install()` しても
+`installFn` は呼ばれない。再確認しても `restart-required` のまま（I-SM23）。
+
+### tp-sm-update-not-in-diff: 更新 UI は差分判定の対象外 {#tp-sm-update-not-in-diff}
+
+確認後に何も編集せず save → `updateSettings` は呼ばれず close（I-SM6 / I-SM17）。
+
 ## 実装ノート {#impl-notes}
 
 ### Svelte 5 + `<dialog>` element {#impl-svelte-dialog}
@@ -274,6 +392,10 @@ save が `invalid_path` で失敗して inline error が出ている状態でリ
   component の mount 時に `loadAppVersion()` を 1 回呼ぶ
 - 同様に `defaultStorageDir: string | null` / `loadDefaultStorageDir(): Promise<void>`（reject を握り潰す）/
   `resetStorageDir()`（未取得なら no-op）を持たせ、deps に `getDefaultStorageDirFn` を追加する
+- 手動確認 / インストールの状態は form store と分け、`createSettingsUpdateStore(deps)`（`update-store.svelte.ts`）に置く。
+  deps: `checkForUpdatesFn` / `installableFn` / `installFn` / `openUrlFn` / `onInstalled`。
+  state は `checkStatus`（`idle` / `checking` / `up-to-date` / `available` / `failed`）・`installable`・
+  `installStatus`（`idle` / `installing` / `failed` / `already-installing` / `restart-required`）。form の draft とは独立なので I-SM17 が構造で保たれる
 - component (`*.svelte`) は store の薄い presentation layer
 
 ### ディレクトリ構成 {#impl-layout-dir}
@@ -282,9 +404,11 @@ save が `invalid_path` で失敗して inline error が出ている状態でリ
 apps/promptnotes/src/ui-widget/settings-modal/
 ├── WidgetSettingsModal.svelte    # presentation (dialog + form)
 ├── store.svelte.ts               # createSettingsModalStore factory
+├── update-store.svelte.ts        # createSettingsUpdateStore factory (手動確認 + インストール)
 └── tests/
     ├── store.test.ts             # form / save / cancel / reset の unit test (server)
-    └── WidgetSettingsModal.svelte.test.ts  # reset ボタンの enabled / disabled (client)
+    ├── update-store.test.ts      # 手動確認 / インストールの unit test (server)
+    └── WidgetSettingsModal.svelte.test.ts  # reset ボタン / Updates セクションの表示 (client)
 ```
 
 ### 非責務 {#impl-non-responsibility}

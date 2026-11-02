@@ -1,6 +1,10 @@
 import { listen as tauriListen } from '@tauri-apps/api/event';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { installUpdate, isUpdateInstallable } from '$lib/update-distribution/slices/install-update';
+import {
+	installUpdate,
+	isInstallInProgressError,
+	isUpdateInstallable
+} from '$lib/update-distribution/slices/install-update';
 
 /**
  * widget-update-toast の購読 + dismiss / view-release ロジックを保持する store。
@@ -19,6 +23,10 @@ import { installUpdate, isUpdateInstallable } from '$lib/update-distribution/sli
  * - I-UT10 (I-U5 / S24): install は installStatus=installing の間は多重実行しない。成功したら
  *   onInstalled (page-main: 全 Note Flush → 再起動、I-U8) を await する
  * - I-UT11 (I-U7 / S25): install 失敗は installStatus=failed にして再実行可能に戻す。payload は維持
+ * - I-UT12 (I-U10 / S29): 別 UI (設定モーダル) のインストールが実行中 / 再起動待ちで拒否されたら
+ *   installStatus=already-installing。失敗扱いにしない
+ * - I-UT13 (I-U8 / S29): install 成功後に onInstalled (再起動) が reject したら installStatus=restart-required。
+ *   dismiss を有効に戻し、再インストールは受け付けない
  */
 
 export type NewVersionDetectedPayload = {
@@ -43,7 +51,12 @@ export type UpdateInstallFn = () => Promise<string>;
 /** install 成功後に呼ぶ hook。page-main が全 pending Note を Flush してから再起動する (I-U8)。 */
 export type UpdateInstalledHook = (installedVersion: string) => void | Promise<void>;
 
-export type InstallStatus = 'idle' | 'installing' | 'failed';
+export type InstallStatus =
+	| 'idle'
+	| 'installing'
+	| 'failed'
+	| 'already-installing'
+	| 'restart-required';
 
 export type UpdateToastStoreDeps = {
 	listenFn?: UpdateEventListener;
@@ -91,7 +104,9 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 			unsubscribe = await listenFn((p) => {
 				payload = p;
 				// より新しい版の通知で失敗表示はリセットする。install 中は状態を変えない。
-				if (installStatus === 'failed') installStatus = 'idle';
+				if (installStatus === 'failed' || installStatus === 'already-installing') {
+					installStatus = 'idle';
+				}
 			});
 		} catch {
 			// I-UT2 / S14: listen 失敗は silent。toast は出さない。
@@ -122,18 +137,33 @@ export function createUpdateToastStore(deps: UpdateToastStoreDeps = {}) {
 	}
 
 	async function install(): Promise<void> {
-		if (!payload || !installable || installStatus === 'installing') return;
+		if (
+			!payload ||
+			!installable ||
+			installStatus === 'installing' ||
+			installStatus === 'restart-required'
+		)
+			return;
 		installStatus = 'installing';
 		let installedVersion: string;
 		try {
 			installedVersion = await installFn();
 		} catch (err) {
+			if (isInstallInProgressError(err)) {
+				installStatus = 'already-installing';
+				return;
+			}
 			console.error('[update] install failed', err);
 			installStatus = 'failed';
 			return;
 		}
 		// 成功時は onInstalled (Flush → 再起動) に進む。再起動までは installing のまま。
-		await onInstalled?.(installedVersion);
+		try {
+			await onInstalled?.(installedVersion);
+		} catch (err) {
+			console.error('[update] restart after install failed', err);
+			installStatus = 'restart-required';
+		}
 	}
 
 	async function viewRelease(): Promise<void> {

@@ -87,6 +87,9 @@ pub enum InstallUpdateError {
     UnsupportedInstallation,
     #[error("no newer release is available")]
     NoUpdateAvailable,
+    /// I-U10: 別のインストールが実行中、またはインストール成功後の再起動待ち。
+    #[error("another update is already being installed")]
+    InstallInProgress,
     #[error("failed to fetch the latest release: {0}")]
     CheckFailed(String),
     #[error("failed to download the update: {0}")]

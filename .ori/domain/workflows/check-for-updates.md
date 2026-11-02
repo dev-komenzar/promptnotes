@@ -63,7 +63,9 @@ struct CheckForUpdatesCommand {
 
 ## Notes {#notes}
 
-- **起動時 1 回 + 24 時間ごとに実行**（I-U3）。手動チェックボタンは MVP 範囲外
+- **起動時 1 回 + 24 時間ごとに実行**（I-U3）。設定モーダルからの手動確認は別 workflow
+  [check-for-updates-manually](check-for-updates-manually.md)（I-U9）。手動確認は本 workflow の
+  揮発 state（前回確認時刻 / 通知済みバージョン）を変更しない
 - sleep / 休止復帰で timer が遅れる場合の吸収（monotonic clock での経過時間計測、
   ウィンドウ focus 復帰時の経過確認など）は実装詳細とし、domain では規定しない
 - 通知 UI（Toast vs Modal）の選択は Phase 11a (ui-fields) で確定

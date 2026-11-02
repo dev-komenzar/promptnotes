@@ -611,6 +611,78 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
   （View release と dismiss のみ、I-U6）
 - 仮に install が要求されても `UnsupportedInstallation` で拒否し、ネットワークには触れない
 
+## Scenario S27: 設定モーダルの手動確認で新バージョンを表示し、そこからインストールする {#s27-manual-update-check-new-version}
+
+### Given {#s27-given}
+
+- current_version = `0.2.4`、`InstallationKind::Bundled(AppImage)`
+- 起動時の確認で `0.2.5` を検出し、event **NewVersionDetected** を発行済み。Toast は dismiss 済み
+- Note A が EDITING 状態（AutoSave debounce timer 中）
+- ユーザが設定モーダルを開いている
+
+### When {#s27-when}
+
+1. ユーザが設定モーダルの「Check for updates」を押す
+2. ユーザが設定モーダルの「Update & restart」を押す
+
+### Then {#s27-then}
+
+- When 1: 確認中は「Check for updates」を押せず、確認中であることを表示する
+- When 1: `UpdateChannel::check_manually()` が `latest_release = Some(0.2.5)` を返す。
+  `0.2.5` は通知済み（I-U4）だが、設定モーダルに「`0.2.5` があります」を表示する（I-U9）
+- When 1: event **NewVersionDetected** は **発行されない**（I-U9）。Toast は再表示されない
+- When 1: `InstallationKind::is_installable() == true` のため「Update & restart」と「View release」を表示する
+  （`Unbundled` なら「View release」のみ、I-U6）
+- When 2: S24 と同じく install-update が最新リリースを取得し直して install し（I-U7）、
+  インストール中は設定モーダルの操作（確認 / インストール / 保存 / キャンセル / Esc）を受け付けない
+- When 2: インストール成功後、Note A を Flush（event **NoteBodyEdited**）し、永続化を待ってから
+  アプリを再起動する（I-U8）
+- install が失敗した場合は設定モーダルに失敗を表示し、「Update & restart」を再度押せる状態に戻る（S25 / I-U7）
+
+## Scenario S28: 手動確認の「最新」と「確認失敗」を設定モーダルに表示する {#s28-manual-update-check-up-to-date-or-failure}
+
+### Given {#s28-given}
+
+- current_version = `0.2.5`
+- ユーザが設定モーダルを開いている
+
+### When {#s28-when}
+
+1. 最新リリースが `0.2.5` の状態で、ユーザが「Check for updates」を押す
+2. ネットワークに接続できない状態で、ユーザがもう一度「Check for updates」を押す
+
+### Then {#s28-then}
+
+- When 1: `UpdateChannel::check_manually()` が `latest_release = None` を返し（I-U2）、
+  設定モーダルに「最新です」を表示する
+- When 2: `UpdateChannel::check_manually()` が `Err(UpdateError::NetworkError)` を返し、
+  設定モーダルに「確認できなかった」ことを表示する（I-U9。S14 と違い silent にしない）
+- いずれも event は発行せず、Toast も出さない。自動確認の前回確認時刻（I-U3）と
+  通知済みバージョン（I-U4）は変化しない
+- 確認失敗の後も「Check for updates」を再度押せる。自動リトライはしない
+
+## Scenario S29: 同時に要求されたインストールは 2 本目を拒否する {#s29-concurrent-install-rejected}
+
+### Given {#s29-given}
+
+- current_version = `0.2.4`、`InstallationKind::Bundled(AppImage)`
+- Toast に `0.2.5` を表示中。ユーザが Toast の「Update & restart」を押し、インストール中（download 中）
+- ユーザが設定モーダルを開き、「Check for updates」で `0.2.5` を表示している
+
+### When {#s29-when}
+
+1. ユーザが設定モーダルの「Update & restart」を押す
+2. Toast 側のインストールが成功し、page-main が Flush 後に `restartApp` を呼ぶが、再起動に失敗する
+
+### Then {#s29-then}
+
+- When 1: `UpdateChannel::install()` は `InstallInProgress` を返し、updater には触れない（I-U10）。
+  2 本目の download / install は行われない
+- When 1: 設定モーダルは「別のインストールが進行中」を表示する。Toast 側のインストールは影響を受けない
+- When 2: Toast は「インストール済み。再起動して更新を完了してください」を表示し、dismiss できる状態に戻る（I-U8）
+- When 2: 再起動待ちの間に再び「Update & restart」が押されても `InstallInProgress` で拒否される（I-U10）
+- アプリを手動で再起動すると揮発 state は初期化され、新しいバージョンで起動する
+
 ## 補足 {#validation-notes}
 
 ### シナリオ漏れの検出ポリシー {#notes-coverage-policy}

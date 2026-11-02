@@ -122,6 +122,21 @@
 				>
 					Update failed. Try again or download it from the release page.
 				</p>
+			{:else if store.installStatus === 'already-installing'}
+				<p
+					data-testid="widget.widget-update-toast.install-status"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					Another update is in progress or waiting for a restart.
+				</p>
+			{:else if store.installStatus === 'restart-required'}
+				<p
+					data-testid="widget.widget-update-toast.install-status"
+					role="alert"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					The update was installed. Restart PromptNotes to finish updating.
+				</p>
 			{/if}
 
 			<div class="flex justify-end gap-1">
@@ -137,7 +152,8 @@
 					<button
 						type="button"
 						data-testid="widget.widget-update-toast.install-update"
-						disabled={store.installStatus === 'installing'}
+						disabled={store.installStatus === 'installing' ||
+							store.installStatus === 'restart-required'}
 						class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-500 dark:hover:bg-blue-600"
 						onclick={handleInstall}
 					>

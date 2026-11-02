@@ -7,12 +7,16 @@ derives_from:
   - domain/workflows/update-settings.md#update-settings
   - domain/workflows/get-app-version.md#get-app-version
   - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
+  - domain/workflows/check-for-updates-manually.md#check-for-updates-manually
+  - domain/workflows/install-update.md#install-update
 relations:
   - kind: hosts
     slices:
       - update-settings
       - get-app-version
       - get-default-storage-dir
+      - check-for-updates-manually
+      - install-update
   - kind: mounted-by
     page: page-main
 implementation:

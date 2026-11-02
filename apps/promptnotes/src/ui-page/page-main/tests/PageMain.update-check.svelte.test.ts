@@ -17,6 +17,10 @@ const tauri = vi.hoisted(() => {
 		checkResponder: { current: (() => {}) as () => void },
 		installable: { current: false },
 		installResponder: { current: (async () => '0.2.3') as () => Promise<string> },
+		restartResponder: { current: (async () => undefined) as () => Promise<unknown> },
+		manualCheckResponse: {
+			current: { current_version: '0.2.2', latest_release: null } as unknown
+		},
 		listen: async (name: string, handler: Handler) => {
 			handlers.set(name, handler);
 			calls.push(`listen:${name}`);
@@ -28,8 +32,11 @@ const tauri = vi.hoisted(() => {
 				tauri.checkResponder.current();
 				return { current_version: '0.2.2', latest_release: null };
 			}
+			if (cmd === 'check_for_updates_manually') return tauri.manualCheckResponse.current;
+			if (cmd === 'get_app_version') return '0.2.2';
 			if (cmd === 'is_update_installable') return tauri.installable.current;
 			if (cmd === 'install_update') return tauri.installResponder.current();
+			if (cmd === 'restart_app') return tauri.restartResponder.current();
 			return undefined;
 		}
 	};
@@ -64,6 +71,8 @@ beforeEach(() => {
 	tauri.checkResponder.current = () => {};
 	tauri.installable.current = false;
 	tauri.installResponder.current = async () => '0.2.3';
+	tauri.manualCheckResponse.current = { current_version: '0.2.2', latest_release: null };
+	tauri.restartResponder.current = async () => undefined;
 });
 
 function emitNewVersionAtStartup(): void {
@@ -189,5 +198,124 @@ describe('page:page-main install-update (I-U6 / I-U8)', () => {
 		await expect
 			.element(page.getByTestId('widget.widget-update-toast.view-release'))
 			.toBeInTheDocument();
+	});
+});
+
+describe('page:page-main settings modal manual update check (I-U9 / I-U8)', () => {
+	it('S27 — 設定モーダルの手動確認で新版を表示し、Update & restart で install → flush → restart の順に呼ぶ', async () => {
+		tauri.installable.current = true;
+		tauri.manualCheckResponse.current = {
+			current_version: '0.2.2',
+			latest_release: { version: '0.2.3', url: payload.release_url, notes: 'bug fixes' }
+		};
+
+		render(PageMain, {
+			loadSettingsFn,
+			listNotesFn,
+			quitWindow: null,
+			pendingFlush: makePendingFlush()
+		});
+
+		await page.getByTestId('page.page-main.toolbar-settings-button').click();
+		await page.getByRole('button', { name: 'Check for updates' }).click();
+
+		await expect
+			.element(page.getByTestId('widget.widget-settings-modal.update-check-result'))
+			.toHaveTextContent('Version 0.2.3 is available');
+		// 手動確認は event を発行しないので Toast は出ない (I-U9)
+		expect(document.querySelector('[data-testid="widget.widget-update-toast.root"]')).toBeNull();
+
+		await page.getByTestId('widget.widget-settings-modal.install-update').click();
+
+		await expect.poll(() => tauri.calls.includes('invoke:restart_app')).toBe(true);
+		const order = tauri.calls.filter((c) =>
+			[
+				'invoke:check_for_updates_manually',
+				'invoke:install_update',
+				'flushAll',
+				'invoke:restart_app'
+			].includes(c)
+		);
+		expect(order).toEqual([
+			'invoke:check_for_updates_manually',
+			'invoke:install_update',
+			'flushAll',
+			'invoke:restart_app'
+		]);
+	});
+});
+
+describe('page:page-main concurrent install / restart failure (I-U10 / S29)', () => {
+	it('S29 — toast の install 中に設定モーダルから要求すると 2 本目は拒否され「進行中」を表示する', async () => {
+		tauri.installable.current = true;
+		tauri.manualCheckResponse.current = {
+			current_version: '0.2.2',
+			latest_release: { version: '0.2.3', url: payload.release_url, notes: 'bug fixes' }
+		};
+		// Rust の I-U10 ガードを模す: 1 本目は download 中のまま、2 本目は InstallInProgress
+		let installs = 0;
+		tauri.installResponder.current = () => {
+			installs += 1;
+			if (installs === 1) return new Promise<string>(() => {});
+			return Promise.reject({
+				kind: 'InstallInProgress',
+				message: 'another update is already being installed'
+			});
+		};
+		emitNewVersionAtStartup();
+
+		render(PageMain, {
+			loadSettingsFn,
+			listNotesFn,
+			quitWindow: null,
+			pendingFlush: makePendingFlush()
+		});
+
+		await page.getByTestId('widget.widget-update-toast.install-update').click();
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-status'))
+			.toHaveTextContent('Updating…');
+
+		await page.getByTestId('page.page-main.toolbar-settings-button').click();
+		await page.getByRole('button', { name: 'Check for updates' }).click();
+		await page.getByTestId('widget.widget-settings-modal.install-update').click();
+
+		await expect
+			.element(page.getByTestId('widget.widget-settings-modal.install-status'))
+			.toHaveTextContent('Another update is in progress or waiting for a restart.');
+		// 設定モーダルは操作できるまま、toast 側のインストールは継続
+		await expect.element(page.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-status'))
+			.toHaveTextContent('Updating…');
+		expect(tauri.calls).not.toContain('flushAll');
+		expect(tauri.calls).not.toContain('invoke:restart_app');
+	});
+
+	it('S29 — install 成功後に restart_app が失敗したら toast は再起動を促し dismiss できる', async () => {
+		tauri.installable.current = true;
+		tauri.restartResponder.current = async () => {
+			throw new Error('restart failed');
+		};
+		emitNewVersionAtStartup();
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		render(PageMain, {
+			loadSettingsFn,
+			listNotesFn,
+			quitWindow: null,
+			pendingFlush: makePendingFlush()
+		});
+
+		await page.getByTestId('widget.widget-update-toast.install-update').click();
+
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-status'))
+			.toHaveTextContent('Restart PromptNotes to finish updating');
+		expect(tauri.calls).toContain('flushAll');
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-update'))
+			.toBeDisabled();
+		await expect.element(page.getByTestId('widget.widget-update-toast.dismiss')).toBeEnabled();
 	});
 });

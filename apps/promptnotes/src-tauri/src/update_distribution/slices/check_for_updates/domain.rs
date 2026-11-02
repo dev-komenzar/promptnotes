@@ -2,7 +2,7 @@
 
 use std::time::{Duration, SystemTime};
 
-use crate::update_distribution::shared::types::{Release, Version};
+use crate::update_distribution::shared::types::Version;
 
 /// `check-for-updates` slice の input (`workflows/check-for-updates.md#input`)。
 #[derive(Debug, Clone)]
@@ -12,12 +12,8 @@ pub struct CheckForUpdatesCommand {
 
 /// `compareVersions` step の結果 (`workflows/check-for-updates.md#steps`)。
 /// `NewVersion(Release)` のみが event 発行 path、それ以外は I-U2 によって `None` 正規化。
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Comparison {
-    NewVersion(Release),
-    UpToDate,
-    OlderVersion,
-}
+/// 手動確認 slice と共有するため shared に置く。
+pub use crate::update_distribution::shared::release_check::Comparison;
 
 // ===== I-U3: 24 時間周期 (spec.md#invariants-slice-specific C-CFU10 / C-CFU11) =====
 
