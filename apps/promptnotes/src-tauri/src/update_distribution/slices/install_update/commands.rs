@@ -3,11 +3,16 @@
 //! I-U8: `install_update` は再起動しない。page-main が全 pending Note を Flush してから
 //! `restart_app` を呼ぶ (quit 時の S13 と同じ順序保証を composition 側に寄せる)。
 
+use std::sync::Arc;
+
 use serde::Serialize;
+use tauri::Manager;
 
 use super::application::InstallUpdateUseCase;
 use super::domain::InstallUpdateCommand;
-use super::infrastructure::{current_installation_kind, TauriUpdateInstaller};
+use super::infrastructure::{
+    current_installation_kind, InMemoryInstallState, TauriUpdateInstaller,
+};
 use crate::update_distribution::shared::build_info::build_version;
 use crate::update_distribution::shared::types::{InstallUpdateError, Version};
 
@@ -29,6 +34,7 @@ impl From<InstallUpdateError> for InstallUpdateErrorResponse {
 
 /// 最新リリースを取得し直して download + 署名検証 + install する (I-U5〜I-U7)。
 /// 成功時はインストールしたバージョン文字列を返す。
+/// toast / 設定モーダルのどちらから呼ばれても同時実行は 1 本だけ。2 本目は `InstallInProgress` (I-U10)。
 #[tauri::command]
 pub async fn install_update(
     app_handle: tauri::AppHandle,
@@ -39,7 +45,11 @@ pub async fn install_update(
             build_version()
         )))
     })?;
-    let usecase = InstallUpdateUseCase::new(TauriUpdateInstaller { app_handle });
+    let guard = app_handle
+        .state::<Arc<InMemoryInstallState>>()
+        .inner()
+        .clone();
+    let usecase = InstallUpdateUseCase::new(TauriUpdateInstaller { app_handle }, guard);
     usecase
         .execute(InstallUpdateCommand {
             current_version,

@@ -9,9 +9,9 @@ coherence:
     - domain/validation.md#s12-startup-state
   hash:
     domain/workflows/list-feed.md#.*: b05c95558e97
-    domain/aggregates.md#.*: 675676f60daa
+    domain/aggregates.md#.*: 0549c2d38dd2
     domain/bounded-contexts.md#.*: c3bc130f98d5
-    domain/validation.md#.*: e64a7d3e3083
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file

@@ -7,6 +7,7 @@ derives_from:
   - domain/validation.md#s24-install-update-and-restart
   - domain/validation.md#s25-install-update-failure
   - domain/validation.md#s26-unbundled-notify-only
+  - domain/validation.md#s29-concurrent-install-rejected
 relations: []
 implementation:
   language: rust

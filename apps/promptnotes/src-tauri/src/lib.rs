@@ -39,6 +39,11 @@ pub fn run() {
                 std::time::SystemTime::now(),
             ),
         ))
+        // I-U10: install-update の揮発な実行状態。toast / 設定モーダルからの install が共有し、
+        // 同時実行を 1 本に制限する。
+        .manage(Arc::new(
+            update_distribution::slices::install_update::infrastructure::InMemoryInstallState::new(),
+        ))
         // S22 / C-DEC11: `StorageDirChanged` の Infrastructure 層 subscriber。
         // cross-BC 配線のため composition root で登録する (この slice の
         // commands.rs module doc / .ori/scenarios/s22.../notes.md に理由を記録)。

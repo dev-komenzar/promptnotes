@@ -3,11 +3,14 @@
 //! `UpdateInstaller` / `PendingUpdate` を Tauri v2 updater plugin に橋渡しする。plugin の
 //! version 比較は permissive にし、domain (`ensure_newer`) を唯一の比較者にする (C-IU2)。
 
+use std::sync::{Mutex, PoisonError};
+
 use tauri::utils::config::BundleType;
 use tauri::utils::platform::bundle_type;
 use tauri_plugin_updater::UpdaterExt;
 
-use crate::update_distribution::shared::ports::{PendingUpdate, UpdateInstaller};
+use super::domain::InstallPhase;
+use crate::update_distribution::shared::ports::{InstallGuard, PendingUpdate, UpdateInstaller};
 use crate::update_distribution::shared::types::{
     BundleFormat, InstallUpdateError, InstallationKind,
 };
@@ -35,6 +38,48 @@ pub fn current_installation_kind() -> InstallationKind {
         return InstallationKind::Unbundled;
     }
     installation_kind_from(bundle_type())
+}
+
+/// install-update の揮発な実行状態 (I-U10)。`lib.rs` で `Arc` にして manage し、
+/// toast / 設定モーダルのどちらから invoke されても同じ instance を共有する (C-IU6)。
+pub struct InMemoryInstallState {
+    phase: Mutex<InstallPhase>,
+}
+
+impl InMemoryInstallState {
+    pub fn new() -> Self {
+        Self {
+            phase: Mutex::new(InstallPhase::Idle),
+        }
+    }
+
+    pub fn phase(&self) -> InstallPhase {
+        *self.phase.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+}
+
+impl Default for InMemoryInstallState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl InstallGuard for InMemoryInstallState {
+    fn try_begin(&self) -> bool {
+        let mut phase = self.phase.lock().unwrap_or_else(PoisonError::into_inner);
+        match phase.begin() {
+            Some(next) => {
+                *phase = next;
+                true
+            }
+            None => false,
+        }
+    }
+
+    fn finish(&self, succeeded: bool) {
+        let mut phase = self.phase.lock().unwrap_or_else(PoisonError::into_inner);
+        *phase = phase.finish(succeeded);
+    }
 }
 
 pub struct TauriUpdateInstaller {

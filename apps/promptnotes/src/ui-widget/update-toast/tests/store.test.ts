@@ -326,4 +326,49 @@ describe('widget:widget-update-toast store — install-update', () => {
 		cap.emit(makePayload({ latest_version: '1.4.1' }));
 		expect(store.installStatus).toBe('idle');
 	});
+
+	it('spec#tp-ut-install-in-progress (I-UT12 / S29) — InstallInProgress は already-installing (失敗扱いにしない)', async () => {
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		errorSpy.mockClear();
+		const onInstalled = vi.fn();
+		const { cap, store } = await startWith({
+			installFn: async () => {
+				throw { kind: 'InstallInProgress', message: 'another update is already being installed' };
+			},
+			onInstalled
+		});
+
+		await store.install();
+
+		expect(store.installStatus).toBe('already-installing');
+		expect(onInstalled).not.toHaveBeenCalled();
+		expect(errorSpy).not.toHaveBeenCalled();
+		// dismiss できる
+		store.dismiss();
+		expect(store.payload).toBeNull();
+		// 新しい版が届いたら idle に戻る
+		cap.emit(makePayload({ latest_version: '1.4.1' }));
+		expect(store.installStatus).toBe('idle');
+	});
+
+	it('spec#tp-ut-restart-failure (I-UT13 / S29) — 再起動が reject したら restart-required、再インストールしない', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const installFn = vi.fn(async () => '1.4.0');
+		const { store } = await startWith({
+			installFn,
+			onInstalled: async () => {
+				throw new Error('restart failed');
+			}
+		});
+
+		await store.install();
+		expect(store.installStatus).toBe('restart-required');
+
+		await store.install();
+		expect(installFn).toHaveBeenCalledOnce();
+
+		// dismiss は有効
+		store.dismiss();
+		expect(store.payload).toBeNull();
+	});
 });

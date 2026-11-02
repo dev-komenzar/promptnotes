@@ -9,9 +9,9 @@ coherence:
     - domain/validation.md#s8-query-normalize
   hash:
     domain/workflows/update-feed-filter.md#.*: 51cdf06a33f9
-    domain/aggregates.md#.*: 675676f60daa
+    domain/aggregates.md#.*: 0549c2d38dd2
     domain/bounded-contexts.md#.*: c3bc130f98d5
-    domain/validation.md#.*: e64a7d3e3083
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file

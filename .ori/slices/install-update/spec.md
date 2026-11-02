@@ -3,10 +3,10 @@ coherence:
   source: derived
   last_derived: 2026-11-02
   hash:
-    domain/workflows/install-update.md#.*: 396ba9de56a0
-    domain/aggregates.md#.*: 675676f60daa
+    domain/workflows/install-update.md#.*: 4b291a6c25a9
+    domain/aggregates.md#.*: 0549c2d38dd2
     domain/bounded-contexts.md#.*: c3bc130f98d5
-    domain/validation.md#.*: e64a7d3e3083
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file
@@ -55,6 +55,7 @@ pub struct InstallUpdateCommand {
 | variant | 条件 |
 |--|--|
 | `UnsupportedInstallation` | `InstallationKind::Unbundled` (I-U6) |
+| `InstallInProgress` | 別の `install_update` が実行中、または成功後の再起動待ち (I-U10)。updater には触れない |
 | `NoUpdateAvailable` | 取得し直した最新版 `<= current_version` (I-U7)、または plugin がリリースなしを返した |
 | `CheckFailed` | 最新リリースの取得 / version parse に失敗 |
 | `DownloadFailed` | download 失敗 |
@@ -69,7 +70,8 @@ TS へは `{ kind: "<variant>", message: string }` に射影する。
 - **I-U5**: install はユーザ要求時のみ。本 slice は起動時 / 定期確認から呼ばれない
 - **I-U6**: `Unbundled` は `UnsupportedInstallation`。updater には一切触れない
 - **I-U7**: `current_version` より新しいリリースのみ install。失敗は UI に返す
-- **I-U8**: `restart_app` は install 成功後、Flush 完了後にのみ呼ばれる (呼出順序は page-main の責務)
+- **I-U8**: `restart_app` は install 成功後、Flush 完了後にのみ呼ばれる (呼出順序は page-main の責務)。再起動が失敗したら UI が手動再起動を促す (UI 層の責務)
+- **I-U10**: 同時に実行する install は 1 本だけ。実行中 / 成功後の再起動待ちは、どの UI からの要求も `InstallInProgress` で拒否する
 
 ### slice 固有制約 {#invariants-slice-specific}
 
@@ -78,6 +80,8 @@ TS へは `{ kind: "<variant>", message: string }` に射影する。
 - **C-IU3**: `NoUpdateAvailable` / `UnsupportedInstallation` / `CheckFailed` のときは download_and_install を呼ばない
 - **C-IU4**: `InstallationKind` は `BundleType` から導出する: `App`/`Dmg` → `MacApp`、`AppImage`/`Deb`/`Rpm`/`Msi`/`Nsis` は同名、`None` (bundle 種別なし) → `Unbundled`。開発ビルド (`debug_assertions`) は bundle 種別によらず `Unbundled` (macOS は bundler 未経由でも `App` を返すため)
 - **C-IU5**: check-for-updates の揮発 state (通知済みバージョン I-U4 / 前回確認時刻) を読まない・変えない
+- **C-IU6**: 実行状態 `InstallPhase` (`Idle` / `Installing` / `Installed`) はプロセス内の揮発 state。`lib.rs` で `Arc<InMemoryInstallState>` を 1 つ manage し、toast / 設定モーダルのどちらから invoke されても同じ instance を使う。判定と遷移は Mutex 内で 1 操作 (`try_begin`) で行う
+- **C-IU7**: `Unbundled` の判定 (step 1) は slot を取る前に行う。slot を取った後は、成功なら `Installed` (再起動まで保持)、失敗 (`NoUpdateAvailable` / `CheckFailed` / `DownloadFailed` / `InstallFailed`) なら `Idle` に戻す
 
 ## 境界契約 {#boundary-contract}
 
@@ -127,6 +131,16 @@ Rust 側は `install_update/tests.rs`。`UpdateInstaller` は adapter 境界の 
 - **TP-B2**: TS — `isUpdateInstallable()` / `restartApp()` がそれぞれ `invoke('is_update_installable')` / `invoke('restart_app')` を呼ぶ
 - **TP-B3**: エラー DTO の `kind` が variant 名と一致する (Rust unit)
 
+### I-U10: 同時実行の拒否 {#tp-concurrency}
+
+- **TP-G1**: `InstallPhase` の遷移 — `Idle` だけが `Installing` に進め、`Installing` は成功で `Installed` / 失敗で `Idle`
+- **TP-G2**: `Installing` 中の要求は `Err(InstallInProgress)`、fetch も install も 0 回、実行中の状態は変えない
+- **TP-G3**: 成功後 (`Installed`) の再要求も `Err(InstallInProgress)` (再起動まで再インストールしない)
+- **TP-G4**: 失敗 (`CheckFailed` / `NoUpdateAvailable` / `DownloadFailed` / `InstallFailed`) 後は `Idle` に戻り、再試行で install できる
+- **TP-G5**: `Unbundled` は slot を取らない (`Idle` のまま)
+- **TP-G6**: 2 thread から同時に要求すると、download 中の 1 本目だけが install し、2 本目は `InstallInProgress` (S29)
+- **TP-G7**: TS — `isInstallInProgressError()` は `kind === 'InstallInProgress'` の DTO だけを true にする
+
 ## 実装ノート {#impl-notes}
 
 ### アーキ層への落とし込み {#impl-layers}
@@ -136,12 +150,12 @@ apps/promptnotes/src-tauri/src/update_distribution/
 ├── shared/
 │   ├── types/installation_kind.rs  # InstallationKind / BundleFormat (新設)
 │   ├── types/install_update_error.rs # InstallUpdateError (新設)
-│   └── ports.rs                    # + UpdateInstaller / PendingUpdate
+│   └── ports.rs                    # + UpdateInstaller / PendingUpdate / InstallGuard (I-U10)
 └── slices/install_update/
     ├── mod.rs
-    ├── domain.rs          # InstallUpdateCommand / ensure_installable / ensure_newer (純粋)
-    ├── application.rs     # InstallUpdateUseCase<I>: ensure_installable → fetch → ensure_newer → download_and_install
-    ├── infrastructure.rs  # TauriUpdateInstaller / current_installation_kind()
+    ├── domain.rs          # InstallUpdateCommand / InstallPhase / ensure_installable / ensure_newer (純粋)
+    ├── application.rs     # InstallUpdateUseCase<I, G>: ensure_installable → try_begin → fetch → ensure_newer → download_and_install → finish
+    ├── infrastructure.rs  # TauriUpdateInstaller / InMemoryInstallState / current_installation_kind()
     ├── commands.rs        # install_update / is_update_installable / restart_app
     └── tests.rs
 ```

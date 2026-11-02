@@ -11,7 +11,7 @@ coherence:
     - domain/bounded-contexts.md#user-preferences
   hash:
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
-    domain/aggregates.md#.*: 675676f60daa
+    domain/aggregates.md#.*: 0549c2d38dd2
     domain/bounded-contexts.md#.*: c3bc130f98d5
 ---
 

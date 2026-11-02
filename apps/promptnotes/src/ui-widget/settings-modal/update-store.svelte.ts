@@ -5,6 +5,7 @@ import {
 } from '$lib/update-distribution/slices/check-for-updates-manually';
 import {
 	installUpdate as defaultInstallUpdate,
+	isInstallInProgressError,
 	isUpdateInstallable as defaultIsUpdateInstallable
 } from '$lib/update-distribution/slices/install-update';
 
@@ -19,6 +20,10 @@ import {
  * - I-SM19: `install()` 成功後に `onInstalled` (page-main: 全 Note Flush → 再起動、I-U8) を await
  * - I-SM20: インストール中は `busy` (modal は閉じない・他の操作を受け付けない)。成功後も再起動まで installing
  * - I-SM21: インストール失敗は `failed` にして再試行可能に戻す。確認結果は維持、再確認で失敗表示を消す
+ * - I-SM22 (I-U10 / S29): 別 UI (toast) のインストールが実行中 / 再起動待ちで拒否されたら
+ *   `already-installing`。失敗扱いにせず、modal は操作できるまま
+ * - I-SM23 (I-U8 / S29): install 成功後に `onInstalled` (再起動) が reject したら `restart-required`。
+ *   modal は操作できる状態に戻し、再インストールは受け付けない
  */
 
 export type CheckStatus =
@@ -28,7 +33,12 @@ export type CheckStatus =
 	| { kind: 'available'; release: ReleaseResponse }
 	| { kind: 'failed' };
 
-export type InstallStatus = 'idle' | 'installing' | 'failed';
+export type InstallStatus =
+	| 'idle'
+	| 'installing'
+	| 'failed'
+	| 'already-installing'
+	| 'restart-required';
 
 export type SettingsUpdateStoreDeps = {
 	checkForUpdatesFn?: typeof defaultCheckForUpdates;
@@ -74,7 +84,8 @@ export function createSettingsUpdateStore(deps: SettingsUpdateStoreDeps = {}) {
 	async function check(): Promise<void> {
 		if (checkStatus.kind === 'checking' || busy) return;
 		checkStatus = { kind: 'checking' };
-		installStatus = 'idle';
+		// 再起動待ちは確認し直しても解消しない (I-SM23)。それ以外の install 結果表示は消す (I-SM21)
+		if (installStatus !== 'restart-required') installStatus = 'idle';
 		try {
 			const result = await checkForUpdatesFn();
 			checkStatus = result.latest_release
@@ -87,18 +98,33 @@ export function createSettingsUpdateStore(deps: SettingsUpdateStoreDeps = {}) {
 	}
 
 	async function install(): Promise<void> {
-		if (checkStatus.kind !== 'available' || !installable || busy) return;
+		if (
+			checkStatus.kind !== 'available' ||
+			!installable ||
+			busy ||
+			installStatus === 'restart-required'
+		)
+			return;
 		installStatus = 'installing';
 		let installedVersion: string;
 		try {
 			installedVersion = await installFn();
 		} catch (err) {
+			if (isInstallInProgressError(err)) {
+				installStatus = 'already-installing';
+				return;
+			}
 			console.error('[update] install failed', err);
 			installStatus = 'failed';
 			return;
 		}
 		// 成功時は onInstalled (Flush → 再起動) に進む。再起動までは installing のまま。
-		await onInstalled?.(installedVersion);
+		try {
+			await onInstalled?.(installedVersion);
+		} catch (err) {
+			console.error('[update] restart after install failed', err);
+			installStatus = 'restart-required';
+		}
 	}
 
 	async function viewRelease(): Promise<void> {

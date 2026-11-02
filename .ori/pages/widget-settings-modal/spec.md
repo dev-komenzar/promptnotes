@@ -14,13 +14,13 @@ coherence:
     - domain/workflows/check-for-updates-manually.md#check-for-updates-manually
     - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-2.md#.*: 834a63707f44
+    domain/ui-fields/screen-2.md#.*: ba406246ada8
     domain/ui-fields/page-groups.md#.*: f77c8a834634
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: a7ddfb091648
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
     domain/workflows/check-for-updates-manually.md#.*: c3f0e2d63d42
-    domain/workflows/install-update.md#.*: 396ba9de56a0
+    domain/workflows/install-update.md#.*: 4b291a6c25a9
 ---
 
 # widget-settings-modal — Widget Specification {#widget-settings-modal-spec}
@@ -219,6 +219,12 @@ workflow の **唯一の trigger UI** となる。
 - **I-SM21（インストール失敗）**: `installUpdate()` が reject したら「Update failed. Try again or download it from
   the release page.」を表示し、「Update & restart」を再度押せる状態に戻す（I-U7 / S25）。確認結果は維持する。
   再確認したら失敗表示は消す
+- **I-SM22（別 UI のインストール中）**: `installUpdate()` が `kind = InstallInProgress` で reject したら（Toast からの
+  インストールが実行中 / 再起動待ち、I-U10）「An update is already being installed.」を表示する。失敗扱いにせず、
+  modal は操作できるまま（`busy` にしない）。再確認したら表示は消す（S29）
+- **I-SM23（再起動失敗）**: install 成功後に `onUpdateInstalled` が reject したら「The update was installed. Restart
+  PromptNotes to finish updating.」を表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は
+  無効のまま（再インストールしない）。再確認しても表示は消えない（I-U8 / I-U10 / S29）
 
 ## テスト観点 (vitest) {#test-points}
 
@@ -351,6 +357,17 @@ Check / Update / Save / Cancel は `disabled`（I-SM19 / I-SM20）。
 
 `installFn` が reject → 「Update failed. …」を表示し、`onUpdateInstalled` は呼ばれず、「Update & restart」は
 再度押せる。再押下で `installFn` が再び呼ばれる（I-SM21）。
+
+### tp-sm-update-install-in-progress: 別 UI のインストール中 {#tp-sm-update-install-in-progress}
+
+`installFn` が `{ kind: 'InstallInProgress' }` で reject → 「An update is already being installed.」を表示し、`busy` は
+false、`onUpdateInstalled` は呼ばれない。page-main の browser test で、Toast のインストール中に設定モーダルから要求すると
+2 本目が拒否され、Toast 側は Updating… のまま・Cancel は押せることを確認する（I-SM22 / S29）。
+
+### tp-sm-update-restart-failure: 再起動失敗 {#tp-sm-update-restart-failure}
+
+install 成功後に `onUpdateInstalled` が reject → `restart-required`、`busy` は false、再度 `install()` しても
+`installFn` は呼ばれない。再確認しても `restart-required` のまま（I-SM23）。
 
 ### tp-sm-update-not-in-diff: 更新 UI は差分判定の対象外 {#tp-sm-update-not-in-diff}
 

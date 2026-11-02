@@ -245,5 +245,47 @@ describe('widget:widget-settings-modal update store', () => {
 
 			expect(installFn).not.toHaveBeenCalled();
 		});
+
+		it('spec#tp-sm-update-install-in-progress (I-SM22 / S29) — InstallInProgress は already-installing で busy にしない', async () => {
+			const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+			errorSpy.mockClear();
+			const onInstalled = vi.fn();
+			const store = await availableStore({
+				installFn: vi.fn().mockRejectedValue({ kind: 'InstallInProgress', message: 'already' }),
+				onInstalled
+			});
+
+			await store.install();
+
+			expect(store.installStatus).toBe('already-installing');
+			expect(store.busy).toBe(false);
+			expect(onInstalled).not.toHaveBeenCalled();
+			expect(errorSpy).not.toHaveBeenCalled();
+
+			// 再確認で表示を消す
+			await store.check();
+			expect(store.installStatus).toBe('idle');
+			errorSpy.mockRestore();
+		});
+
+		it('spec#tp-sm-update-restart-failure (I-SM23 / S29) — 再起動 reject は restart-required、操作可能に戻し再インストールしない', async () => {
+			vi.spyOn(console, 'error').mockImplementation(() => {});
+			const installFn = vi.fn().mockResolvedValue('0.2.5');
+			const store = await availableStore({
+				installFn,
+				onInstalled: vi.fn().mockRejectedValue(new Error('restart failed'))
+			});
+
+			await store.install();
+			expect(store.installStatus).toBe('restart-required');
+			expect(store.busy).toBe(false);
+
+			await store.install();
+			expect(installFn).toHaveBeenCalledTimes(1);
+
+			// 確認し直しても再起動待ちは解消しない
+			await store.check();
+			expect(store.installStatus).toBe('restart-required');
+		});
 	});
 });

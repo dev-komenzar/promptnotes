@@ -4,10 +4,10 @@ coherence:
   last_derived: 2026-11-02
   hash:
     domain/workflows/assign-tag.md#.*: 4efe2dfe63c4
-    domain/aggregates.md#.*: 675676f60daa
+    domain/aggregates.md#.*: 0549c2d38dd2
     domain/bounded-contexts.md#.*: c3bc130f98d5
     domain/domain-events.md#.*: 34746af8d1fa
-    domain/validation.md#.*: e64a7d3e3083
+    domain/validation.md#.*: a47549dec6ff
 ori:
   schema:
     propagation_level: file

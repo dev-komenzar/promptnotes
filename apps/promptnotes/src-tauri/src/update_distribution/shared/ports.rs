@@ -33,6 +33,17 @@ pub trait PendingUpdate {
     fn download_and_install(self: Box<Self>) -> Result<(), InstallUpdateError>;
 }
 
+/// install-update の実行状態 (揮発) を持つ port (I-U10)。
+///
+/// production impl は `install_update::infrastructure::InMemoryInstallState`。
+/// `try_begin` と `finish` の間は他の要求を受け付けない。
+pub trait InstallGuard {
+    /// `Idle` なら `Installing` にして true。`Installing` / `Installed` なら state を変えず false。
+    fn try_begin(&self) -> bool;
+    /// `Installing` を終える。成功なら `Installed` (再起動まで保持)、失敗なら `Idle` に戻す。
+    fn finish(&self, succeeded: bool);
+}
+
 /// Update Distribution BC の domain event 同期 in-process bus
 /// (`domain-events.md#notes-sync-rationale`)。
 pub trait EventBus {
@@ -65,6 +76,15 @@ impl<T: EventBus + ?Sized> EventBus for std::rc::Rc<T> {
 impl<T: NotifiedVersionLedger + ?Sized> NotifiedVersionLedger for std::rc::Rc<T> {
     fn claim(&self, version: &Version) -> bool {
         (**self).claim(version)
+    }
+}
+
+impl<T: InstallGuard + ?Sized> InstallGuard for std::sync::Arc<T> {
+    fn try_begin(&self) -> bool {
+        (**self).try_begin()
+    }
+    fn finish(&self, succeeded: bool) {
+        (**self).finish(succeeded)
     }
 }
 
