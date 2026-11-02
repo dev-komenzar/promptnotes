@@ -1,5 +1,5 @@
 page_id: widget-settings-modal
-derived_at: 2026-10-14
+derived_at: 2026-11-02
 beads:
   epic: ori-page-widget-settings-modal
   current_phase: finalize
@@ -14,34 +14,34 @@ phases:
   derive:
     status: closed
     issue: ori-derive-widget-settings-modal
-    completed_at: 2026-10-07
-    notes: storage-dir-reset 追加に伴う手動再 derive (ori-fo5n, I-SM12..14 / get-default-storage-dir)
+    completed_at: 2026-11-02
+    notes: Updates セクション (手動確認 + install) 追加に伴う手動再 derive (ori-iz6f.3, I-SM15..21 / check-for-updates-manually / install-update)
   plan:
     status: closed
     issue: ori-plan-widget-settings-modal
-    completed_at: 2026-10-07
+    completed_at: 2026-11-02
   test-red:
     status: closed
     issue: ori-test-red-widget-settings-modal
-    completed_at: 2026-10-07
+    completed_at: 2026-11-02
     failing_tests: 4
   impl-green:
     status: closed
     issue: ori-impl-green-widget-settings-modal
-    completed_at: 2026-10-07
+    completed_at: 2026-11-02
     passing_tests: 15
   refactor:
     status: closed
     issue: ori-refactor-widget-settings-modal
-    completed_at: 2026-10-07
+    completed_at: 2026-11-02
   review:
     status: closed
     issue: ori-review-widget-settings-modal
-    completed_at: 2026-10-07
+    completed_at: 2026-11-02
     passes: 1
     verdict: PASS
 dirty: []
-finalized_at: 2026-10-07
+finalized_at: 2026-11-02
 followup:
   - ori-z42w
 proposals: {}

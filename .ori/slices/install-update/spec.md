@@ -1,12 +1,12 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-11-01
+  last_derived: 2026-11-02
   hash:
-    domain/workflows/install-update.md#.*: c0633544b381
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/bounded-contexts.md#.*: 4e4f641c9627
-    domain/validation.md#.*: a226e34cf459
+    domain/workflows/install-update.md#.*: 396ba9de56a0
+    domain/aggregates.md#.*: 675676f60daa
+    domain/bounded-contexts.md#.*: c3bc130f98d5
+    domain/validation.md#.*: e64a7d3e3083
 ori:
   schema:
     propagation_level: file

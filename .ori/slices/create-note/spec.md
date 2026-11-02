@@ -4,9 +4,9 @@ coherence:
   last_derived: 2026-11-02
   hash:
     domain/workflows/create-note.md#.*: 6d0fdc24ceb7
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/domain-events.md#.*: 922c62c32c4d
-    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/aggregates.md#.*: 675676f60daa
+    domain/domain-events.md#.*: 34746af8d1fa
+    domain/bounded-contexts.md#.*: c3bc130f98d5
     domain/ui-fields/screen-1.md#.*: 18a41b79b1f8
 ori:
   schema:

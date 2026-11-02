@@ -11,8 +11,8 @@ coherence:
     - domain/bounded-contexts.md#update-distribution
   hash:
     domain/workflows/get-app-version.md#.*: a7ddfb091648
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/bounded-contexts.md#.*: 4e4f641c9627
+    domain/aggregates.md#.*: 675676f60daa
+    domain/bounded-contexts.md#.*: c3bc130f98d5
 ---
 
 # get-app-version — Specification {#get-app-version-spec}

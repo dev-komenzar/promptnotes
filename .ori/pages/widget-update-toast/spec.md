@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-11-01
+  last_derived: 2026-11-02
   derives_from:
     - domain/ui-fields/screen-3.md#screen-3
     - domain/ui-fields/page-groups.md#widget-update-toast
@@ -12,9 +12,9 @@ coherence:
     - domain/workflows/install-update.md#install-update
   hash:
     domain/ui-fields/screen-3.md#.*: 9272e0f0142d
-    domain/ui-fields/page-groups.md#.*: b10b453d71fb
-    domain/workflows/check-for-updates.md#.*: f08ad6cf0874
-    domain/workflows/install-update.md#.*: c0633544b381
+    domain/ui-fields/page-groups.md#.*: f77c8a834634
+    domain/workflows/check-for-updates.md#.*: 32f87895c0d8
+    domain/workflows/install-update.md#.*: 396ba9de56a0
 ---
 
 # widget-update-toast — Widget Specification {#widget-update-toast-spec}

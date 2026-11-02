@@ -11,10 +11,10 @@ coherence:
     - domain/validation.md#s9-idempotent-autosave
   hash:
     domain/workflows/auto-save-note.md#.*: 642c5094fd1a
-    domain/aggregates.md#.*: ebcf66d3a2eb
-    domain/bounded-contexts.md#.*: 4e4f641c9627
-    domain/domain-events.md#.*: 922c62c32c4d
-    domain/validation.md#.*: a226e34cf459
+    domain/aggregates.md#.*: 675676f60daa
+    domain/bounded-contexts.md#.*: c3bc130f98d5
+    domain/domain-events.md#.*: 34746af8d1fa
+    domain/validation.md#.*: e64a7d3e3083
 ori:
   schema:
     propagation_level: file
