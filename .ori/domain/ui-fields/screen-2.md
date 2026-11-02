@@ -133,7 +133,7 @@ spec 「設定モーダル」セクション + Q6 (Settings 永続化先) の反
 - 失敗したら「Update failed. Try again or download it from the release page.」を表示し、
   「Update & restart」を再度押せる状態に戻す（I-U7 / S25）
 - Toast 側のインストールが実行中 / 再起動待ちで `InstallInProgress` が返ったら（I-U10）、
-  「An update is already being installed.」を表示する。失敗扱いにせず、モーダルは操作できる状態のまま（S29）
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせず、モーダルは操作できる状態のまま（S29）
 - インストール成功後に再起動が失敗したら「The update was installed. Restart PromptNotes to finish updating.」を
   表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は無効のまま（I-U8 / I-U10）
 

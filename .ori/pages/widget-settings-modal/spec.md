@@ -14,7 +14,7 @@ coherence:
     - domain/workflows/check-for-updates-manually.md#check-for-updates-manually
     - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-2.md#.*: ba406246ada8
+    domain/ui-fields/screen-2.md#.*: 395b41f96ec8
     domain/ui-fields/page-groups.md#.*: f77c8a834634
     domain/workflows/update-settings.md#.*: f420da94bd93
     domain/workflows/get-app-version.md#.*: a7ddfb091648
@@ -220,7 +220,7 @@ workflow の **唯一の trigger UI** となる。
   the release page.」を表示し、「Update & restart」を再度押せる状態に戻す（I-U7 / S25）。確認結果は維持する。
   再確認したら失敗表示は消す
 - **I-SM22（別 UI のインストール中）**: `installUpdate()` が `kind = InstallInProgress` で reject したら（Toast からの
-  インストールが実行中 / 再起動待ち、I-U10）「An update is already being installed.」を表示する。失敗扱いにせず、
+  インストールが実行中 / 再起動待ち、I-U10）「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせず、
   modal は操作できるまま（`busy` にしない）。再確認したら表示は消す（S29）
 - **I-SM23（再起動失敗）**: install 成功後に `onUpdateInstalled` が reject したら「The update was installed. Restart
   PromptNotes to finish updating.」を表示し、保存 / キャンセル / Esc を受け付ける状態に戻す。「Update & restart」は
@@ -360,7 +360,7 @@ Check / Update / Save / Cancel は `disabled`（I-SM19 / I-SM20）。
 
 ### tp-sm-update-install-in-progress: 別 UI のインストール中 {#tp-sm-update-install-in-progress}
 
-`installFn` が `{ kind: 'InstallInProgress' }` で reject → 「An update is already being installed.」を表示し、`busy` は
+`installFn` が `{ kind: 'InstallInProgress' }` で reject → 「Another update is in progress or waiting for a restart.」を表示し、`busy` は
 false、`onUpdateInstalled` は呼ばれない。page-main の browser test で、Toast のインストール中に設定モーダルから要求すると
 2 本目が拒否され、Toast 側は Updating… のまま・Cancel は押せることを確認する（I-SM22 / S29）。
 
@@ -395,7 +395,7 @@ install 成功後に `onUpdateInstalled` が reject → `restart-required`、`bu
 - 手動確認 / インストールの状態は form store と分け、`createSettingsUpdateStore(deps)`（`update-store.svelte.ts`）に置く。
   deps: `checkForUpdatesFn` / `installableFn` / `installFn` / `openUrlFn` / `onInstalled`。
   state は `checkStatus`（`idle` / `checking` / `up-to-date` / `available` / `failed`）・`installable`・
-  `installStatus`（`idle` / `installing` / `failed`）。form の draft とは独立なので I-SM17 が構造で保たれる
+  `installStatus`（`idle` / `installing` / `failed` / `already-installing` / `restart-required`）。form の draft とは独立なので I-SM17 が構造で保たれる
 - component (`*.svelte`) は store の薄い presentation layer
 
 ### ディレクトリ構成 {#impl-layout-dir}

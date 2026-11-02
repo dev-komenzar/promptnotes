@@ -67,7 +67,7 @@ event を購読して表示する。対応配布形式では [install-update](..
 - 失敗: `screen-3-install-status = Failed` で失敗メッセージを表示し、ボタンを再び押せるようにする。
   View release は使える（I-U7、S25）
 - 別のインストールが実行中 / 再起動待ち（`InstallInProgress`、I-U10）: `screen-3-install-status = AlreadyInstalling` で
-  「An update is already being installed.」を表示する。失敗扱いにしない（S29）
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにしない（S29）
 - インストール成功後に再起動が失敗: `screen-3-install-status = RestartRequired` で
   「The update was installed. Restart PromptNotes to finish updating.」を表示し、dismiss を有効に戻す。
   「Update & restart」は無効のまま（再インストールしない、I-U8 / I-U10、S29）

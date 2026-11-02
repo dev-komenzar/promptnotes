@@ -454,3 +454,28 @@ fn tp_g6_concurrent_requests_from_two_threads_run_only_one_install() {
     assert_eq!(first.join().unwrap(), Ok(v("0.2.5")));
     assert_eq!(state.phase(), InstallPhase::Installed);
 }
+
+/// fetch で panic する installer (plugin 内部の panic を模す)。
+struct PanickingInstaller;
+
+impl UpdateInstaller for PanickingInstaller {
+    fn fetch_pending(&self) -> Result<Box<dyn PendingUpdate>, InstallUpdateError> {
+        panic!("updater plugin panicked");
+    }
+}
+
+#[test]
+fn tp_g8_panic_during_install_releases_the_slot() {
+    let state = Arc::new(InMemoryInstallState::new());
+
+    let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        InstallUpdateUseCase::new(PanickingInstaller, state.clone()).execute(cmd("0.2.4", APPIMAGE))
+    }));
+    assert!(panicked.is_err());
+    // slot は Idle に戻り、次の install を受け付ける
+    assert_eq!(state.phase(), InstallPhase::Idle);
+
+    let (retry, _, installs) = run_with(&state, "0.2.4", APPIMAGE, Ok("0.2.5"), InstallOutcome::Ok);
+    assert_eq!(retry, Ok(v("0.2.5")));
+    assert_eq!(installs, 1);
+}

@@ -282,7 +282,7 @@ describe('page:page-main concurrent install / restart failure (I-U10 / S29)', ()
 
 		await expect
 			.element(page.getByTestId('widget.widget-settings-modal.install-status'))
-			.toHaveTextContent('An update is already being installed.');
+			.toHaveTextContent('Another update is in progress or waiting for a restart.');
 		// 設定モーダルは操作できるまま、toast 側のインストールは継続
 		await expect.element(page.getByRole('button', { name: 'Cancel' })).toBeEnabled();
 		await expect

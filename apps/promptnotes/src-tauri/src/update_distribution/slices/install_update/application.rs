@@ -24,9 +24,14 @@ impl<I: UpdateInstaller, G: InstallGuard> InstallUpdateUseCase<I, G> {
         if !self.guard.try_begin() {
             return Err(InstallUpdateError::InstallInProgress);
         }
+        // panic で unwind しても slot を解放する (Drop で `finish(false)`、C-IU7)
+        let slot = InstallSlot {
+            guard: &self.guard,
+            succeeded: false,
+        };
         let result = self.install(cmd);
         // 成功なら再起動まで Installed を保持、失敗なら Idle に戻して再試行可能にする (C-IU7)
-        self.guard.finish(result.is_ok());
+        slot.finish(result.is_ok());
         result
     }
 
@@ -44,5 +49,25 @@ impl<I: UpdateInstaller, G: InstallGuard> InstallUpdateUseCase<I, G> {
         // step 5: download + 署名検証 + install
         pending.download_and_install()?;
         Ok(version)
+    }
+}
+
+/// 取得した install slot。`finish` で結果を記録し、`finish` されずに drop された場合 (panic による
+/// unwind を含む) は失敗として `Idle` に戻す。slot が `Installing` のまま残って以後の install が
+/// すべて `InstallInProgress` になるのを防ぐ (C-IU7)。
+struct InstallSlot<'a, G: InstallGuard> {
+    guard: &'a G,
+    succeeded: bool,
+}
+
+impl<G: InstallGuard> InstallSlot<'_, G> {
+    fn finish(mut self, succeeded: bool) {
+        self.succeeded = succeeded;
+    }
+}
+
+impl<G: InstallGuard> Drop for InstallSlot<'_, G> {
+    fn drop(&mut self) {
+        self.guard.finish(self.succeeded);
     }
 }

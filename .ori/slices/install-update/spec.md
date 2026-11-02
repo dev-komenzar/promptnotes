@@ -81,7 +81,7 @@ TS へは `{ kind: "<variant>", message: string }` に射影する。
 - **C-IU4**: `InstallationKind` は `BundleType` から導出する: `App`/`Dmg` → `MacApp`、`AppImage`/`Deb`/`Rpm`/`Msi`/`Nsis` は同名、`None` (bundle 種別なし) → `Unbundled`。開発ビルド (`debug_assertions`) は bundle 種別によらず `Unbundled` (macOS は bundler 未経由でも `App` を返すため)
 - **C-IU5**: check-for-updates の揮発 state (通知済みバージョン I-U4 / 前回確認時刻) を読まない・変えない
 - **C-IU6**: 実行状態 `InstallPhase` (`Idle` / `Installing` / `Installed`) はプロセス内の揮発 state。`lib.rs` で `Arc<InMemoryInstallState>` を 1 つ manage し、toast / 設定モーダルのどちらから invoke されても同じ instance を使う。判定と遷移は Mutex 内で 1 操作 (`try_begin`) で行う
-- **C-IU7**: `Unbundled` の判定 (step 1) は slot を取る前に行う。slot を取った後は、成功なら `Installed` (再起動まで保持)、失敗 (`NoUpdateAvailable` / `CheckFailed` / `DownloadFailed` / `InstallFailed`) なら `Idle` に戻す
+- **C-IU7**: `Unbundled` の判定 (step 1) は slot を取る前に行う。slot を取った後は、成功なら `Installed` (再起動まで保持)、失敗 (`NoUpdateAvailable` / `CheckFailed` / `DownloadFailed` / `InstallFailed`) なら `Idle` に戻す。slot は RAII (`InstallSlot`) で持ち、panic で unwind した場合も Drop で `Idle` に戻す
 
 ## 境界契約 {#boundary-contract}
 
@@ -139,6 +139,7 @@ Rust 側は `install_update/tests.rs`。`UpdateInstaller` は adapter 境界の 
 - **TP-G4**: 失敗 (`CheckFailed` / `NoUpdateAvailable` / `DownloadFailed` / `InstallFailed`) 後は `Idle` に戻り、再試行で install できる
 - **TP-G5**: `Unbundled` は slot を取らない (`Idle` のまま)
 - **TP-G6**: 2 thread から同時に要求すると、download 中の 1 本目だけが install し、2 本目は `InstallInProgress` (S29)
+- **TP-G8**: install 中に panic しても slot は `Idle` に戻り、次の install を受け付ける (C-IU7)
 - **TP-G7**: TS — `isInstallInProgressError()` は `kind === 'InstallInProgress'` の DTO だけを true にする
 
 ## 実装ノート {#impl-notes}
@@ -164,6 +165,8 @@ apps/promptnotes/src-tauri/src/update_distribution/
 - tauri-specta 未採用のため bindings 再生成は無い (DoD rule 4 対象外)
 
 ### Out of scope {#out-of-scope}
+
+- `restart_app` の失敗検出: `AppHandle::restart()` は戻らないため、本番では command は resolve も reject もしない。UI の「再起動してください」表示 (I-UT13 / I-SM23) は IPC 自体が reject した場合だけ発火する。再起動が静かに失敗したケースの検出 (timeout 等) は扱わない
 
 - download 進捗 (%) の通知
 - 再起動前の Flush (page-main / widget-update-toast の責務)

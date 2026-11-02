@@ -11,7 +11,7 @@ coherence:
     - domain/workflows/check-for-updates.md#check-for-updates
     - domain/workflows/install-update.md#install-update
   hash:
-    domain/ui-fields/screen-3.md#.*: 6f06408660d7
+    domain/ui-fields/screen-3.md#.*: ddf71dd05ef4
     domain/ui-fields/page-groups.md#.*: f77c8a834634
     domain/workflows/check-for-updates.md#.*: 32f87895c0d8
     domain/workflows/install-update.md#.*: 4b291a6c25a9
@@ -119,7 +119,7 @@ Tauri event channel 名は `new_version_detected`（snake_case）。emit 側は
   `onInstalled` は呼ばない。より新しい版の event が届いたら `idle` に戻す（I-U7 / S25）
 - **I-UT12（別 UI のインストール中は進行中表示）**: `installFn` が `kind = InstallInProgress` で reject したら
   （設定モーダルからのインストールが実行中 / 再起動待ち、I-U10）`installStatus = already-installing` にして
-  「An update is already being installed.」を表示する。失敗扱いにせずエラーログも出さない。dismiss は有効。
+  「Another update is in progress or waiting for a restart.」を表示する。失敗扱いにせずエラーログも出さない。dismiss は有効。
   より新しい版の event が届いたら `idle` に戻す（S29）
 - **I-UT13（再起動失敗）**: install 成功後に `onInstalled` が reject したら（page-main の `restart_app` 失敗）
   `installStatus = restart-required` にして「The update was installed. Restart PromptNotes to finish updating.」を表示し、

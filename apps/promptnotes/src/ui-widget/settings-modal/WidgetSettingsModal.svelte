@@ -320,7 +320,7 @@
 					data-testid="widget.widget-settings-modal.install-status"
 					class="text-xs text-neutral-600 dark:text-neutral-400"
 				>
-					An update is already being installed.
+					Another update is in progress or waiting for a restart.
 				</p>
 			{:else if updates.installStatus === 'restart-required'}
 				<p
