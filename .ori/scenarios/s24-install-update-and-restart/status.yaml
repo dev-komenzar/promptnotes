@@ -1,0 +1,28 @@
+scenario_id: s24-install-update-and-restart
+derived_at: 2026-11-02T09:35:52.272Z
+beads:
+  epic: ori-scenario-s24-install-update-and-restart
+  current_phase: null
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive:
+    state: done
+    started_at: 2026-11-02T09:54:27.256Z
+    completed_at: 2026-11-02T09:54:27.256Z
+  generate:
+    state: done
+    started_at: 2026-11-02T09:55:59.820Z
+    completed_at: 2026-11-02T09:55:59.820Z
+  review:
+    state: done
+    started_at: 2026-11-02T10:05:18.531Z
+    completed_at: 2026-11-02T10:05:18.531Z
+  finalize:
+    state: done
+    started_at: 2026-11-02T10:05:28.047Z
+    completed_at: 2026-11-02T10:05:28.047Z
+dirty: []
