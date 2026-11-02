@@ -159,6 +159,44 @@ describe('page:page-main install-update (I-U6 / I-U8)', () => {
 		expect(order).toEqual(['invoke:install_update', 'flushAll', 'invoke:restart_app']);
 	});
 
+	it('S24 (I-U8) — 全 Note の flush が完了するまで restart_app を呼ばない', async () => {
+		tauri.installable.current = true;
+		emitNewVersionAtStartup();
+		let finishFlush: () => void = () => {};
+		const pendingFlush = {
+			register: () => {},
+			unregister: () => {},
+			flushAll: () =>
+				new Promise<void>((resolve) => {
+					tauri.calls.push('flushAll:start');
+					finishFlush = () => {
+						tauri.calls.push('flushAll:done');
+						resolve();
+					};
+				})
+		} as unknown as import('../stores/pending-flush.svelte').PendingFlushRegistry;
+
+		render(PageMain, { loadSettingsFn, listNotesFn, quitWindow: null, pendingFlush });
+
+		await page.getByTestId('widget.widget-update-toast.install-update').click();
+		await expect.poll(() => tauri.calls.includes('flushAll:start')).toBe(true);
+		// flush (永続化) が終わるまでは再起動しない
+		await new Promise((r) => setTimeout(r, 50));
+		expect(tauri.calls).not.toContain('invoke:restart_app');
+
+		finishFlush();
+		await expect.poll(() => tauri.calls.includes('invoke:restart_app')).toBe(true);
+		const order = tauri.calls.filter((c) =>
+			['invoke:install_update', 'flushAll:start', 'flushAll:done', 'invoke:restart_app'].includes(c)
+		);
+		expect(order).toEqual([
+			'invoke:install_update',
+			'flushAll:start',
+			'flushAll:done',
+			'invoke:restart_app'
+		]);
+	});
+
 	it('S25 — install_update が失敗したら flush も restart もせず失敗を表示する', async () => {
 		tauri.installable.current = true;
 		tauri.installResponder.current = async () => {

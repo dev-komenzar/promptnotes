@@ -1,0 +1,28 @@
+scenario_id: s26-unbundled-notify-only
+derived_at: 2026-11-02T09:35:52.639Z
+beads:
+  epic: ori-scenario-s26-unbundled-notify-only
+  current_phase: null
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive:
+    state: done
+    started_at: 2026-11-02T09:54:28.790Z
+    completed_at: 2026-11-02T09:54:28.790Z
+  generate:
+    state: done
+    started_at: 2026-11-02T09:56:01.380Z
+    completed_at: 2026-11-02T09:56:01.380Z
+  review:
+    state: done
+    started_at: 2026-11-02T10:04:36.949Z
+    completed_at: 2026-11-02T10:04:36.949Z
+  finalize:
+    state: done
+    started_at: 2026-11-02T10:05:31.476Z
+    completed_at: 2026-11-02T10:05:31.476Z
+dirty: []

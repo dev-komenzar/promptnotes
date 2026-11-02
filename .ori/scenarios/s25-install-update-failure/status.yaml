@@ -1,0 +1,28 @@
+scenario_id: s25-install-update-failure
+derived_at: 2026-11-02T09:35:52.456Z
+beads:
+  epic: ori-scenario-s25-install-update-failure
+  current_phase: null
+  completion:
+    - derive
+    - generate
+    - review
+    - finalize
+phases:
+  derive:
+    state: done
+    started_at: 2026-11-02T09:54:28.012Z
+    completed_at: 2026-11-02T09:54:28.012Z
+  generate:
+    state: done
+    started_at: 2026-11-02T09:56:00.573Z
+    completed_at: 2026-11-02T09:56:00.573Z
+  review:
+    state: done
+    started_at: 2026-11-02T10:04:35.616Z
+    completed_at: 2026-11-02T10:04:35.616Z
+  finalize:
+    state: done
+    started_at: 2026-11-02T10:05:29.765Z
+    completed_at: 2026-11-02T10:05:29.765Z
+dirty: []
