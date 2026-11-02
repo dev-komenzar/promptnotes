@@ -193,6 +193,27 @@ fn tp_u3_bundle_type_maps_to_installation_kind() {
     }
 }
 
+/// E2E seam (s24 / s25 / s26): debug build の `TAURI_TEST_INSTALLATION_KIND` の解釈。
+/// release build には seam 自体が無いので test も debug 限定。
+#[cfg(debug_assertions)]
+#[test]
+fn tp_u4_test_installation_kind_override_is_parsed() {
+    use super::infrastructure::parse_test_installation_kind;
+    use BundleFormat::*;
+    let cases = [
+        ("appimage", Some(InstallationKind::Bundled(AppImage))),
+        ("AppImage", Some(InstallationKind::Bundled(AppImage))),
+        (" deb ", Some(InstallationKind::Bundled(Deb))),
+        ("rpm", Some(InstallationKind::Bundled(Rpm))),
+        ("unbundled", Some(InstallationKind::Unbundled)),
+        ("msi", None),
+        ("", None),
+    ];
+    for (value, expected) in cases {
+        assert_eq!(parse_test_installation_kind(value), expected, "{value:?}");
+    }
+}
+
 // ===== spec.md#tp-not-newer =====
 
 #[test]

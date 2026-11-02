@@ -14,6 +14,8 @@ use crate::update_distribution::shared::ports::{InstallGuard, PendingUpdate, Upd
 use crate::update_distribution::shared::types::{
     BundleFormat, InstallUpdateError, InstallationKind,
 };
+#[cfg(debug_assertions)]
+use crate::update_distribution::shared::updater::with_test_endpoint;
 
 /// `BundleType` → `InstallationKind` (C-IU4)。`None` は bundle 種別なし (nix 等)。
 pub(crate) fn installation_kind_from(bundle: Option<BundleType>) -> InstallationKind {
@@ -31,13 +33,47 @@ pub(crate) fn installation_kind_from(bundle: Option<BundleType>) -> Installation
 
 /// 実行中アプリの配布形式。bundler が binary に埋め込んだ値を読む。
 ///
-/// 開発ビルド (`debug_assertions`) は常に `Unbundled`。macOS では bundler 未経由でも
+/// 開発ビルド (`debug_assertions`) は `Unbundled`。macOS では bundler 未経由でも
 /// `bundle_type()` が `Some(App)` を返すため、そのままだと dev でもボタンが出てしまう。
+/// ただし E2E (s24 / s25) は debug build で install 経路を通すため、`TAURI_TEST_INSTALLATION_KIND`
+/// で配布形式を上書きできる (debug build 限定 seam。release build では compile out)。
 pub fn current_installation_kind() -> InstallationKind {
     if cfg!(debug_assertions) {
-        return InstallationKind::Unbundled;
+        return debug_installation_kind();
     }
     installation_kind_from(bundle_type())
+}
+
+/// debug build の配布形式。`TAURI_TEST_INSTALLATION_KIND` があればそれ、無ければ `Unbundled`。
+#[cfg(debug_assertions)]
+fn debug_installation_kind() -> InstallationKind {
+    std::env::var("TAURI_TEST_INSTALLATION_KIND")
+        .ok()
+        .and_then(|v| parse_test_installation_kind(&v))
+        .unwrap_or(InstallationKind::Unbundled)
+}
+
+/// release build では呼ばれない (`cfg!(debug_assertions)` が false)。seam の env 読み出しを含めない。
+#[cfg(not(debug_assertions))]
+fn debug_installation_kind() -> InstallationKind {
+    InstallationKind::Unbundled
+}
+
+/// `TAURI_TEST_INSTALLATION_KIND` の値 (`appimage` / `deb` / `rpm` / `unbundled`) を解釈する。
+/// 未知の値は `None` (= debug 既定の `Unbundled`)。
+#[cfg(debug_assertions)]
+pub(crate) fn parse_test_installation_kind(value: &str) -> Option<InstallationKind> {
+    let kind = match value.trim().to_ascii_lowercase().as_str() {
+        "appimage" => InstallationKind::Bundled(BundleFormat::AppImage),
+        "deb" => InstallationKind::Bundled(BundleFormat::Deb),
+        "rpm" => InstallationKind::Bundled(BundleFormat::Rpm),
+        "unbundled" => InstallationKind::Unbundled,
+        other => {
+            log::warn!("unknown TAURI_TEST_INSTALLATION_KIND: {other}");
+            return None;
+        }
+    };
+    Some(kind)
 }
 
 /// install-update の揮発な実行状態 (I-U10)。`lib.rs` で `Arc` にして manage し、
@@ -88,10 +124,26 @@ pub struct TauriUpdateInstaller {
 
 impl UpdateInstaller for TauriUpdateInstaller {
     fn fetch_pending(&self) -> Result<Box<dyn PendingUpdate>, InstallUpdateError> {
-        let updater = self
+        let builder = self
             .app_handle
             .updater_builder()
-            .version_comparator(|_current, _remote| true)
+            .version_comparator(|_current, _remote| true);
+
+        // E2E test seam (s24 / s25): debug build では取得先と署名検証の公開鍵を差し替えられる。
+        // 公開鍵は E2E が実行時に生成した鍵で署名したテストパッケージを検証するため。
+        // release build では分岐ごと compile out され、本番の endpoint / pubkey (tauri.conf.json) は不変。
+        #[cfg(debug_assertions)]
+        let builder = {
+            let builder = with_test_endpoint(builder).map_err(|e| {
+                InstallUpdateError::CheckFailed(format!("test endpoint override failed: {e:?}"))
+            })?;
+            match std::env::var("TAURI_TEST_UPDATER_PUBKEY") {
+                Ok(pubkey) => builder.pubkey(pubkey),
+                Err(_) => builder,
+            }
+        };
+
+        let updater = builder
             .build()
             .map_err(|e| InstallUpdateError::CheckFailed(e.to_string()))?;
 

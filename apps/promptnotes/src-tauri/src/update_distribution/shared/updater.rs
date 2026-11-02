@@ -27,25 +27,13 @@ impl UpdaterPort for TauriUpdaterPort {
             .updater_builder()
             .version_comparator(|_current, _remote| true);
 
-        // S14 E2E test seam (`.ori/scenarios/s14-update-check-failure`):
-        // debug builds may point the updater at a local endpoint via
-        // `TAURI_TEST_UPDATER_ENDPOINT` to deterministically reproduce an HTTP
-        // failure. Release builds compile this branch out entirely, so the
-        // production endpoint (tauri.conf.json) is never overridden.
+        // E2E test seam (s14 / s23 / s24 / s25): debug build では更新確認の取得先を local server に向けられる。
+        // release build では分岐ごと compile out され、本番 endpoint (tauri.conf.json) は不変。
         #[cfg(debug_assertions)]
-        let builder = match std::env::var("TAURI_TEST_UPDATER_ENDPOINT") {
-            Ok(endpoint) => {
-                let url = tauri::Url::parse(&endpoint).map_err(|e| {
-                    log::warn!("invalid TAURI_TEST_UPDATER_ENDPOINT ({endpoint}): {e:?}");
-                    UpdateError::ParseError
-                })?;
-                builder.endpoints(vec![url]).map_err(|e| {
-                    log::warn!("failed to apply TAURI_TEST_UPDATER_ENDPOINT: {e:?}");
-                    UpdateError::NetworkError
-                })?
-            }
-            Err(_) => builder,
-        };
+        let builder = with_test_endpoint(builder).map_err(|e| match e {
+            TestEndpointError::InvalidUrl => UpdateError::ParseError,
+            TestEndpointError::Apply => UpdateError::NetworkError,
+        })?;
 
         let updater = builder.build().map_err(|e| {
             log::warn!("failed to build updater: {e:?}");
@@ -80,6 +68,36 @@ impl UpdaterPort for TauriUpdaterPort {
             }
         }
     }
+}
+
+/// debug build 限定 seam の取得先上書きに失敗した理由。呼出側が自分のエラー型に写す。
+#[cfg(debug_assertions)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum TestEndpointError {
+    InvalidUrl,
+    Apply,
+}
+
+/// E2E test seam: `TAURI_TEST_UPDATER_ENDPOINT` が設定されていれば updater の取得先をそれに差し替える。
+///
+/// 更新確認 (`check-for-updates` / `check-for-updates-manually`) と install (`install-update`) が
+/// 同じ取得先を使うよう、両方の adapter がこの関数を通す。`#[cfg(debug_assertions)]` 限定で、
+/// release build には存在しない (本番 endpoint は tauri.conf.json のみ)。
+#[cfg(debug_assertions)]
+pub(crate) fn with_test_endpoint(
+    builder: tauri_plugin_updater::UpdaterBuilder,
+) -> Result<tauri_plugin_updater::UpdaterBuilder, TestEndpointError> {
+    let Ok(endpoint) = std::env::var("TAURI_TEST_UPDATER_ENDPOINT") else {
+        return Ok(builder);
+    };
+    let url = tauri::Url::parse(&endpoint).map_err(|e| {
+        log::warn!("invalid TAURI_TEST_UPDATER_ENDPOINT ({endpoint}): {e:?}");
+        TestEndpointError::InvalidUrl
+    })?;
+    builder.endpoints(vec![url]).map_err(|e| {
+        log::warn!("failed to apply TAURI_TEST_UPDATER_ENDPOINT: {e:?}");
+        TestEndpointError::Apply
+    })
 }
 
 /// GitHub Releases の tag page URL prefix。tag は release workflow が `v<version>` で切る。
