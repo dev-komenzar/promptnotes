@@ -432,13 +432,18 @@ gh release edit "v${VERSION}" --draft=false
 promptnotes は Apple Developer Program に登録していないため、公証 (notarization) されていません。
 初回起動時に Gatekeeper の警告が出ます。以下のいずれかで回避してください:
 
-**方法 A: 右クリックで開く**
-1. Finder で `promptnotes.app` を右クリック (control + クリック)
-2. 「開く」を選択
-3. 再度警告が出るが、もう一度「開く」をクリック
+**方法 A: システム設定から許可する (macOS 15 Sequoia 以降)**
+1. `promptnotes.app` を `/Applications` に移動し、一度ダブルクリックで開く。ブロックのダイアログが出たら「完了」を押す (「ゴミ箱に入れる」を押すとアプリが削除される)
+2. 「システム設定 > プライバシーとセキュリティ」を開き、下部の「セキュリティ」欄にある「このまま開く」を押す
+3. 管理者パスワード (または Touch ID) で認証する
+4. `promptnotes.app` をもう一度開き、確認ダイアログでも「このまま開く」を押す
+
+macOS 14 Sonoma 以前では、Finder で右クリック (control + クリック) →「開く」→ 再度表示される警告で「開く」でも起動できる。
 
 **方法 B: ターミナルから属性を解除**
 `xattr -dr com.apple.quarantine /Applications/promptnotes.app`
+
+方法 A を行っても「壊れているため開けません」と表示される場合は、方法 B を実行する。
 ```
 
 #### macOS 配布先の Gatekeeper 回避手順 (README に貼るテンプレ)
@@ -449,10 +454,13 @@ promptnotes は Apple Developer Program に登録していないため、公証 
 promptnotes は Apple Developer Program に登録していないため、公証 (notarization) されていません。
 初回起動時に Gatekeeper の警告が出ます。以下のいずれかで回避してください:
 
-**方法 A: 右クリックで開く (1 回だけ)**
-1. Finder で `promptnotes.app` を右クリック (control + クリック)
-2. 「開く」を選択
-3. 再度警告が出るが、もう一度「開く」をクリック
+**方法 A: システム設定から許可する (macOS 15 Sequoia 以降)**
+1. `promptnotes.app` を `/Applications` に移動し、一度ダブルクリックで開く。ブロックのダイアログが出たら「完了」を押す (「ゴミ箱に入れる」を押すとアプリが削除される)
+2. 「システム設定 > プライバシーとセキュリティ」を開き、下部の「セキュリティ」欄にある「このまま開く」を押す
+3. 管理者パスワード (または Touch ID) で認証する
+4. `promptnotes.app` をもう一度開き、確認ダイアログでも「このまま開く」を押す
+
+macOS 14 Sonoma 以前では、Finder で右クリック (control + クリック) →「開く」→ 再度表示される警告で「開く」でも起動できる。
 
 **方法 B: ターミナルから属性を解除**
 
