@@ -4,7 +4,7 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-15
+  last_derived: 2026-11-02
   derives_from:
     - domain/ui-fields/screen-5.md#screen-5
     - domain/ui-fields/page-groups.md#widget-external-delete-notice
@@ -12,9 +12,9 @@ coherence:
     - domain/domain-events.md#note-file-deleted-externally
   hash:
     domain/ui-fields/screen-5.md#.*: 8ae9b5c9d594
-    domain/ui-fields/page-groups.md#.*: a9fb317174a9
+    domain/ui-fields/page-groups.md#.*: b10b453d71fb
     domain/workflows/detect-external-changes.md#.*: a66910b0d892
-    domain/domain-events.md#.*: 86acb64f8149
+    domain/domain-events.md#.*: 922c62c32c4d
 ---
 
 # widget-external-delete-notice — Widget Specification {#widget-external-delete-notice-spec}

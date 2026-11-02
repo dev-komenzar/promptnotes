@@ -4,15 +4,15 @@ ori:
     propagation_level: file
 coherence:
   source: derived
-  last_derived: 2026-10-14
+  last_derived: 2026-11-02
   derives_from:
     - domain/workflows/get-default-storage-dir.md#get-default-storage-dir
     - domain/aggregates.md#settings-aggregate
     - domain/bounded-contexts.md#user-preferences
   hash:
     domain/workflows/get-default-storage-dir.md#.*: 84a2bc66ea78
-    domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: fe8bafba0f88
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
 ---
 
 # get-default-storage-dir — Specification {#get-default-storage-dir-spec}

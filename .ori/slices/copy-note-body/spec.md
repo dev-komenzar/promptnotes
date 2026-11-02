@@ -1,11 +1,11 @@
 ---
 coherence:
   source: derived
-  last_derived: 2026-06-30
+  last_derived: 2026-11-02
   hash:
     domain/workflows/copy-note-body.md#.*: 5ec956893834
-    domain/aggregates.md#.*: c2eaa083eaf0
-    domain/bounded-contexts.md#.*: fe8bafba0f88
+    domain/aggregates.md#.*: ebcf66d3a2eb
+    domain/bounded-contexts.md#.*: 4e4f641c9627
 ori:
   schema:
     propagation_level: file
