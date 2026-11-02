@@ -63,9 +63,10 @@ promptnotes は Apple Developer Program に登録していないため、公証 
 **方法 A: システム設定から許可する（macOS 15 Sequoia 以降）**
 
 macOS 15 以降では、右クリック →「開く」では警告を回避できません。
-1. `promptnotes.app` を `/Applications` に移動し、一度ダブルクリックで開く（ブロックされる）
+1. `promptnotes.app` を `/Applications` に移動し、一度ダブルクリックで開く。ブロックのダイアログが出たら「完了」を押す（「ゴミ箱に入れる」を押すとアプリが削除されます）
 2. 「システム設定 > プライバシーとセキュリティ」を開き、下部の「セキュリティ」欄にある「このまま開く」を押す
 3. 管理者パスワード（または Touch ID）で認証する
+4. `promptnotes.app` をもう一度開く。確認ダイアログが出るので、そこでも「このまま開く」を押す
 
 > macOS 14 Sonoma 以前では、Finder で `promptnotes.app` を右クリック（control + クリック）→「開く」→ 再度表示される警告で「開く」でも起動できます。
 
