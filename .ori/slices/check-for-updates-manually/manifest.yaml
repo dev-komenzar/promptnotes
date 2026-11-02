@@ -1,0 +1,15 @@
+slice_id: "check-for-updates-manually"
+type: "query"
+derives_from:
+  - domain/workflows/check-for-updates-manually.md#check-for-updates-manually
+  - domain/aggregates.md#update-channel-aggregate
+  - domain/bounded-contexts.md#update-distribution
+  - domain/validation.md#s27-manual-update-check-new-version
+  - domain/validation.md#s28-manual-update-check-up-to-date-or-failure
+relations: []
+implementation:
+  language: rust
+  primary_bc: update-distribution
+  generates:
+    - apps/promptnotes/src-tauri/src/update_distribution/slices/check_for_updates_manually/
+    - apps/promptnotes/src/lib/update-distribution/slices/check-for-updates-manually/

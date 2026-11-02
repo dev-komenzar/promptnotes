@@ -11,7 +11,7 @@ pub struct RawRelease {
 
 /// Tauri v2 updater plugin の薄ラッパー port (`workflows/check-for-updates.md#dependencies`)。
 ///
-/// production impl は `check_for_updates::infrastructure::TauriUpdaterPort` (ori-2lm.8)。
+/// production impl は `shared::updater::TauriUpdaterPort` (ori-2lm.8)。自動確認 / 手動確認で共有する。
 pub trait UpdaterPort {
     fn fetch_latest_release(&self) -> Result<RawRelease, UpdateError>;
 }

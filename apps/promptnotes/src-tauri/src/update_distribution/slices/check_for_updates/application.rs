@@ -5,14 +5,9 @@
 //! (S14 silent failure + I-U2)。同一プロセス内で通知済みのバージョン以下は event を発行しない
 //! (I-U4。`NotifiedVersionLedger` が揮発 state を持つ)。
 
-use std::cmp::Ordering;
-
-use crate::update_distribution::shared::ports::{
-    EventBus, NotifiedVersionLedger, RawRelease, UpdaterPort,
-};
-use crate::update_distribution::shared::types::{
-    NewVersionDetected, Release, UpdateChannel, UpdateError, Version,
-};
+use crate::update_distribution::shared::ports::{EventBus, NotifiedVersionLedger, UpdaterPort};
+use crate::update_distribution::shared::release_check::{compare, parse_release};
+use crate::update_distribution::shared::types::{NewVersionDetected, UpdateChannel, UpdateError};
 
 use super::domain::{CheckForUpdatesCommand, Comparison};
 
@@ -73,20 +68,5 @@ impl<U: UpdaterPort, B: EventBus, L: NotifiedVersionLedger> CheckForUpdatesUseCa
                 Ok(UpdateChannel::without_release(cmd.current_version))
             }
         }
-    }
-}
-
-/// `RawRelease` を parse して `Release` を作る (step 2 + 5 をまとめる)。
-fn parse_release(raw: RawRelease) -> Result<Release, UpdateError> {
-    let version = Version::from_str(&raw.version_string)?;
-    Ok(Release::new(version, raw.url, raw.notes))
-}
-
-/// `(Version, Release)` から `Comparison` を導出 (I-U2 の単一エントリポイント)。
-fn compare(current: &Version, candidate: Release) -> Comparison {
-    match candidate.version().cmp(current) {
-        Ordering::Greater => Comparison::NewVersion(candidate),
-        Ordering::Equal => Comparison::UpToDate,
-        Ordering::Less => Comparison::OlderVersion,
     }
 }

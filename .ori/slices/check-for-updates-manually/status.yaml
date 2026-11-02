@@ -1,0 +1,17 @@
+slice_id: check-for-updates-manually
+derived_at: 2026-11-02
+beads:
+  epic: ori-iz6f
+  current_phase: finalize
+  completion:
+    - phase: derive
+      issue: ori-iz6f.2
+    - phase: test-red
+      issue: ori-iz6f.2
+    - phase: impl-green
+      issue: ori-iz6f.2
+    - phase: review
+      issue: ori-iz6f.2
+phases: {}
+dirty: []
+finalized_at: 2026-11-02

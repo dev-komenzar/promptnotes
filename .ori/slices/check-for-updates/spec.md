@@ -240,13 +240,16 @@ apps/promptnotes/src-tauri/src/update_distribution/
 ├── shared/
 │   ├── types/               # Version / Release / UpdateChannel / UpdateError / NewVersionDetected (変更なし)
 │   ├── build_info.rs        # build_version() (変更なし)
-│   └── ports.rs             # UpdaterPort / EventBus + NotifiedVersionLedger (新設)
+│   ├── ports.rs             # UpdaterPort / EventBus + NotifiedVersionLedger (新設)
+│   ├── release_check.rs     # Comparison / parse_release / compare (手動確認 slice と共有、ori-iz6f.2)
+│   ├── response.rs          # UpdateChannelResponse / ReleaseResponse (手動確認 slice と共有、ori-iz6f.2)
+│   └── updater.rs           # TauriUpdaterPort / release_page_url (手動確認 slice と共有、ori-iz6f.2)
 └── slices/check_for_updates/
     ├── mod.rs
-    ├── domain.rs            # CheckForUpdatesCommand / Comparison
+    ├── domain.rs            # CheckForUpdatesCommand / Comparison (shared::release_check を再 export)
     │                        # + UPDATE_CHECK_INTERVAL / PERIODIC_CHECK_TICK / should_notify / is_check_due (純粋)
     ├── application.rs       # CheckForUpdatesUseCase<U, B, L>: fetch → parse → compare → claim → emit
-    ├── infrastructure.rs    # TauriUpdaterPort / TauriEventBus (既存)
+    ├── infrastructure.rs    # TauriEventBus (既存。TauriUpdaterPort は shared::updater を再 export)
     │                        # + InMemoryUpdateCheckState (前回確認時刻 + 通知済みバージョン、Mutex)
     ├── commands.rs          # #[tauri::command] check_for_updates + execute_update_check (起動時 / 定期の共通入口)
     │                        # + spawn_periodic_update_check (tick ループ。composition 側に置く)
@@ -303,7 +306,8 @@ pub trait NotifiedVersionLedger {
 
 - 前回確認時刻 / 通知済みバージョンの永続化（I-U3 / I-U4 は揮発と規定。永続 skip は screen-3 `#cross-suppression` で MVP 範囲外）
 - 確認間隔の設定 UI（I-U3: 定数）
-- 手動チェックボタン（workflow Notes: MVP 範囲外）
+- 設定モーダルからの手動確認（別 slice [check-for-updates-manually](../check-for-updates-manually/spec.md)、I-U9）。
+  手動確認は本 slice の揮発 state（`InMemoryUpdateCheckState`）を参照しない
 - ウィンドウ focus 復帰時の確認（C-CFU11 の wall clock + tick で休止を吸収するため不要）
 - 通知 UI（widget-update-toast の責務）
 
