@@ -15,6 +15,8 @@ const tauri = vi.hoisted(() => {
 		handlers,
 		calls,
 		checkResponder: { current: (() => {}) as () => void },
+		installable: { current: false },
+		installResponder: { current: (async () => '0.2.3') as () => Promise<string> },
 		listen: async (name: string, handler: Handler) => {
 			handlers.set(name, handler);
 			calls.push(`listen:${name}`);
@@ -26,6 +28,8 @@ const tauri = vi.hoisted(() => {
 				tauri.checkResponder.current();
 				return { current_version: '0.2.2', latest_release: null };
 			}
+			if (cmd === 'is_update_installable') return tauri.installable.current;
+			if (cmd === 'install_update') return tauri.installResponder.current();
 			return undefined;
 		}
 	};
@@ -58,7 +62,26 @@ beforeEach(() => {
 	tauri.handlers.clear();
 	tauri.calls.length = 0;
 	tauri.checkResponder.current = () => {};
+	tauri.installable.current = false;
+	tauri.installResponder.current = async () => '0.2.3';
 });
+
+function emitNewVersionAtStartup(): void {
+	tauri.checkResponder.current = () => {
+		tauri.handlers.get('new_version_detected')?.({ payload });
+	};
+}
+
+/** flushAll の呼出を tauri.calls に記録する fake (順序検証用)。 */
+function makePendingFlush() {
+	return {
+		register: () => {},
+		unregister: () => {},
+		flushAll: async () => {
+			tauri.calls.push('flushAll');
+		}
+	} as unknown as import('../stores/pending-flush.svelte').PendingFlushRegistry;
+}
 
 afterEach(() => {
 	document.documentElement.classList.remove('dark');
@@ -101,5 +124,70 @@ describe('page:page-main startup update check (I-U3 / I-PM3)', () => {
 		await expect.poll(() => tauri.calls.includes('invoke:check_for_updates')).toBe(true);
 		await expect.element(page.getByTestId('page.page-main.region-feed')).toBeInTheDocument();
 		expect(document.querySelector('[data-testid="widget.widget-update-toast.root"]')).toBeNull();
+	});
+});
+
+describe('page:page-main install-update (I-U6 / I-U8)', () => {
+	it('S24 — Update & restart で install_update → 全 Note flush → restart_app の順に呼ぶ', async () => {
+		tauri.installable.current = true;
+		emitNewVersionAtStartup();
+
+		render(PageMain, {
+			loadSettingsFn,
+			listNotesFn,
+			quitWindow: null,
+			pendingFlush: makePendingFlush()
+		});
+
+		const button = page.getByTestId('widget.widget-update-toast.install-update');
+		await expect.element(button).toBeInTheDocument();
+		await button.click();
+
+		await expect.poll(() => tauri.calls.includes('invoke:restart_app')).toBe(true);
+		const order = tauri.calls.filter((c) =>
+			['invoke:install_update', 'flushAll', 'invoke:restart_app'].includes(c)
+		);
+		expect(order).toEqual(['invoke:install_update', 'flushAll', 'invoke:restart_app']);
+	});
+
+	it('S25 — install_update が失敗したら flush も restart もせず失敗を表示する', async () => {
+		tauri.installable.current = true;
+		tauri.installResponder.current = async () => {
+			throw { kind: 'DownloadFailed', message: 'net' };
+		};
+		emitNewVersionAtStartup();
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		render(PageMain, {
+			loadSettingsFn,
+			listNotesFn,
+			quitWindow: null,
+			pendingFlush: makePendingFlush()
+		});
+
+		await page.getByTestId('widget.widget-update-toast.install-update').click();
+
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-status'))
+			.toHaveTextContent('Update failed');
+		expect(tauri.calls).not.toContain('flushAll');
+		expect(tauri.calls).not.toContain('invoke:restart_app');
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.install-update'))
+			.toBeEnabled();
+	});
+
+	it('S26 — is_update_installable=false なら Update & restart を出さない', async () => {
+		emitNewVersionAtStartup();
+
+		render(PageMain, { loadSettingsFn, listNotesFn, quitWindow: null });
+
+		await expect.element(page.getByTestId('widget.widget-update-toast.root')).toBeInTheDocument();
+		expect(
+			document.querySelector('[data-testid="widget.widget-update-toast.install-update"]')
+		).toBeNull();
+		await expect
+			.element(page.getByTestId('widget.widget-update-toast.view-release'))
+			.toBeInTheDocument();
 	});
 });

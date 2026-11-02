@@ -66,11 +66,13 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 
 - **kind**: ui-widget
 - **screens**: [screen-3](screen-3.md)
-- **対応 workflow**: check-for-updates
+- **対応 workflow**: check-for-updates / install-update
 - **mount trigger**: `NewVersionDetected` event 受信（起動時および 24 時間ごとの定期確認。I-U3 / I-U4）
 - **unmount trigger**: dismiss をユーザがクリック（view-release では残る。screen-3 cross-dismiss-view）
 - **依存する page**: page-main (toast は parent page の overlay area に表示)
-- **failure mode**: `NewVersionDetected` 未発行時は **mount されない** (silent, S14)
+- **failure mode**: `NewVersionDetected` 未発行時は **mount されない** (silent, S14)。
+  install-update 失敗時は toast 内に失敗を表示して継続 (S25)
+- **再起動 orchestration**: install-update 成功後、page-main が全 pending Note を Flush → 再起動 (I-U8)
 
 ### widget-external-change-conflict {#widget-external-change-conflict}
 

@@ -76,3 +76,26 @@ impl UpdateChannel {
         self.latest_release.is_some()
     }
 }
+
+/// 実行中アプリの配布形式 (I-U6)。bundle 時に埋め込まれ immutable。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BundleFormat {
+    MacApp,
+    AppImage,
+    Deb,
+    Rpm,
+    Msi,
+    Nsis,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InstallationKind {
+    Bundled(BundleFormat),
+    Unbundled,
+}
+
+impl InstallationKind {
+    pub fn is_installable(&self) -> bool {
+        matches!(self, Self::Bundled(_))
+    }
+}

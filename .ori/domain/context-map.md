@@ -74,6 +74,9 @@ graph LR
 - 設定モーダル（widget-settings-modal）での現在バージョン表示は
   [get-app-version](workflows/get-app-version.md) を **UI 層が直接** 呼ぶ。
   User Preferences BC は Version を知らないため Separate Ways は維持される
+- 更新インストール後の「全 Note Flush → 再起動」（I-U8）は **UI 層（page-main）が orchestrate** する。
+  [install-update](workflows/install-update.md) は Note Capture を知らず、page-main が
+  quit 時（S13）と同じ pending flush を await してから再起動を呼ぶ。Separate Ways は維持される
 
 ### 採用しなかったパターン {#decisions-rejected}
 

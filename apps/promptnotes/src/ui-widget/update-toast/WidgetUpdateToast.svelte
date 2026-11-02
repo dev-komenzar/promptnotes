@@ -3,6 +3,9 @@
 	import {
 		createUpdateToastStore,
 		type UpdateEventListener,
+		type UpdateInstallableFn,
+		type UpdateInstalledHook,
+		type UpdateInstallFn,
 		type UpdateSubscribedHook,
 		type UpdateUrlOpener
 	} from './store.svelte';
@@ -12,11 +15,25 @@
 		openUrlFn?: UpdateUrlOpener;
 		/** listen 確立後に 1 回呼ばれる。page-main が起動時 check-for-updates を流す。 */
 		onSubscribed?: UpdateSubscribedHook;
+		installableFn?: UpdateInstallableFn;
+		installFn?: UpdateInstallFn;
+		/** install 成功後に 1 回呼ばれる。page-main が全 Note を Flush してから再起動する (I-U8)。 */
+		onInstalled?: UpdateInstalledHook;
 	};
 
-	let { listenFn, openUrlFn, onSubscribed }: Props = $props();
+	let { listenFn, openUrlFn, onSubscribed, installableFn, installFn, onInstalled }: Props =
+		$props();
 
-	const store = untrack(() => createUpdateToastStore({ listenFn, openUrlFn, onSubscribed }));
+	const store = untrack(() =>
+		createUpdateToastStore({
+			listenFn,
+			openUrlFn,
+			onSubscribed,
+			installableFn,
+			installFn,
+			onInstalled
+		})
+	);
 
 	$effect(() => {
 		void store.start();
@@ -37,6 +54,10 @@
 
 	function handleDismiss() {
 		store.dismiss();
+	}
+
+	function handleInstall() {
+		void store.install();
 	}
 </script>
 
@@ -69,6 +90,7 @@
 					type="button"
 					data-testid="widget.widget-update-toast.dismiss"
 					aria-label="Close"
+					disabled={store.installStatus === 'installing'}
 					class="-mt-0.5 -mr-0.5 shrink-0 rounded p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
 					onclick={handleDismiss}
 				>
@@ -85,7 +107,24 @@
 				</p>
 			{/if}
 
-			<div class="flex justify-end">
+			{#if store.installStatus === 'installing'}
+				<p
+					data-testid="widget.widget-update-toast.install-status"
+					class="text-xs text-neutral-600 dark:text-neutral-400"
+				>
+					Updating…
+				</p>
+			{:else if store.installStatus === 'failed'}
+				<p
+					data-testid="widget.widget-update-toast.install-status"
+					role="alert"
+					class="text-xs text-red-600 dark:text-red-400"
+				>
+					Update failed. Try again or download it from the release page.
+				</p>
+			{/if}
+
+			<div class="flex justify-end gap-1">
 				<button
 					type="button"
 					data-testid="widget.widget-update-toast.view-release"
@@ -94,6 +133,17 @@
 				>
 					View release
 				</button>
+				{#if store.installable}
+					<button
+						type="button"
+						data-testid="widget.widget-update-toast.install-update"
+						disabled={store.installStatus === 'installing'}
+						class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-500 dark:hover:bg-blue-600"
+						onclick={handleInstall}
+					>
+						Update & restart
+					</button>
+				{/if}
 			</div>
 		</div>
 	</div>

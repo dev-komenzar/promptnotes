@@ -80,6 +80,21 @@ pub enum UpdateError {
     RateLimited,
 }
 
+/// install-update の失敗 (I-U6 / I-U7)。UI に返し Toast に表示する (silent にしない)。
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
+pub enum InstallUpdateError {
+    #[error("this installation does not support in-app updates")]
+    UnsupportedInstallation,
+    #[error("no newer release is available")]
+    NoUpdateAvailable,
+    #[error("failed to fetch the latest release: {0}")]
+    CheckFailed(String),
+    #[error("failed to download the update: {0}")]
+    DownloadFailed(String),
+    #[error("failed to install the update: {0}")]
+    InstallFailed(String),
+}
+
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum NoteIdError {
     #[error("invalid NoteId format: expected YYYYMMDDhhmmss, got {0:?}")]

@@ -1,0 +1,16 @@
+slice_id: "install-update"
+type: "command"
+derives_from:
+  - domain/workflows/install-update.md#install-update
+  - domain/aggregates.md#update-channel-aggregate
+  - domain/bounded-contexts.md#update-distribution
+  - domain/validation.md#s24-install-update-and-restart
+  - domain/validation.md#s25-install-update-failure
+  - domain/validation.md#s26-unbundled-notify-only
+relations: []
+implementation:
+  language: rust
+  primary_bc: update-distribution
+  generates:
+    - apps/promptnotes/src-tauri/src/update_distribution/slices/install_update/
+    - apps/promptnotes/src/lib/update-distribution/slices/install-update/

@@ -10,7 +10,7 @@ ori:
 
 # Workflows Index {#workflows-index}
 
-PromptNotes の 17 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
+PromptNotes の 18 workflow を BC 別に列挙。各 workflow は DMMF pipeline 形式で
 別ファイルに記述（review しやすさのため）。
 
 <!-- ori:auto-table:start -->
@@ -36,6 +36,7 @@ PromptNotes の 17 workflow を BC 別に列挙。各 workflow は DMMF pipeline
 | [get-default-storage-dir](get-default-storage-dir.md) | 設定モーダル表示時 | (なし) | Settings | User Preferences |
 | [check-for-updates](check-for-updates.md) | アプリ起動時 | NewVersionDetected (条件付) | UpdateChannel | Update Distribution |
 | [get-app-version](get-app-version.md) | 設定モーダル表示時 | (なし) | UpdateChannel | Update Distribution |
+| [install-update](install-update.md) | 更新通知の「Update & restart」 | (なし) | UpdateChannel | Update Distribution |
 
 <!-- ori:auto-table:end -->
 
@@ -59,6 +60,9 @@ Phase 7 validation scenarios の workflow 対応：
 | S12 (起動時 filter リセット / sort 復元) | load-settings → list-feed |
 | S13 (quit 時連続 Flush) | flush-note ×N |
 | S14 (更新失敗 silent) | check-for-updates |
+| S24 (更新インストール → Flush → 再起動) | install-update |
+| S25 (更新インストール失敗) | install-update |
+| S26 (非対応配布形式は通知のみ) | install-update |
 | S15 (同一秒内編集) | auto-save-note / flush-note |
 
 ## Open Questions {#open-questions}

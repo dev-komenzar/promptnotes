@@ -77,6 +77,9 @@ pub fn run() {
             user_preferences::slices::update_settings::commands::update_settings,
             update_distribution::slices::check_for_updates::commands::check_for_updates,
             update_distribution::slices::get_app_version::commands::get_app_version,
+            update_distribution::slices::install_update::commands::install_update,
+            update_distribution::slices::install_update::commands::is_update_installable,
+            update_distribution::slices::install_update::commands::restart_app,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

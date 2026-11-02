@@ -555,6 +555,62 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
   Toast を表示する
 - アプリを再起動した場合は通知済み記録が消えるため、起動時の確認で再び通知される（I-U4 揮発）
 
+## Scenario S24: 更新をインストールし、編集中の Note を Flush してから再起動 {#s24-install-update-and-restart}
+
+### Given {#s24-given}
+
+- current_version = `0.2.4`、`InstallationKind::Bundled(AppImage)`
+- 起動時の確認で `0.2.5` を検出し、Toast を表示中
+- Note A が EDITING 状態（AutoSave debounce timer 中）
+
+### When {#s24-when}
+
+- ユーザが Toast の「Update & restart」を押す
+
+### Then {#s24-then}
+
+- `UpdateChannel::install()` が最新リリースを取得し直し、`0.2.5 > 0.2.4` を確認（I-U7）
+- updater plugin が download + 署名検証 + install を行い、`0.2.5` を返す
+- 処理中は Toast が「Updating…」を表示し、ボタンは押せない
+- インストール成功後、Note A を Flush（event **NoteBodyEdited**）し、永続化を待ってから
+  アプリを再起動する（I-U8、S13 と同じ順序保証）
+
+## Scenario S25: 更新インストールの失敗はユーザに伝え、アプリは継続 {#s25-install-update-failure}
+
+### Given {#s25-given}
+
+- current_version = `0.2.4`、`InstallationKind::Bundled(Deb)`
+- Toast に `0.2.5` を表示中
+
+### When {#s25-when}
+
+- ユーザが「Update & restart」を押し、download がネットワークエラーで失敗する
+  （または deb の権限昇格をユーザが拒否して install が失敗する）
+
+### Then {#s25-then}
+
+- `InstallUpdateError::DownloadFailed`（または `InstallFailed`）が UI に返る
+- アプリは再起動しない。Note の Flush も行わない
+- Toast は失敗メッセージを表示し、「Update & restart」を再度押せる状態に戻る（I-U7）
+- 「View release」は引き続き使える。自動リトライはしない
+
+## Scenario S26: 非対応の配布形式では通知のみ {#s26-unbundled-notify-only}
+
+### Given {#s26-given}
+
+- `InstallationKind::Unbundled`（nix package 等、bundle 種別を持たないビルド）
+- 起動時の確認で新バージョンを検出
+
+### When {#s26-when}
+
+- Toast が表示される
+
+### Then {#s26-then}
+
+- `InstallationKind::is_installable() == false` のため、Toast に「Update & restart」は表示されない
+  （View release と dismiss のみ、I-U6）
+- 仮に install が要求されても `UnsupportedInstallation` で拒否し、ネットワークには触れない
+
 ## 補足 {#validation-notes}
 
 ### シナリオ漏れの検出ポリシー {#notes-coverage-policy}
@@ -574,6 +630,8 @@ Note Aggregate 自体は呼ばれれば `updatedAt` を更新する（I-N4 通�
 
 - 22 シナリオすべてが既存の aggregate / event で表現できた
   （S23 は I-U3 改訂・I-U4 新設時に追加。こちらも既存 event で表現できる）
+- S24〜S26 は I-U5〜I-U8 新設（自動アップデート、ori-rbb9）時に追加。新しい event は導入せず、
+  インストール結果は install-update の戻り値で表現する
 - ただし S4, S9 で「変化がない場合は event を発行しない」という暗黙の前提を
   application service 層に置く必要性を確認
 

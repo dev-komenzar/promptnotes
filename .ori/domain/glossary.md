@@ -130,6 +130,18 @@ context 間で同じ単語が違う意味を持つ場合は最終セクション
   ビルド時定数を `Version` として正規化した Display、parse 不能なら raw 文字列
 - **kind**: 表示用 DTO（[get-app-version](workflows/get-app-version.md) の Output）
 
+### InstallationKind {#glossary-installation-kind}
+
+- **定義**: 実行中アプリの配布形式。`Bundled(BundleFormat)`（macOS `.app` / AppImage / deb / rpm / msi / nsis）か
+  `Unbundled`（nix package 等）。自動インストールできるのは `Bundled` のみ（I-U6）
+- **kind**: VO (enum)
+
+### UpdateInstall {#glossary-update-install}
+
+- **定義**: ユーザが更新通知から要求した、最新リリースの download + 署名検証 + install。
+  成功後に全 Note を Flush してから再起動する（I-U5 / I-U8、[install-update](workflows/install-update.md)）
+- **kind**: workflow
+
 ### Release {#glossary-release}
 
 - **定義**: GitHub Releases の 1 リリース（version + url + notes）

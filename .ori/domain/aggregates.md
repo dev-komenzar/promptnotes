@@ -252,6 +252,11 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
   - `version: Version`
   - `url: Url`（GitHub Releases page）
   - `notes: String`（リリースノート Markdown）
+- **InstallationKind** (VO)
+  - 実行中アプリの配布形式。ビルド（bundle）時に埋め込まれ immutable（I-U1 と同じく定数）
+  - `Bundled(BundleFormat)` — updater 対応の配布形式（macOS `.app` / Linux AppImage・deb・rpm /
+    Windows msi・nsis）
+  - `Unbundled` — bundle 種別を持たないビルド（nix package / `--no-bundle` / 開発ビルド）
 
 ### ビジネス不変条件 {#update-channel-aggregate-invariants}
 
@@ -261,10 +266,20 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
 - **I-U3**: 確認は **アプリ起動時に 1 回** 行い、以降は **前回確認から 24 時間経過するごとに**
   再確認する。間隔は定数（設定 UI は持たない）。前回確認の時刻は揮発（プロセス内のみ、永続化しない）。
   失敗時の即時リトライ（短い間隔での再試行）はしない。次の確認は通常の 24 時間周期を待つ
-  （spec の core 動作: 通知のみ）
+  （確認そのものは通知のみ。インストールはユーザ操作を起点とする: I-U5）
 - **I-U4**: 同一プロセス内で一度通知した `Release::version` 以下のバージョンについては、
   `NewVersionDetected` を再発行しない。通知済みバージョンは揮発（再起動後は再び通知される）。
   この抑止は application service が揮発 state で担い、aggregate は 1 回分の確認結果を返すだけ
+- **I-U5**: 更新のインストール（download + 署名検証 + install）は **ユーザが通知から明示的に要求したときだけ**
+  開始する。バックグラウンドでの自動 download / install はしない
+- **I-U6**: インストールは `InstallationKind::Bundled(_)` のときだけ可能。`Unbundled` では
+  インストールを拒否し（`UnsupportedInstallation`）、UI はインストール操作を提示せず通知のみ
+  （リリースページを開く）にとどめる
+- **I-U7**: インストールするのは `current_version` より新しいリリースのみ（I-U2 と同じ比較）。
+  パッケージの署名検証は updater plugin に委譲し、検証失敗はインストール失敗として扱う。
+  失敗時はアプリを継続し、失敗をユーザに伝える（ユーザ操作の結果なので S14 の silent 方針は適用しない）
+- **I-U8**: インストール成功後にのみアプリを再起動する。再起動の前に編集中の全 Note を Flush する
+  （quit 時の S13 と同じ順序保証。永続化を待ってから再起動する）
 
 ### 公開操作 {#update-channel-aggregate-operations}
 
@@ -278,12 +293,21 @@ Update Distribution BC の唯一の集約。Tauri v2 updater plugin の薄いラ
   - 内部実装は `Result<UpdateChannel, UpdateError>` を持つ private fn を経由してよいが、
     外部 API は **`Result` を露出しない**。
 
+- `UpdateChannel::install(installation: InstallationKind) -> Result<Version, InstallUpdateError>`
+  - ユーザが通知の「Update & restart」を押したときに呼ばれる（I-U5）
+  - `Unbundled` は即 `UnsupportedInstallation`（I-U6）。最新リリースを取得し直し、
+    `current_version` より新しくなければ `NoUpdateAvailable`（I-U7）
+  - 成功時はインストールしたバージョンを返す。再起動は呼出側（UI の orchestration）が
+    全 Note の Flush 後に行う（I-U8、[install-update](workflows/install-update.md)）
+
 #### Queries {#update-channel-aggregate-queries}
 
 - `UpdateChannel::current_version(&self) -> &Version`
   - 設定モーダルのバージョン表示に使う（[get-app-version](workflows/get-app-version.md)）
 - `UpdateChannel::has_new_version(&self) -> bool`
 - `UpdateChannel::latest_release(&self) -> Option<&Release>`
+- `InstallationKind::is_installable(&self) -> bool`
+  - 通知 UI がインストール操作を提示するかの判定に使う（I-U6）
 
 ## Notes {#notes}
 

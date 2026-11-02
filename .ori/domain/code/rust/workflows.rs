@@ -40,6 +40,18 @@ pub trait UpdaterPlugin: Send + Sync {
     fn fetch_latest(&self) -> Result<Release, UpdateError>;
 }
 
+/// install-update 用の updater plugin ラッパー。取得した pending update の version を返し、
+/// 同じ pending update を download + 署名検証 + install する (I-U7)。
+pub trait UpdateInstaller: Send + Sync {
+    fn fetch_pending(&self) -> Result<Version, InstallUpdateError>;
+    fn download_and_install(&self) -> Result<(), InstallUpdateError>;
+}
+
+/// アプリプロセスの再起動。UI 層が全 Note の Flush 後に呼ぶ (I-U8)。
+pub trait AppRestarter: Send + Sync {
+    fn restart(&self) -> !;
+}
+
 /// Undo スタック (Vec<DeletedNote>) を保持する application service。
 /// 各要素は対応する Toast の TTL に同期して expire する。
 /// Phase 11a UI 設計改訂 (2026-06-20) により、旧 `UndoSlot` (単一保持) から
@@ -206,6 +218,17 @@ pub struct CheckForUpdatesCommand {
     pub current_version: Version,
 }
 
+#[derive(Debug, Clone)]
+pub struct InstallUpdateCommand {
+    pub current_version: Version,
+    pub installation: InstallationKind,
+}
+
+#[derive(Debug, Clone)]
+pub struct IsUpdateInstallableQuery {
+    pub installation: InstallationKind,
+}
+
 // ----- Workflow trait signatures -----
 //
 // Each workflow is a function: deps -> (input -> Result<Output, Error>).
@@ -293,4 +316,15 @@ pub trait CheckForUpdatesWorkflow {
         &self,
         cmd: CheckForUpdatesCommand,
     ) -> Result<UpdateChannel, UpdateError>;
+}
+
+/// I-U5〜I-U7。成功時はインストールしたバージョンを返す。再起動は呼出側 (I-U8)。
+pub trait InstallUpdateWorkflow {
+    fn run(&self, cmd: InstallUpdateCommand) -> Result<Version, InstallUpdateError>;
+}
+
+pub trait IsUpdateInstallableWorkflow {
+    fn run(&self, query: IsUpdateInstallableQuery) -> bool {
+        query.installation.is_installable()
+    }
 }
