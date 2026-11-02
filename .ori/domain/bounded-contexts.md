@@ -102,7 +102,7 @@ Note の lifecycle とは独立に変更され、Note とは別の永続化先�
 
 新バージョンの検出・通知と、ユーザが要求したときの更新インストールを司る。実装は
 Tauri v2 updater plugin + GitHub Releases に外注し、PromptNotes 側のロジックは
-「起動時と 24 時間ごとに確認する」「通知する」「要求されたらインストールする（対応配布形式のみ）」
+「起動時と 24 時間ごとに確認する」「通知する」「要求されたらその場で確認する」「要求されたらインストールする（対応配布形式のみ）」
 「現在のバージョンを提示する」のみ。
 
 ### Subdomain Type {#update-distribution-subdomain-type}
@@ -115,6 +115,7 @@ Tauri v2 updater plugin + GitHub Releases に外注し、PromptNotes 側のロ�
 - **UpdateChannel** — Tauri updater が参照する更新元（GitHub Releases）
 - **VersionNotification** — 新バージョン検出時の起動時通知
 - **AppVersion** — 設定モーダルに表示する現在のアプリバージョン（ビルド時定数）
+- **ManualUpdateCheck** — 設定モーダルからユーザが要求する、その場 1 回の更新確認（I-U9）
 - **InstallationKind** — 実行中アプリの配布形式。自動インストールできるか（I-U6）を決める
 - **UpdateInstall** — ユーザ要求による更新の download + 署名検証 + install（成功後に Flush → 再起動）
 

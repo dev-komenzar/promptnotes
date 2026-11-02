@@ -7,16 +7,18 @@ ori:
     - scenario:s24-install-update-and-restart
     - scenario:s25-install-update-failure
     - scenario:s26-unbundled-notify-only
+    - scenario:s27-manual-update-check-new-version
 ---
 
 # install-update {#install-update}
 
-ユーザが更新通知（widget-update-toast）の「Update & restart」を押したときに、最新リリースを
+ユーザが更新通知（widget-update-toast）、または設定モーダル（widget-settings-modal）の手動確認結果の
+「Update & restart」を押したときに、最新リリースを
 download → 署名検証 → install する（I-U5）。インストールできるのは updater 対応の配布形式だけ（I-U6）。
 成功したらインストールしたバージョンを返し、呼出側（page-main）が全 Note を Flush してから
 アプリを再起動する（I-U8）。
 
-併せて、通知 UI がインストール操作を提示してよいかを返す読み取り query
+併せて、通知 UI / 設定モーダルがインストール操作を提示してよいかを返す読み取り query
 （`isUpdateInstallable`）を持つ。
 
 ## Input {#input}
@@ -40,7 +42,7 @@ struct IsUpdateInstallableQuery {
 
 ## Errors {#errors}
 
-- `InstallUpdateError` — UI に返し、Toast に失敗を表示する（I-U7。silent にしない）
+- `InstallUpdateError` — UI に返し、要求元（Toast / 設定モーダル）に失敗を表示する（I-U7。silent にしない）
   - `UnsupportedInstallation` — `InstallationKind::Unbundled`（I-U6）
   - `NoUpdateAvailable` — 取得し直した最新リリースが `current_version` 以下（I-U7）
   - `CheckFailed` — 最新リリースの取得 / parse に失敗（ネットワーク等）
@@ -67,7 +69,7 @@ struct IsUpdateInstallableQuery {
 
 ## Error Handling {#error-handling}
 
-- すべてのエラーを UI に返す。Toast はエラーを表示し、「Update & restart」を再度押せる状態に戻す
+- すべてのエラーを UI に返す。要求元の UI（Toast / 設定モーダル）はエラーを表示し、「Update & restart」を再度押せる状態に戻す
   （ユーザ操作を起点とした再試行のみ。自動リトライはしない）
 - 失敗時はアプリを再起動しない。View release（手動更新）は引き続き使える
 - ログにエラーの詳細を出す

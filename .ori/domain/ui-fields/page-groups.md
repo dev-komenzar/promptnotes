@@ -55,12 +55,15 @@ spec の **シングルペイン制約** により page は 1 つのみ、残り
 
 - **kind**: ui-widget
 - **screens**: [screen-2](screen-2.md)
-- **対応 workflow**: update-settings, get-app-version（表示のみ）
+- **対応 workflow**: update-settings, get-app-version（表示のみ）, get-default-storage-dir,
+  check-for-updates-manually, install-update
 - **mount trigger**:
   - page-main の `screen-1-toolbar-settings-button` クリック
   - macOS menu bar 「PromptNotes → Preferences」 (`Cmd+,`)
-- **unmount trigger**: save / cancel / Esc キー
+- **unmount trigger**: save / cancel / Esc キー（インストール中は受け付けない）
 - **依存する page**: page-main (modal は parent page を持つ)
+- **再起動 orchestration**: 設定モーダルからの install-update 成功後も、page-main が
+  全 pending Note を Flush → 再起動 (I-U8。widget-update-toast と同じ経路)
 
 ### widget-update-toast {#widget-update-toast}
 
