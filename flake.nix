@@ -144,7 +144,7 @@
           '';
 
           outputHashMode = "flat";
-          outputHash = "sha256-x3wZR3aEQVFjxguNAMFThrkqPt4IYTb3y5MLIrhv8uY=";
+          outputHash = "sha256-SetUVrJnC3A6m4Qy+/khfINEGVZ8/yeZfg0b6WoKP7M=";
         };
 
         # FOD: cargo dependencies (vendored crates)
@@ -152,7 +152,7 @@
         cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
           name = "promptnotes-cargo-deps";
           src = ./apps/promptnotes/src-tauri;
-          hash = "sha256-hR+j0slQXPfJiIlkugL1mvn9zQ66Qh4an6gGbWoQW+M=";
+          hash = "sha256-zT9D5s9jGjeo3bMx4Cn24s/x9xDjrc4YPRxLmgVQz4Y=";
         };
 
         # NixOS 個人利用向けの PromptNotes パッケージ。
